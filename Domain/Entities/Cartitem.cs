@@ -13,7 +13,7 @@ public partial class Cartitem
 
     public int Quantity { get; set; }
 
-    public bool Isselected { get; set; }
+    public bool? Isselected { get; set; }
 
     public virtual Cart Cart { get; set; } = null!;
 

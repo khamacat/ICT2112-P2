@@ -15,7 +15,7 @@ public partial class Session
 
     public DateTime Expiresat { get; set; }
 
-    public virtual User User { get; set; } = null!;
-
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
+
+    public virtual User User { get; set; } = null!;
 }

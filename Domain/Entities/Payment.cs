@@ -13,10 +13,6 @@ public partial class Payment
 
     public decimal Amount { get; set; }
 
-    public string Purpose { get; set; } = null!;
-
-    public string Status { get; set; } = null!;
-
     public DateTime Createdat { get; set; }
 
     public virtual Order Order { get; set; } = null!;

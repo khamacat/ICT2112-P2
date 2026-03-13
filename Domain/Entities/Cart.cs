@@ -15,11 +15,11 @@ public partial class Cart
 
     public DateTime? Rentalend { get; set; }
 
-    public string Status { get; set; } = null!;
+    public virtual ICollection<Cartitem> Cartitems { get; set; } = new List<Cartitem>();
+
+    public virtual ICollection<Checkout> Checkouts { get; set; } = new List<Checkout>();
 
     public virtual Customer? Customer { get; set; }
 
     public virtual Session? Session { get; set; }
-
-    public virtual ICollection<Cartitem> Cartitems { get; set; } = new List<Cartitem>();
-} 
+}

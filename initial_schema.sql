@@ -1157,45 +1157,20 @@ CREATE TABLE IF NOT EXISTS StaffFootprint (
         ON DELETE CASCADE
 );
 
--- 006_OrderCarbondata
-CREATE TABLE IF NOT EXISTS ordercarbondata (
-    ordercarbondataid INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    orderid INT NOT NULL,
-    productcarbon DOUBLE PRECISION NOT NULL,
-    packagingcarbon DOUBLE PRECISION NOT NULL,
-    staffcarbon DOUBLE PRECISION NOT NULL,
-    buildingcarbon DOUBLE PRECISION NOT NULL,
-    totalcarbon DOUBLE PRECISION NOT NULL,
-    impactlevel VARCHAR(20),
-    calculatedat TIMESTAMP NOT NULL,
-
-    CONSTRAINT fk_ordercarbondata_order
-        FOREIGN KEY (orderid)
-        REFERENCES "Order"(orderid)
-        ON DELETE CASCADE
-);
-
--- 007_CustomerRewards
-CREATE TABLE IF NOT EXISTS customerrewards (
-    rewardid INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    customerid INT NOT NULL,
-    ordercarbondataid INT NOT NULL,
-    rewardtype VARCHAR(50) NOT NULL,
-    rewardvalue DOUBLE PRECISION NOT NULL,
-    createdat TIMESTAMP NOT NULL,
+-- 006_CustomerRewards
+CREATE TABLE IF NOT EXISTS CustomerRewards (
+    customerRewardsID INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    customerId INT NOT NULL,
+    discount DOUBLE PRECISION NOT NULL,
+    totalCarbon DOUBLE PRECISION NOT NULL,
 
     CONSTRAINT fk_customerrewards_customer
-        FOREIGN KEY (customerid)
-        REFERENCES customer(customerid)
-        ON DELETE CASCADE,
-
-    CONSTRAINT fk_customerrewards_ordercarbondata
-        FOREIGN KEY (ordercarbondataid)
-        REFERENCES ordercarbondata(ordercarbondataid)
+        FOREIGN KEY (customerId)
+        REFERENCES Customer(customerId)
         ON DELETE CASCADE
 );
 
--- 008_PackagingProfile
+-- 007_PackagingProfile
 CREATE TABLE IF NOT EXISTS PackagingProfile (
     profileId INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     orderId INT NOT NULL,
