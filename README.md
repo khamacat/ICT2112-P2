@@ -255,6 +255,15 @@ If a migration must be created:
 - Never two people adding migrations simultaneously
 - Migration must be reviewed and merged before anyone else pulls
 
+### Changing a schema-affecting entity
+Every time you change a schema-affecting entity:
+
+# Step 1 — Create the migration
+dotnet ef migrations add DescribeWhatYouChanged
+
+# Step 2 — Apply it to the database
+dotnet ef database update
+
 ---
 
 ## 8. Git & Branching Strategy
@@ -340,6 +349,29 @@ A: Do not push. Run `git reset HEAD~1`, then tell your team lead.
 
 **Q: Two people edited the same file and there's a merge conflict.**  
 A: Open the file, resolve the `<<<<<<<` markers manually, then `git add . && git commit`.
+
+**Q: When should i create a migration?**  
+A: The Rule
+You need a new migration every time you change anything that affects the database schema. If your change only affects business logic inside the class and not the table structure, no migration is needed.
+
+When You DO Need a Migration
+Change	Example	Migration Needed?
+- Add a new entity class	| Create DeliveryBatch.cs + add DbSet<DeliveryBatch>	✅ Yes
+- Add a new property	| Add CarbonSurcharge decimal to ShippingOption	✅ Yes
+- Remove a property	| Delete OldField from an entity	✅ Yes
+- Rename a property	| Cost → RentalCost	✅ Yes
+- Change a property type	| int → double	✅ Yes
+- Add a relationship	| Add List<RouteLeg> navigation property to Route	✅ Yes
+
+When You Do NOT Need a Migration
+Change	Example	Migration Needed?
+- Add/edit a method	| Add IsFasterThan() to ShippingOption	❌ No
+- Add business logic	| Edit CalculateTotalCost()	❌ No
+- Change a controller	| Edit ShippingOptionsController	❌ No
+- Change a view	        | Edit Index.cshtml	❌ No
+- Change a gateway	| Edit ShippingOptionGateway.cs	❌ No
+- Change an interface	| Edit IShippingOptionService	❌ No
+
 
 ---
 
