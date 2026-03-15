@@ -71,3 +71,45 @@ INSERT INTO InventoryItem (ProductId, SerialNumber) VALUES
 (7,'RVP-0008'),
 (7,'RVP-0009'),
 (7,'RVP-0010');
+
+INSERT INTO "User" (name, email, passwordHash, phoneCountry, phoneNumber)
+VALUES
+  ('Alice Tan',        'alice.tan@example.com',        '$2b$12$hashAlice', 65, '90000001'),
+  ('Benjamin Lee',     'ben.lee@example.com',          '$2b$12$hashBen',   65, '90000002'),
+  ('Charlotte Ng',     'charlotte.ng@example.com',     '$2b$12$hashChar',  65, '90000003'),
+  ('Daniel Wong',      'daniel.wong@example.com',      '$2b$12$hashDan',   65, '90000004'),
+  ('Elaine Goh',       'elaine.goh@example.com',       '$2b$12$hashEla',   65, '90000005'),
+  ('Farid Ahmad',      'farid.ahmad@example.com',      '$2b$12$hashFarid', 65, '90000006'),
+  ('Grace Lim',        'grace.lim@example.com',        '$2b$12$hashGrace', 65, '90000007'),
+  ('Hannah Koh',       'hannah.koh@example.com',       '$2b$12$hashHan',   65, '90000008'),
+  ('Ivan Tan',         'ivan.tan@example.com',         '$2b$12$hashIvan',  65, '90000009'),
+  ('Jasmine Ong',      'jasmine.ong@example.com',      '$2b$12$hashJas',   65, '90000010'),
+  ('Kevin Chan',       'kevin.chan@example.com',       '$2b$12$hashKev',   65, '90000011'),
+  ('Lydia Chua',       'lydia.chua@example.com',       '$2b$12$hashLyd',   65, '90000012'),
+  ('Marcus Ho',        'marcus.ho@example.com',        '$2b$12$hashMar',   65, '90000013'),
+  ('Natalie Yeo',      'natalie.yeo@example.com',      '$2b$12$hashNat',   65, '90000014'),
+  ('Operations Admin', 'ops.admin@company.com',        '$2b$12$hashOps',   65, '90000015')
+ON CONFLICT (email) DO NOTHING;
+
+INSERT INTO Customer (userId, address, customerType)
+VALUES
+  (1, '123 Orchard Rd, Singapore 238123', 1),
+  (2, '456 Marina Bay, Singapore 018972', 1),
+  (3, '10 Tampines Ave, Singapore 529000', 2),
+  (4, '5 Jurong East St, Singapore 609000', 2),
+  (5, '88 Punggol Walk, Singapore 828000', 1),
+  (6, '2 Clementi Rd, Singapore 129000', 2),
+  (7, '12 Clementi Ave 1, Singapore 129012', 2),
+  (8, '128 Plantation Crescent, Singapore 691128', 1),
+  (9, '225 Bukit Batok Central, Singapore 650225', 2),
+  (10, '503 Woodlands Ave 14, Singapore 730503', 2),
+  (11, '224 Serangoon Ave 4, Singapore 334224', 2),
+ON CONFLICT (userId) DO NOTHING;
+
+INSERT INTO Staff (userId, department)
+VALUES
+  (12, 'Customer Support'),
+  (13, 'Operations'),
+  (14, 'Finance'),
+  (15, 'IT')
+ON CONFLICT (userId) DO NOTHING;
