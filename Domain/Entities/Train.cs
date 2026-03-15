@@ -11,7 +11,7 @@ public partial class Train
 
     public string? TrainType { get; private set; }
 
-    public string? LicensePlate { get; private set; }
+    public string? TrainNumber { get; private set; }
 
     public virtual Transport Transport { get; private set; } = null!;
 }

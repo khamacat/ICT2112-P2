@@ -21,9 +21,9 @@ public partial class ReturnStage
 
     public double? PackagingKg { get; private set; }
 
-    public double? StorageHours { get; private set; }
+    public decimal? SurchargeRate { get; private set; }
 
     public virtual ICollection<CarbonEmission> CarbonEmissions { get; private set; } = new List<CarbonEmission>();
 
-    public virtual ProductReturn Return { get; private set; } = null!;
+    public virtual Returnrequest Return { get; private set; } = null!;
 }

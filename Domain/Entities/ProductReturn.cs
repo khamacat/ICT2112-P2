@@ -14,6 +14,4 @@ public partial class ProductReturn
     public DateOnly? DateIn { get; private set; }
 
     public DateOnly? DateOn { get; private set; }
-
-    public virtual ICollection<ReturnStage> ReturnStages { get; private set; } = new List<ReturnStage>();
 }

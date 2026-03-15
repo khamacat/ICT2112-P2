@@ -55,6 +55,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<DeliveryBatch> DeliveryBatches { get; set; }
 
+    public virtual DbSet<DeliveryRoute> DeliveryRoutes { get; set; }
+
     public virtual DbSet<Deliverymethod> Deliverymethods { get; set; }
 
     public virtual DbSet<Deposit> Deposits { get; set; }
@@ -131,8 +133,6 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Returnrequest> Returnrequests { get; set; }
 
-    public virtual DbSet<Route> Routes { get; set; }
-
     public virtual DbSet<RouteLeg> RouteLegs { get; set; }
 
     public virtual DbSet<Session> Sessions { get; set; }
@@ -177,14 +177,14 @@ public partial class AppDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=pro_rental;Username=devuser;Password=devpassword");
+        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=pro_rental;Username=postgres;Password=password");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
             .HasPostgresEnum("access_event_type", new[] { "IN", "OUT" })
             .HasPostgresEnum("alert_status", new[] { "OPEN", "ACKNOWLEDGED", "RESOLVED" })
-            .HasPostgresEnum("batch_status", new[] { "PENDING", "IN_PROGRESS", "COMPLETED", "CANCELLED" })
+            .HasPostgresEnum("batch_status", new[] { "PENDING", "SHIPPEDOUT" })
             .HasPostgresEnum("carbon_stage_type", new[] { "DAMAGE_INSPECTION", "REPAIRING", "SERVICING", "CLEANING", "RETURN" })
             .HasPostgresEnum("cart_status_enum", new[] { "ACTIVE", "CHECKED_OUT", "EXPIRED" })
             .HasPostgresEnum("checkout_status_enum", new[] { "IN_PROGRESS", "CONFIRMED", "CANCELLED" })
@@ -207,7 +207,7 @@ public partial class AppDbContext : DbContext
             .HasPostgresEnum("payment_method_enum", new[] { "CREDIT_CARD" })
             .HasPostgresEnum("payment_purpose_enum", new[] { "RENTAL_FEE_DEPOSIT", "PENALTY_FEE" })
             .HasPostgresEnum("po_status_enum", new[] { "COMPLETED", "CONFIRMED", "SUBMITTED", "APPROVED", "REJECTED", "CANCELLED" })
-            .HasPostgresEnum("preference_type", new[] { "SPEED", "COST", "GREEN" })
+            .HasPostgresEnum("preference_type", new[] { "FAST", "CHEAP", "GREEN" })
             .HasPostgresEnum("product_status", new[] { "AVAILABLE", "UNAVAILABLE", "RETIRED" })
             .HasPostgresEnum("purchase_order_status_enum", new[] { "PENDING", "APPROVED", "REJECTED", "DELIVERED", "CANCELLED" })
             .HasPostgresEnum("rating_band_enum", new[] { "HIGH", "MEDIUM", "LOW", "UNRATED" })
@@ -218,12 +218,12 @@ public partial class AppDbContext : DbContext
             .HasPostgresEnum("return_request_status", new[] { "PROCESSING", "COMPLETED" })
             .HasPostgresEnum("return_status_enum", new[] { "PENDING", "APPROVED", "REJECTED", "COMPLETED" })
             .HasPostgresEnum("shipment_status_enum", new[] { "PENDING", "IN_TRANSIT", "DELIVERED", "CANCELLED" })
+            .HasPostgresEnum("stagetype", new[] { "INSPECTION", "REPAIRING", "SERVICING", "CLEANING", "INV_RETURN" })
             .HasPostgresEnum("supplier_category_enum", new[] { "LONGCREDITPERIOD", "QUICKTURNAROUNDTIME", "NEWUNTESTED" })
             .HasPostgresEnum("transaction_purpose_enum", new[] { "ORDER", "PENALTY", "REFUND_DEPOSIT" })
             .HasPostgresEnum("transaction_status_enum", new[] { "PENDING", "COMPLETED", "FAILED", "CANCELLED" })
             .HasPostgresEnum("transaction_type_enum", new[] { "PAYMENT", "REFUND" })
             .HasPostgresEnum("transport_mode", new[] { "TRUCK", "SHIP", "PLANE", "TRAIN" })
-            .HasPostgresEnum("transport_mode_combination", new[] { "TRUCK_ONLY", "SHIP_TRUCK", "AIR_TRUCK", "RAIL_TRUCK", "MULTIMODAL" })
             .HasPostgresEnum("vetting_decision_enum", new[] { "APPROVED", "REJECTED", "PENDING" })
             .HasPostgresEnum("vetting_result_enum", new[] { "APPROVED", "REJECTED", "PENDING" })
             .HasPostgresEnum("visual_type_enum", new[] { "TABLE", "BAR", "COLUMN", "LINE", "PIE", "AREA" });
@@ -237,6 +237,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.HubId)
                 .ValueGeneratedNever()
                 .HasColumnName("hub_id");
+            entity.Property(e => e.AircraftSize).HasColumnName("aircraft_size");
             entity.Property(e => e.AirportCode)
                 .HasMaxLength(10)
                 .HasColumnName("airport_code");
@@ -333,6 +334,8 @@ public partial class AppDbContext : DbContext
 
             entity.ToTable("batch_order");
 
+            entity.HasIndex(e => e.OrderId, "batch_order_order_id_key").IsUnique();
+
             entity.Property(e => e.BatchId).HasColumnName("batch_id");
             entity.Property(e => e.OrderId).HasColumnName("order_id");
             entity.Property(e => e.AddedTimestamp)
@@ -345,8 +348,8 @@ public partial class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_batch_order_batch");
 
-            entity.HasOne(d => d.Order).WithMany(p => p.BatchOrders)
-                .HasForeignKey(d => d.OrderId)
+            entity.HasOne(d => d.Order).WithOne(p => p.BatchOrder)
+                .HasForeignKey<BatchOrder>(d => d.OrderId)
                 .HasConstraintName("fk_batch_order_order");
         });
 
@@ -715,18 +718,50 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.DeliveryBatchId)
                 .UseIdentityAlwaysColumn()
                 .HasColumnName("delivery_batch_id");
+            entity.Property(e => e.BatchWeightKg).HasColumnName("batch_weight_kg");
             entity.Property(e => e.CarbonSavings).HasColumnName("carbon_savings");
             entity.Property(e => e.DestinationAddress)
                 .HasMaxLength(255)
                 .HasColumnName("destination_address");
-            entity.Property(e => e.SourceHubId).HasColumnName("source_hub_id");
+            entity.Property(e => e.HubId).HasColumnName("hub_id");
             entity.Property(e => e.TotalOrders)
                 .HasDefaultValue(0)
                 .HasColumnName("total_orders");
 
-            entity.HasOne(d => d.SourceHub).WithMany(p => p.DeliveryBatches)
-                .HasForeignKey(d => d.SourceHubId)
+            entity.HasOne(d => d.Hub).WithMany(p => p.DeliveryBatches)
+                .HasForeignKey(d => d.HubId)
                 .HasConstraintName("fk_delivery_batch_hub");
+        });
+
+        modelBuilder.Entity<DeliveryRoute>(entity =>
+        {
+            entity.HasKey(e => e.RouteId).HasName("delivery_route_pkey");
+
+            entity.ToTable("delivery_route");
+
+            entity.Property(e => e.RouteId)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("route_id");
+            entity.Property(e => e.DestinationAddress)
+                .HasMaxLength(255)
+                .HasColumnName("destination_address");
+            entity.Property(e => e.DestinationHubId).HasColumnName("destination_hub_id");
+            entity.Property(e => e.IsValid)
+                .HasDefaultValue(true)
+                .HasColumnName("is_valid");
+            entity.Property(e => e.OriginAddress)
+                .HasMaxLength(255)
+                .HasColumnName("origin_address");
+            entity.Property(e => e.OriginHubId).HasColumnName("origin_hub_id");
+            entity.Property(e => e.TotalDistanceKm).HasColumnName("total_distance_km");
+
+            entity.HasOne(d => d.DestinationHub).WithMany(p => p.DeliveryRouteDestinationHubs)
+                .HasForeignKey(d => d.DestinationHubId)
+                .HasConstraintName("fk_route_destination_hub");
+
+            entity.HasOne(d => d.OriginHub).WithMany(p => p.DeliveryRouteOriginHubs)
+                .HasForeignKey(d => d.OriginHubId)
+                .HasConstraintName("fk_route_origin_hub");
         });
 
         modelBuilder.Entity<Deliverymethod>(entity =>
@@ -1655,13 +1690,15 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.MaterialsKg).HasColumnName("materials_kg");
             entity.Property(e => e.PackagingKg).HasColumnName("packaging_kg");
             entity.Property(e => e.ReturnId).HasColumnName("return_id");
-            entity.Property(e => e.StorageHours).HasColumnName("storage_hours");
+            entity.Property(e => e.SurchargeRate)
+                .HasPrecision(10, 4)
+                .HasColumnName("surcharge_rate");
             entity.Property(e => e.WaterLitres).HasColumnName("water_litres");
 
             entity.HasOne(d => d.Return).WithMany(p => p.ReturnStages)
                 .HasForeignKey(d => d.ReturnId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("fk_return_stage_return");
+                .HasConstraintName("fk_return_stage_return_request");
         });
 
         modelBuilder.Entity<Returnitem>(entity =>
@@ -1758,37 +1795,6 @@ public partial class AppDbContext : DbContext
                 .HasForeignKey(d => d.Orderid)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("fk_returnrequest_order");
-        });
-
-        modelBuilder.Entity<Route>(entity =>
-        {
-            entity.HasKey(e => e.RouteId).HasName("route_pkey");
-
-            entity.ToTable("route");
-
-            entity.Property(e => e.RouteId)
-                .UseIdentityAlwaysColumn()
-                .HasColumnName("route_id");
-            entity.Property(e => e.DestinationAddress)
-                .HasMaxLength(255)
-                .HasColumnName("destination_address");
-            entity.Property(e => e.DestinationHubId).HasColumnName("destination_hub_id");
-            entity.Property(e => e.IsValid)
-                .HasDefaultValue(true)
-                .HasColumnName("is_valid");
-            entity.Property(e => e.OriginAddress)
-                .HasMaxLength(255)
-                .HasColumnName("origin_address");
-            entity.Property(e => e.OriginHubId).HasColumnName("origin_hub_id");
-            entity.Property(e => e.TotalDistanceKm).HasColumnName("total_distance_km");
-
-            entity.HasOne(d => d.DestinationHub).WithMany(p => p.RouteDestinationHubs)
-                .HasForeignKey(d => d.DestinationHubId)
-                .HasConstraintName("fk_route_destination_hub");
-
-            entity.HasOne(d => d.OriginHub).WithMany(p => p.RouteOriginHubs)
-                .HasForeignKey(d => d.OriginHubId)
-                .HasConstraintName("fk_route_origin_hub");
         });
 
         modelBuilder.Entity<RouteLeg>(entity =>
@@ -1913,7 +1919,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.OptionId)
                 .UseIdentityAlwaysColumn()
                 .HasColumnName("option_id");
-            entity.Property(e => e.CarbonFootprint).HasColumnName("carbon_footprint");
+            entity.Property(e => e.Carbonfootprintkg).HasColumnName("carbonfootprintkg");
             entity.Property(e => e.Cost)
                 .HasPrecision(10, 2)
                 .HasColumnName("cost");
@@ -1921,10 +1927,12 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.DisplayName)
                 .HasMaxLength(255)
                 .HasColumnName("display_name");
-            entity.Property(e => e.IsGreenOption)
-                .HasDefaultValue(false)
-                .HasColumnName("is_green_option");
+            entity.Property(e => e.OrderId).HasColumnName("order_id");
             entity.Property(e => e.RouteId).HasColumnName("route_id");
+
+            entity.HasOne(d => d.Order).WithMany(p => p.ShippingOptions)
+                .HasForeignKey(d => d.OrderId)
+                .HasConstraintName("fk_shipping_option_order");
 
             entity.HasOne(d => d.Route).WithMany(p => p.ShippingOptions)
                 .HasForeignKey(d => d.RouteId)
@@ -1949,9 +1957,7 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.PortType)
                 .HasMaxLength(50)
                 .HasColumnName("port_type");
-            entity.Property(e => e.VesselSize)
-                .HasMaxLength(50)
-                .HasColumnName("vessel_size");
+            entity.Property(e => e.VesselSize).HasColumnName("vessel_size");
 
             entity.HasOne(d => d.Hub).WithOne(p => p.ShippingPort)
                 .HasForeignKey<ShippingPort>(d => d.HubId)
@@ -2089,10 +2095,10 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.TransportId)
                 .ValueGeneratedNever()
                 .HasColumnName("transport_id");
-            entity.Property(e => e.LicensePlate)
-                .HasMaxLength(50)
-                .HasColumnName("license_plate");
             entity.Property(e => e.TrainId).HasColumnName("train_id");
+            entity.Property(e => e.TrainNumber)
+                .HasMaxLength(50)
+                .HasColumnName("train_number");
             entity.Property(e => e.TrainType)
                 .HasMaxLength(50)
                 .HasColumnName("train_type");
@@ -2265,6 +2271,7 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("hub_id");
             entity.Property(e => e.ClimateControlEmissionRate).HasColumnName("climate_control_emission_rate");
             entity.Property(e => e.LightingEmissionRate).HasColumnName("lighting_emission_rate");
+            entity.Property(e => e.MaxProductCapacity).HasColumnName("max_product_capacity");
             entity.Property(e => e.SecuritySystemEmissionRate).HasColumnName("security_system_emission_rate");
             entity.Property(e => e.TotalWarehouseVolume).HasColumnName("total_warehouse_volume");
             entity.Property(e => e.WarehouseCode)

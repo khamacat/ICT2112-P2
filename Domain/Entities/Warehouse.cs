@@ -9,6 +9,8 @@ public partial class Warehouse
 
     public string WarehouseCode { get; private set; } = null!;
 
+    public int? MaxProductCapacity { get; private set; }
+
     public double? TotalWarehouseVolume { get; private set; }
 
     public double? ClimateControlEmissionRate { get; private set; }

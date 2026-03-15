@@ -23,9 +23,9 @@ public partial class TransportationHub
 
     public virtual ICollection<DeliveryBatch> DeliveryBatches { get; private set; } = new List<DeliveryBatch>();
 
-    public virtual ICollection<Route> RouteDestinationHubs { get; private set; } = new List<Route>();
+    public virtual ICollection<DeliveryRoute> DeliveryRouteDestinationHubs { get; private set; } = new List<DeliveryRoute>();
 
-    public virtual ICollection<Route> RouteOriginHubs { get; private set; } = new List<Route>();
+    public virtual ICollection<DeliveryRoute> DeliveryRouteOriginHubs { get; private set; } = new List<DeliveryRoute>();
 
     public virtual ShippingPort? ShippingPort { get; private set; }
 

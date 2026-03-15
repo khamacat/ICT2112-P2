@@ -21,6 +21,8 @@ public partial class Returnrequest
 
     public virtual ICollection<Refund> Refunds { get; private set; } = new List<Refund>();
 
+    public virtual ICollection<ReturnStage> ReturnStages { get; private set; } = new List<ReturnStage>();
+
     public virtual ICollection<Returnitem> Returnitems { get; private set; } = new List<Returnitem>();
 
     public virtual ICollection<Returnlog> Returnlogs { get; private set; } = new List<Returnlog>();

@@ -11,13 +11,15 @@ public partial class ShippingOption
 
     public decimal? Cost { get; private set; }
 
-    public double? CarbonFootprint { get; private set; }
+    public double? Carbonfootprintkg { get; private set; }
 
     public int? DeliveryDays { get; private set; }
 
-    public bool? IsGreenOption { get; private set; }
+    public int? OrderId { get; private set; }
 
     public int? RouteId { get; private set; }
 
-    public virtual Route? Route { get; private set; }
+    public virtual Order? Order { get; private set; }
+
+    public virtual DeliveryRoute? Route { get; private set; }
 }

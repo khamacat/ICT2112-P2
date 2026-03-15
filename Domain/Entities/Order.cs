@@ -17,7 +17,7 @@ public partial class Order
 
     public decimal Totalamount { get; private set; }
 
-    public virtual ICollection<BatchOrder> BatchOrders { get; private set; } = new List<BatchOrder>();
+    public virtual BatchOrder? BatchOrder { get; private set; }
 
     public virtual Checkout Checkout { get; private set; } = null!;
 
@@ -48,6 +48,8 @@ public partial class Order
     public virtual ICollection<Returnrequest> Returnrequests { get; private set; } = new List<Returnrequest>();
 
     public virtual ICollection<Shipment> Shipments { get; private set; } = new List<Shipment>();
+
+    public virtual ICollection<ShippingOption> ShippingOptions { get; private set; } = new List<ShippingOption>();
 
     public virtual Transaction? Transaction { get; private set; }
 }

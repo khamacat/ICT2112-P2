@@ -13,7 +13,7 @@ public partial class ShippingPort
 
     public string? PortType { get; private set; }
 
-    public string? VesselSize { get; private set; }
+    public int? VesselSize { get; private set; }
 
     public virtual TransportationHub Hub { get; private set; } = null!;
 }

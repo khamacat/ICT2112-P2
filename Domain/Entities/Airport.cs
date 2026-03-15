@@ -13,5 +13,7 @@ public partial class Airport
 
     public int? Terminal { get; private set; }
 
+    public int? AircraftSize { get; private set; }
+
     public virtual TransportationHub Hub { get; private set; } = null!;
 }

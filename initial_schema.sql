@@ -17,16 +17,16 @@ CREATE TYPE transport_mode AS ENUM (
     'TRUCK', 'SHIP', 'PLANE', 'TRAIN'
 );
 
-CREATE TYPE transport_mode_combination AS ENUM (
-    'TRUCK_ONLY', 'SHIP_TRUCK', 'AIR_TRUCK', 'RAIL_TRUCK', 'MULTIMODAL'
-);
-
 CREATE TYPE preference_type AS ENUM (
-    'SPEED', 'COST', 'GREEN'
+    'FAST', 'CHEAP', 'GREEN'
 );
 
 CREATE TYPE batch_status AS ENUM (
-    'PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'
+    'PENDING', 'SHIPPEDOUT'
+);
+
+CREATE TYPE stagetype AS ENUM (
+    'INSPECTION', 'REPAIRING', 'SERVICING', 'CLEANING', 'INV_RETURN'
 );
 
 CREATE TYPE carbon_stage_type AS ENUM (
@@ -95,6 +95,7 @@ CREATE TABLE transportation_hub (
 CREATE TABLE warehouse (
     hub_id                        INT PRIMARY KEY,
     warehouse_code                VARCHAR(100) NOT NULL,
+    max_product_capacity          INT,
     total_warehouse_volume        DOUBLE PRECISION,
     climate_control_emission_rate DOUBLE PRECISION,
     lighting_emission_rate        DOUBLE PRECISION,
@@ -108,7 +109,7 @@ CREATE TABLE shipping_port (
     port_code   VARCHAR(20)  NOT NULL,
     port_name   VARCHAR(255) NOT NULL,
     port_type   VARCHAR(50),
-    vessel_size VARCHAR(50),
+    vessel_size INT,
     CONSTRAINT fk_shipping_port_hub FOREIGN KEY (hub_id)
         REFERENCES transportation_hub(hub_id) ON DELETE CASCADE
 );
@@ -118,6 +119,7 @@ CREATE TABLE airport (
     airport_code VARCHAR(10)  NOT NULL,
     airport_name VARCHAR(255) NOT NULL,
     terminal     INT,
+    aircraft_size INT,
     CONSTRAINT fk_airport_hub FOREIGN KEY (hub_id)
         REFERENCES transportation_hub(hub_id) ON DELETE CASCADE
 );
@@ -166,7 +168,7 @@ CREATE TABLE train (
     transport_id  INT PRIMARY KEY,
     train_id      INT         NOT NULL,
     train_type    VARCHAR(50),
-    license_plate VARCHAR(50),
+    train_number  VARCHAR(50),
     CONSTRAINT fk_train_transport FOREIGN KEY (transport_id)
         REFERENCES transport(transport_id) ON DELETE CASCADE
 );
@@ -175,13 +177,12 @@ CREATE TABLE train (
 -- ============================================================
 -- Route & Route Legs
 -- ============================================================
-CREATE TABLE route (
+CREATE TABLE delivery_route (
     route_id            INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     origin_address      VARCHAR(255)               NOT NULL,
     destination_address VARCHAR(255)               NOT NULL,
     total_distance_km   DOUBLE PRECISION,
     is_valid            BOOLEAN                    DEFAULT TRUE,
-    mode_combination    transport_mode_combination,
     origin_hub_id       INT,
     destination_hub_id  INT,
     CONSTRAINT fk_route_origin_hub      FOREIGN KEY (origin_hub_id)
@@ -202,7 +203,7 @@ CREATE TABLE route_leg (
     is_last_mile   BOOLEAN        DEFAULT FALSE,
     transport_id   INT,
     CONSTRAINT fk_route_leg_route     FOREIGN KEY (route_id)
-        REFERENCES route(route_id),
+        REFERENCES delivery_route(route_id),
     CONSTRAINT fk_route_leg_transport FOREIGN KEY (transport_id)
         REFERENCES transport(transport_id)
 );
@@ -241,12 +242,14 @@ CREATE TABLE shipping_option (
     option_id        INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     display_name     VARCHAR(255),
     cost             NUMERIC(10, 2),
-    carbon_footprint DOUBLE PRECISION,
+    carbonFootprintKg DOUBLE PRECISION,
     delivery_days    INT,
-    is_green_option  BOOLEAN DEFAULT FALSE,
+    preference_type  preference_type,
+    order_id         INT,
+    transport_mode   transport_mode,
     route_id         INT,
     CONSTRAINT fk_shipping_option_route FOREIGN KEY (route_id)
-        REFERENCES route(route_id)
+        REFERENCES delivery_route(route_id)
 );
 
 CREATE TABLE pricing_rule (
@@ -280,13 +283,13 @@ CREATE TABLE customer_choice (
 -- ============================================================
 CREATE TABLE delivery_batch (
     delivery_batch_id     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    -- source_hub string removed; use source_hub_id FK to transportation_hub instead
+    batch_weight_kg       DOUBLE PRECISION,
     destination_address   VARCHAR(255),
     delivery_batch_status batch_status     DEFAULT 'PENDING',
     total_orders          INT              DEFAULT 0,
     carbon_savings        DOUBLE PRECISION,
-    source_hub_id         INT,
-    CONSTRAINT fk_delivery_batch_hub FOREIGN KEY (source_hub_id)
+    hub_id         INT,
+    CONSTRAINT fk_delivery_batch_hub FOREIGN KEY (hub_id)
         REFERENCES transportation_hub(hub_id)
 );
 
@@ -306,15 +309,14 @@ CREATE TABLE return_stage (
     stage_id              INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     return_id             INT              NOT NULL,
     stage_type            carbon_stage_type,          -- use defined ENUM (was VARCHAR(50))
+    stageType             stagetype,
     energy_kwh            DOUBLE PRECISION,
     labour_hours          DOUBLE PRECISION,
     materials_kg          DOUBLE PRECISION,
     cleaning_supplies_qty DOUBLE PRECISION,
     water_litres          DOUBLE PRECISION,
     packaging_kg          DOUBLE PRECISION,
-    storage_hours         DOUBLE PRECISION,
-    CONSTRAINT fk_return_stage_return FOREIGN KEY (return_id)
-        REFERENCES product_return(return_id)
+    surcharge_rate        NUMERIC(10, 4)
 );
 
 CREATE TABLE carbon_emission (
@@ -328,9 +330,11 @@ CREATE TABLE carbon_emission (
 
 
 -- TEAM 1 CROSS TEAM FK TABLES
-CREATE TABLE batch_order (
+-- this was made because batch_order has many orders and order can only belong to one batch, so we need a separate table to link them together. 
+-- either this or order table has to have batch_id as FK, and we chose to have a separate table to avoid having a nullable batch_id in order table.
+CREATE TABLE batch_order ( 
     batch_id        INT       NOT NULL,
-    order_id        INT       NOT NULL,
+    order_id        INT       NOT NULL UNIQUE,
     added_timestamp TIMESTAMP DEFAULT NOW(),
     PRIMARY KEY (batch_id, order_id),
     CONSTRAINT fk_batch_order_batch FOREIGN KEY (batch_id)
@@ -610,7 +614,7 @@ CREATE TABLE IF NOT EXISTS "User" (
 
 CREATE TABLE IF NOT EXISTS Customer (
     customerId   INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    userId       INT          NOT NULL,
+    userId       INT          NOT NULL UNIQUE, --customer is also a user, so userId is unique and not null
     address      VARCHAR(255) NOT NULL,
     customerType INT          NOT NULL,
     CONSTRAINT fk_customer_user FOREIGN KEY (userId) REFERENCES "User"(userId) ON UPDATE CASCADE ON DELETE CASCADE
@@ -618,7 +622,7 @@ CREATE TABLE IF NOT EXISTS Customer (
 
 CREATE TABLE IF NOT EXISTS Staff (
     staffId    INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    userId     INT         NOT NULL,
+    userId     INT         NOT NULL UNIQUE, --staff is also a user, so userId is unique and not null
     department VARCHAR(50) NOT NULL,
     CONSTRAINT fk_staff_user FOREIGN KEY (userId) REFERENCES "User"(userId) ON UPDATE CASCADE ON DELETE CASCADE
   );
@@ -1280,6 +1284,14 @@ ALTER TABLE customer_choice
 ALTER TABLE batch_order
     ADD CONSTRAINT fk_batch_order_order
         FOREIGN KEY (order_id) REFERENCES "Order"(orderId) ON DELETE CASCADE;
+
+-- Team 1 → Team 6 & Team 3: shipping_option and return_stage references
+ALTER TABLE shipping_option
+    ADD CONSTRAINT fk_shipping_option_order
+        FOREIGN KEY (order_id) REFERENCES "Order"(orderId);
+ALTER TABLE return_stage
+    ADD CONSTRAINT fk_return_stage_return_request
+        FOREIGN KEY (return_id) REFERENCES ReturnRequest(ReturnRequestId);
 
 -- Team 6 → Team 4: Checkout.deliveryId
 ALTER TABLE Checkout
