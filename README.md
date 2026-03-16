@@ -411,13 +411,12 @@ A: No. Those files are auto-generated and will be overwritten on the next scaffo
 Run this command any time the schema changes or you need to regenerate entity classes:
 
 ```bash
-dotnet ef dbcontext scaffold
-  "Host=localhost;Port=5432;Database=pro_rental;Username=devuser;Password=devpassword"
-  Npgsql.EntityFrameworkCore.PostgreSQL
-  --output-dir Domain/Entities
-  --context-dir Data/UnitOfWork
-  --context AppDbContext
-  --force
+dotnet ef dbcontext scaffold "Host=localhost;Port=5432;Database=pro_rental;Username=postgres;Password=password" Npgsql.EntityFrameworkCore.PostgreSQL --output-dir Domain/Entities --context-dir Data/UnitOfWork --context AppDbContext --force --no-onconfiguring
+```
+
+This flag is important because it prevents your connection string from being written into appdbcontext.
+```bash
+--no-onconfiguring
 ```
 
 > Replace the connection string credentials with your own if they differ from the defaults above.
