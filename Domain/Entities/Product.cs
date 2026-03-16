@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 
 namespace ProRental.Domain.Entities;
+using ProRental.Domain.Enums;
 
 public partial class Product
 {
@@ -12,6 +13,8 @@ public partial class Product
     public string Sku { get; private set; } = null!;
 
     public decimal Threshold { get; private set; }
+
+    public ProductStatus Status { get; private set; }
 
     public DateTime Createdat { get; private set; }
 

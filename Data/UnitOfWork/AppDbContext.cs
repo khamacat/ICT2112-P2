@@ -615,6 +615,8 @@ public partial class AppDbContext : DbContext
 
             entity.ToTable("customer");
 
+            entity.HasIndex(e => e.Userid, "customer_userid_key").IsUnique();
+
             entity.Property(e => e.Customerid)
                 .UseIdentityAlwaysColumn()
                 .HasColumnName("customerid");
@@ -624,8 +626,8 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Customertype).HasColumnName("customertype");
             entity.Property(e => e.Userid).HasColumnName("userid");
 
-            entity.HasOne(d => d.User).WithMany(p => p.Customers)
-                .HasForeignKey(d => d.Userid)
+            entity.HasOne(d => d.User).WithOne(p => p.Customer)
+                .HasForeignKey<Customer>(d => d.Userid)
                 .HasConstraintName("fk_customer_user");
         });
 
@@ -1970,6 +1972,8 @@ public partial class AppDbContext : DbContext
 
             entity.ToTable("staff");
 
+            entity.HasIndex(e => e.Userid, "staff_userid_key").IsUnique();
+
             entity.Property(e => e.Staffid)
                 .UseIdentityAlwaysColumn()
                 .HasColumnName("staffid");
@@ -1978,8 +1982,8 @@ public partial class AppDbContext : DbContext
                 .HasColumnName("department");
             entity.Property(e => e.Userid).HasColumnName("userid");
 
-            entity.HasOne(d => d.User).WithMany(p => p.Staff)
-                .HasForeignKey(d => d.Userid)
+            entity.HasOne(d => d.User).WithOne(p => p.Staff)
+                .HasForeignKey<Staff>(d => d.Userid)
                 .HasConstraintName("fk_staff_user");
         });
 

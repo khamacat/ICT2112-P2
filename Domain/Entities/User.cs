@@ -17,7 +17,7 @@ public partial class User
 
     public string? Phonenumber { get; private set; }
 
-    public virtual ICollection<Customer> Customers { get; private set; } = new List<Customer>();
+    public virtual Customer? Customer { get; private set; }
 
     public virtual ICollection<Notificationpreference> Notificationpreferences { get; private set; } = new List<Notificationpreference>();
 
@@ -25,5 +25,5 @@ public partial class User
 
     public virtual ICollection<Session> Sessions { get; private set; } = new List<Session>();
 
-    public virtual ICollection<Staff> Staff { get; private set; } = new List<Staff>();
+    public virtual Staff? Staff { get; private set; }
 }
