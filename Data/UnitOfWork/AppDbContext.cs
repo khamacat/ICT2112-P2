@@ -177,14 +177,13 @@ public partial class AppDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=pro_rental;Username=postgres;Password=132135");
+        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=pro_rental;Username=devuser;Password=devpassword");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
             .HasPostgresEnum("access_event_type", new[] { "IN", "OUT" })
             .HasPostgresEnum("alert_status", new[] { "OPEN", "ACKNOWLEDGED", "RESOLVED" })
-            .HasPostgresEnum("analytics_type_enum", new[] { "DAILY", "SUPTREND", "PRODTREND" })
             .HasPostgresEnum("batch_status", new[] { "PENDING", "SHIPPEDOUT" })
             .HasPostgresEnum("carbon_stage_type", new[] { "DAMAGE_INSPECTION", "REPAIRING", "SERVICING", "CLEANING", "RETURN" })
             .HasPostgresEnum("cart_status_enum", new[] { "ACTIVE", "CHECKED_OUT", "EXPIRED" })
@@ -294,17 +293,22 @@ public partial class AppDbContext : DbContext
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("enddate");
             entity.Property(e => e.Loanamt).HasColumnName("loanamt");
-            entity.Property(e => e.Refprimaryid).HasColumnName("refprimaryid");
-            entity.Property(e => e.Refprimaryname)
+            entity.Property(e => e.Primaryitem)
                 .HasMaxLength(255)
-                .HasColumnName("refprimaryname");
-            entity.Property(e => e.Refvalue)
-                .HasPrecision(10, 2)
-                .HasColumnName("refvalue");
+                .HasColumnName("primaryitem");
+            entity.Property(e => e.Primarysupplier)
+                .HasMaxLength(255)
+                .HasColumnName("primarysupplier");
             entity.Property(e => e.Returnamt).HasColumnName("returnamt");
             entity.Property(e => e.Startdate)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("startdate");
+            entity.Property(e => e.Supplierreliability)
+                .HasPrecision(10, 2)
+                .HasColumnName("supplierreliability");
+            entity.Property(e => e.Turnoverrate)
+                .HasPrecision(10, 2)
+                .HasColumnName("turnoverrate");
 
             entity.HasMany(d => d.Transactionlogs).WithMany(p => p.Analytics)
                 .UsingEntity<Dictionary<string, object>>(

@@ -15,11 +15,13 @@ public partial class Analytic
 
     public int? Returnamt { get; private set; }
 
-    public int? Refprimaryid { get; private set; }
+    public string? Primarysupplier { get; private set; }
 
-    public string? Refprimaryname { get; private set; }
+    public string? Primaryitem { get; private set; }
 
-    public decimal? Refvalue { get; private set; }
+    public decimal? Supplierreliability { get; private set; }
+
+    public decimal? Turnoverrate { get; private set; }
 
     public virtual ICollection<Reportexport> Reportexports { get; private set; } = new List<Reportexport>();
 
