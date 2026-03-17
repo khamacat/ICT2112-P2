@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using ProRental.Domain.Enums;
 
 namespace ProRental.Domain.Entities;
 
@@ -11,8 +10,6 @@ public partial class Returnitem
     public int Returnrequestid { get; private set; }
 
     public int Inventoryitemid { get; private set; }
-
-    public ReturnItemStatus Status { get; private set; }
 
     public DateTime? Completiondate { get; private set; }
 

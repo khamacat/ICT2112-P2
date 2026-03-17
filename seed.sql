@@ -539,3 +539,83 @@ VALUES
 ('Equipment Transport Carton', 'Paper', TRUE, FALSE),
 ('Reusable Camera Transport Box', 'Plastic', TRUE, TRUE),
 ('Shock Absorbing Packing Foam', 'Foam', FALSE, FALSE);
+
+-- Team 2-2 Seed Data
+-- PURCHASE ORDERS & STOCK
+INSERT INTO PurchaseOrder (supplierID, poDate, status, expectedDeliveryDate, totalAmount) VALUES
+(1, '2026-03-01', 'COMPLETED', '2026-03-05', 5500.00),
+(2, '2026-03-10', 'CONFIRMED', '2026-03-25', 1200.00),
+(3, '2026-03-15', 'SUBMITTED', '2026-03-30', 450.00);
+
+INSERT INTO StockItem (productID, sku, name, uom) VALUES
+(1, 'CAM-CANON-R5', 'Canon EOS R5 Body', 'Unit'),
+(2, 'LEN-SONY-2470GM', 'Sony 24-70mm f/2.8 GM II', 'Unit'),
+(3, 'ACC-DJI-RS3', 'DJI RS 3 Pro Gimbal', 'Unit'),
+(4, 'LGT-APUTURE-300D', 'Aputure LS 300d II Light', 'Unit');
+
+-- poID 1, 2, 3
+INSERT INTO POLineItem (poID, productID, qty, unitPrice, lineTotal) VALUES
+(1, 101, 2, 2500.00, 5000.00),
+(1, 103, 1, 500.00, 500.00),
+(2, 102, 1, 1200.00, 1200.00),
+(3, 104, 1, 450.00, 450.00);
+
+-- SUPPLIERS & VETTING
+INSERT INTO Supplier (SupplierID, Name, Details, CreditPeriod, AvgTurnaroundTime, SupplierCategory, IsVerified, VettingResult) VALUES
+(1, 'ShutterSpeed Wholesale', 'Main body and lens distributor', 30, 3.5, 'QUICKTURNAROUNDTIME', TRUE, 'APPROVED'),
+(2, 'Vintage Glass Co.', 'Specialist in rare and analog lenses', 60, 14.2, 'LONGCREDITPERIOD', TRUE, 'APPROVED'),
+(3, 'Nano-Tech Sensors', 'Startup for high-speed sensor repair parts', 15, 20.0, 'NEWUNTESTED', FALSE, 'PENDING');
+
+INSERT INTO ReliabilityRating (SupplierID, Score, Rationale, RatingBand, CalculatedByUserID, CalculatedAt) VALUES
+(1, 95.00, 'Excellent delivery speed.', 'HIGH', 1, '2026-01-15 10:00:00'),
+(2, 75.00, 'Reliable but long lead times.', 'MEDIUM', 1, '2026-01-16 11:30:00');
+
+INSERT INTO VettingRecord (RatingID, SupplierID, VettedByUserID, VettedAt, Decision, Notes) VALUES
+(1, 1, 10, '2026-01-20 09:00:00', 'APPROVED', 'Highly recommended for bulk orders.'),
+(2, 2, 10, '2026-01-21 14:00:00', 'APPROVED', 'Approved for niche vintage requests only.');
+
+-- REPLENISHMENT
+INSERT INTO ReplenishmentRequest (RequestedBy, Status, CreatedAt, Remarks, CompletedAt, CompletedBy) VALUES
+('Warehouse_Steve', 'COMPLETED', '2026-02-01 08:00:00', 'Low stock on flagship bodies', '2026-02-05 17:00:00', 'Procurement_Jane'),
+('Store_Manager_Ali', 'SUBMITTED', '2026-03-16 12:00:00', 'Restocking for summer wedding peak', NULL, NULL);
+
+INSERT INTO LineItem (RequestId, ProductId, QuantityRequest, ReasonCode, Remarks) VALUES
+(1, 1, 5, 'LOWSTOCK', 'Immediate need'),
+(2, 2, 3, 'DEMANDSPIKE', 'Rental bookings increased');
+
+-- TRANSACTION LOGGING SYSTEM
+-- We must insert into TransactionLog first to get IDs for the child log tables
+INSERT INTO TransactionLog (LogType, CreatedAt) VALUES
+('PURCHASE_ORDER', '2026-03-01 09:00:00'), -- ID 1
+('RENTAL_ORDER',   '2026-03-05 10:00:00'), -- ID 2
+('LOAN',           '2026-03-05 11:00:00'), -- ID 3
+('RETURN',         '2026-03-10 16:00:00'), -- ID 4
+('CLEARANCE',      '2026-03-14 09:00:00'); -- ID 5
+
+-- Link Transaction Log entries to specific details
+INSERT INTO PurchaseOrderLog (PurchaseOrderLogId, PoID, PoDate, SupplierId, Status, ExpectedDeliveryDate, TotalAmount, DetailsJSON) VALUES
+(1, 1, '2026-03-01', 1, 'COMPLETED', '2026-03-05', 5500.00, '{"note": "Initial spring stock"}');
+
+-- Note: RentalOrderLog needs an OrderId. I am using dummy ID '501'
+INSERT INTO RentalOrderLog (RentalOrderLogId, OrderId, CustomerId, OrderDate, TotalAmount, DeliveryType, Status, DetailsJSON) VALUES
+(2, 501, 99, '2026-03-05', 300.00, 'EXPRESS', 'CONFIRMED', '{"items": ["Canon R5"]}');
+
+INSERT INTO LoanLog (LoanLogId, LoanListId, RentalOrderLogId, Status, LoanDate, ReturnDate, DueDate, DetailsJSON) VALUES
+(3, 701, 2, 'ONGOING', '2026-03-05', NULL, '2026-03-12', '{"assetTag": "PR-001"}');
+
+INSERT INTO ReturnLog (ReturnLogId, ReturnRequestId, RentalOrderLogId, CustomerId, Status, RequestDate, CompletionDate, ImageURL, DetailsJSON) VALUES
+(4, 801, 2, 'CUST-99', 'COMPLETED', '2026-03-10', '2026-03-11', 'img_ret_4.jpg', '{"condition": "Clean"}');
+
+INSERT INTO ClearanceLog (ClearanceLogId, ClearanceBatchId, BatchName, ClearanceDate, Status, DetailsJSON) VALUES
+(5, 901, 'Quarterly Cleanup', '2026-03-14', 'COMPLETED', '{"discardedCount": 5}');
+
+-- ANALYTICS
+INSERT INTO Analytics (AnalyticsType, StartDate, EndDate, LoanAmt, ReturnAmt, RefPrimaryID, RefPrimaryName, RefValue) VALUES
+('DAILY', '2026-03-01', '2026-03-01', 1, 1, 1, '01032026 Logs', 0.00);
+
+INSERT INTO ReportExport (RefAnalyticsID, Title, VisualType, FileFormat, URL) VALUES
+(1, 'March 1 Daily Log', 'BAR', 'PDF', 'https://cdn.prorental.com/reports/mar2026.pdf');
+
+INSERT INTO AnalyticsList (AnalyticsID, TransactionLogID) VALUES
+(1, 3),
+(1, 4);

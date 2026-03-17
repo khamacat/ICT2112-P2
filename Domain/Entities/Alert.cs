@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using ProRental.Domain.Enums;
 
 namespace ProRental.Domain.Entities;
 
@@ -15,8 +14,6 @@ public partial class Alert
     public int Currentstock { get; private set; }
 
     public string Message { get; private set; } = null!;
-
-    public AlertStatus Status { get; private set; }
 
     public DateTime Createdat { get; private set; }
 

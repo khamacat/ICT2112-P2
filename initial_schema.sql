@@ -59,6 +59,7 @@ CREATE TYPE purchase_order_status_enum AS ENUM ('PENDING', 'APPROVED', 'REJECTED
 CREATE TYPE clearance_status_enum AS ENUM ('ONGOING', 'COMPLETED', 'CANCELLED');
 
 -- Analytics
+CREATE TYPE analytics_type_enum AS ENUM ('DAILY', 'SUPTREND', 'PRODTREND');
 CREATE TYPE visual_type_enum AS ENUM ('TABLE', 'BAR', 'COLUMN', 'LINE', 'PIE', 'AREA');
 CREATE TYPE file_format_enum AS ENUM ('CSV', 'XLSX', 'PDF', 'PNG');
 
@@ -459,14 +460,14 @@ CREATE TABLE IF NOT EXISTS PurchaseOrderLog (
 -- ANALYTICS TABLES --
 CREATE TABLE IF NOT EXISTS Analytics (
     AnalyticsID         INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    AnalyticsType       analytics_type_enum,
     StartDate           TIMESTAMP,
     EndDate             TIMESTAMP,
     LoanAmt             INT,
     ReturnAmt           INT,
-    PrimarySupplier     VARCHAR(255),
-    PrimaryItem         VARCHAR(255),
-    SupplierReliability DECIMAL(10,2),
-    TurnoverRate        DECIMAL(10,2)
+    RefPrimaryID        INT,
+    RefPrimaryName      VARCHAR(255),
+    RefValue            DECIMAL(10,2)
 );
 
 CREATE TABLE IF NOT EXISTS ReportExport (
