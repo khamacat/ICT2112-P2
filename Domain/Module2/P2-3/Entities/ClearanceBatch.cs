@@ -4,5 +4,7 @@ namespace ProRental.Domain.Entities;
 
 public partial class Clearancebatch
 {
-	public ClearanceBatchStatus Status { get; private set; }
+    private ClearanceBatchStatus _status;
+    private ClearanceBatchStatus Status { get => _status; set => _status = value; }
+    public void UpdateStatus(ClearanceBatchStatus newValue) => _status = newValue;
 }

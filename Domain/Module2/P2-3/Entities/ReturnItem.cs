@@ -4,5 +4,7 @@ namespace ProRental.Domain.Entities;
 
 public partial class Returnitem
 {
-	public ReturnItemStatus Status { get; private set; }
+    private ReturnItemStatus _status;
+    private ReturnItemStatus Status { get => _status; set => _status = value; }
+    public void UpdateStatus(ReturnItemStatus newValue) => _status = newValue;
 }

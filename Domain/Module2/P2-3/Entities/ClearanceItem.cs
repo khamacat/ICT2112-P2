@@ -4,5 +4,7 @@ namespace ProRental.Domain.Entities;
 
 public partial class Clearanceitem
 {
-	public ClearanceStatus Status { get; private set; }
+    private ClearanceStatus _status;
+    private ClearanceStatus Status { get => _status; set => _status = value; }
+    public void UpdateStatus(ClearanceStatus newValue) => _status = newValue;
 }

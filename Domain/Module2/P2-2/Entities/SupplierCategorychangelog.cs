@@ -1,6 +1,8 @@
 namespace ProRental.Domain.Entities;
 using ProRental.Domain.Enums;
-public partial class SupplierCategoryChangelog
+public partial class Suppliercategorychangelog
 {
-	public SupplierCategory category { get; private set; }
+    private SupplierCategory _category;
+    private SupplierCategory category { get => _category; set => _category = value; }
+    public void UpdateCategory(SupplierCategory newValue) => _category = newValue;
 }

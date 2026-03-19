@@ -4,5 +4,7 @@ namespace ProRental.Domain.Entities;
 
 public partial class CustomerChoice
 {
-    public PreferenceType? PreferenceType { get; set; }
+    private PreferenceType? _preferenceType;
+    private PreferenceType? PreferenceType { get => _preferenceType; set => _preferenceType = value; }
+    public void UpdatePreferenceType(PreferenceType newValue) => _preferenceType = newValue;
 }

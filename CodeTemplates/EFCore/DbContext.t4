@@ -174,7 +174,8 @@ public partial class <#= Options.ContextName #> : DbContext
                 usings.AddRange(indexFluentApiCalls.GetRequiredUsings());
             }
 #>
-            entity.HasIndex(<#= code.Arguments(index.Properties.Select(e => e.Name)) #>, <#= code.Literal(index.GetDatabaseName()) #>)<#= code.Fragment(indexFluentApiCalls, indent: 4) #>;
+            // entity.HasIndex(<#= code.Arguments(index.Properties.Select(e => e.Name)) #>, <#= code.Literal(index.GetDatabaseName()) #>)<#= code.Fragment(indexFluentApiCalls, indent: 4) #>;
+            entity.HasIndex(<#= code.Arguments(index.Properties.Select(e => e.Name)) #>).HasDatabaseName(<#= code.Literal(index.GetDatabaseName()) #>)<#= code.Fragment(indexFluentApiCalls, indent: 4) #>;
 <#
             anyEntityTypeConfiguration = true;
         }

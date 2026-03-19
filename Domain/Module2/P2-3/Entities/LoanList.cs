@@ -4,5 +4,7 @@ namespace ProRental.Domain.Entities;
 
 public partial class Loanlist
 {
-	public LoanStatus Status { get; private set; }
+    private LoanStatus _status;
+    private LoanStatus Status { get => _status; set => _status = value; }
+    public void UpdateStatus(LoanStatus newValue) => _status = newValue;
 }

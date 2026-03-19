@@ -1,6 +1,8 @@
 namespace ProRental.Domain.Entities;
 using ProRental.Domain.Enums;
-public partial class LineItem
+public partial class Lineitem
 {
-	public ReplenishmentReason reason { get; private set; }
+    private ReplenishmentReason _reason;
+    private ReplenishmentReason reason { get => _reason; set => _reason = value; }
+    public void UpdateReason(ReplenishmentReason newValue) => _reason = newValue;
 }

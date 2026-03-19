@@ -4,5 +4,7 @@ namespace ProRental.Domain.Entities;
 
 public partial class Notification
 {
-    public NotificationType? NotificationType { get; set; }
+    private NotificationType? _notificationType;
+    private NotificationType? NotificationType { get => _notificationType; set => _notificationType = value; }
+    public void UpdateNotificationType(NotificationType newValue) => _notificationType = newValue;
 }
