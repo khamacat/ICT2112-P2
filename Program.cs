@@ -6,12 +6,12 @@ using ProRental.Domain.Enums;
 using ProRental.Domain.Entities;
 
 // uncomment when ready to code
-// using ProRental.Data;
+using ProRental.Data;
 // using ProRental.Domain.Controls;
 // using ProRental.Domain.Entities;
 // using ProRental.Interfaces.Domain;
-// using ProRental.Interfaces.Data;
-// using ProRental.Controllers;
+using ProRental.Interfaces.Data;
+using ProRental.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -143,6 +143,17 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 //Team P2-3
 // Data source
+builder.Services.AddScoped<IProductMapper, ProductMapper>();
+builder.Services.AddScoped<IAlertMapper, AlertMapper>();
+builder.Services.AddScoped<IInventoryItemMapper, InventoryItemMapper>();
+builder.Services.AddScoped<ICategoryMapper, CategoryMapper>();
+builder.Services.AddScoped<IReturnItemMapper, ReturnItemMapper>();
+builder.Services.AddScoped<IReturnRequestMapper, ReturnRequestMapper>();
+builder.Services.AddScoped<IDamageReportMapper, DamageReportMapper>();
+builder.Services.AddScoped<IClearanceItemMapper, ClearanceItemMapper>();
+builder.Services.AddScoped<IClearanceBatchMapper, ClearanceBatchMapper>();
+builder.Services.AddScoped<ILoanItemMapper, LoanItemMapper>();
+builder.Services.AddScoped<ILoanListMapper, LoanListMapper>();
 
 // Domain
 
