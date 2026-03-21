@@ -46,7 +46,8 @@ public class ClearanceController : Controller
     {
         var batch = new Clearancebatch();
         batch.SetBatchName(batchName);
-        batch.SetClearanceDate(clearanceDate);
+        // Npgsql requires DateTimes to be strictly UTC when saving to TIMESTAMPTZ columns
+        batch.SetClearanceDate(DateTime.SpecifyKind(clearanceDate, DateTimeKind.Utc));
 
         bool success = _batchControl.CreateClearanceBatch(batch);
         if (!success)
