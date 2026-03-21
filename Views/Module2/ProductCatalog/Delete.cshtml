@@ -1,0 +1,37 @@
+@model ProRental.Domain.Entities.Product
+
+@{
+    ViewData["Title"] = "Delete Product";
+    var detail = Model.GetProductdetail();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Delete Product</h2>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+</div>
+
+<div class="alert alert-warning">
+    Are you sure you want to delete this product?
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Product ID</dt>
+            <dd class="col-sm-9">@Model.GetProductId()</dd>
+
+            <dt class="col-sm-3">SKU</dt>
+            <dd class="col-sm-9">@Model.GetSku()</dd>
+
+            <dt class="col-sm-3">Name</dt>
+            <dd class="col-sm-9">@(detail?.GetName() ?? "-")</dd>
+        </dl>
+    </div>
+</div>
+
+<form asp-action="Delete" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" value="@Model.GetProductId()" />
+    <button type="submit" class="btn btn-danger">Delete</button>
+    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+</form>

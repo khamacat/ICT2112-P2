@@ -171,6 +171,11 @@ builder.Services.AddScoped<iStockSubject>(sp =>
     sp.GetRequiredService<InventoryManagementControl>());
 builder.Services.AddScoped<iAlertControl, LowStockAlertControl>();
 
+builder.Services.AddScoped<ProductCatalogControl>();
+builder.Services.AddScoped<IProductCRUD>(sp => sp.GetRequiredService<ProductCatalogControl>());
+builder.Services.AddScoped<IProductQuery>(sp => sp.GetRequiredService<ProductCatalogControl>());
+builder.Services.AddScoped<IProductBulkCommand>(sp => sp.GetRequiredService<ProductCatalogControl>());
+
 // Presentation/Controllers
 
 

@@ -71,11 +71,50 @@ public class ProductMapper : IProductMapper
 
     public void Update(Product product)
     {
-        // Automatically enforce the TIMESTAMPTZ standard for updates
-        // We use Entry() to update the private Updatedat property safely
-        _context.Entry(product).Property("Updatedat").CurrentValue = DateTime.UtcNow;
+        // Automatically enforce the TIMESTAMPTZ standard for updates.
+        // IMPORTANT: do NOT call _context.Products.Update(product) here.
+        // That causes EF Core to track a second Product instance with the same key
+        // when the existing entity was already loaded earlier in the request.
 
-        _context.Products.Update(product);
+        var existing = _context.Products
+            .Include(p => p.Productdetail)
+            .FirstOrDefault(p => EF.Property<int>(p, "Productid") == product.GetProductId());
+
+        if (existing == null)
+            return;
+
+        // Update root Product values through the partial-class setters
+        existing.SetCategoryId(product.GetCategoryId());
+        existing.SetSku(product.GetSku());
+        existing.SetStatus(product.GetStatus());
+        existing.SetThreshold(product.GetThreshold());
+
+        // Update the composite Productdetail if present
+        var incomingDetail = product.GetProductdetail();
+        var existingDetail = existing.GetProductdetail();
+
+        if (incomingDetail != null)
+        {
+            if (existingDetail == null)
+            {
+                incomingDetail.SetProductId(existing.GetProductId());
+                existing.SetProductdetail(incomingDetail);
+            }
+            else
+            {
+                existingDetail.SetName(incomingDetail.GetName());
+                existingDetail.SetDescription(incomingDetail.GetDescription());
+                existingDetail.SetTotalQuantity(incomingDetail.GetTotalQuantity());
+                existingDetail.SetWeight(incomingDetail.GetWeight());
+                existingDetail.SetImage(incomingDetail.GetImage());
+                existingDetail.SetPrice(incomingDetail.GetPrice());
+                existingDetail.SetDepositRate(incomingDetail.GetDepositRate());
+            }
+        }
+
+        // We use Entry() to update the private Updatedat property safely
+        _context.Entry(existing).Property("Updatedat").CurrentValue = DateTime.UtcNow;
+
         _context.SaveChanges();
     }
 

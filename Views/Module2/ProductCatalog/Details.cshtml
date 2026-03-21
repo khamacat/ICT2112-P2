@@ -1,0 +1,61 @@
+@model ProRental.Domain.Entities.Product
+
+@{
+    ViewData["Title"] = "Product Details";
+
+    var detail = Model.GetProductdetail();
+    var category = Model.GetCategoryEntity();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Product Details</h2>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.GetProductId()" class="btn btn-warning">Edit</a>
+        <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Product ID</dt>
+            <dd class="col-sm-9">@Model.GetProductId()</dd>
+
+            <dt class="col-sm-3">Category</dt>
+            <dd class="col-sm-9">@Model.GetCategoryId()</dd>
+
+            <dt class="col-sm-3">SKU</dt>
+            <dd class="col-sm-9">@Model.GetSku()</dd>
+
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">@Model.GetStatus()</dd>
+
+            <dt class="col-sm-3">Threshold</dt>
+            <dd class="col-sm-9">@Model.GetThreshold()</dd>
+
+            <dt class="col-sm-3">Name</dt>
+            <dd class="col-sm-9">@(detail?.GetName() ?? "-")</dd>
+
+            <dt class="col-sm-3">Description</dt>
+            <dd class="col-sm-9">@(detail?.GetDescription() ?? "-")</dd>
+
+            <dt class="col-sm-3">Total Quantity</dt>
+            <dd class="col-sm-9">@(detail?.GetTotalQuantity() ?? 0)</dd>
+
+            <dt class="col-sm-3">Weight</dt>
+            <dd class="col-sm-9">@(detail?.GetWeight()?.ToString() ?? "-")</dd>
+
+            <dt class="col-sm-3">Price</dt>
+            <dd class="col-sm-9">@((detail?.GetPrice() ?? 0m).ToString("0.00"))</dd>
+
+            <dt class="col-sm-3">Deposit Rate</dt>
+            <dd class="col-sm-9">@(detail?.GetDepositRate()?.ToString() ?? "-")</dd>
+
+            <dt class="col-sm-3">Image</dt>
+            <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(detail?.GetImage()) ? "-" : detail!.GetImage())</dd>
+
+            <dt class="col-sm-3">Created At</dt>
+            <dd class="col-sm-9">@Model.GetCreatedAt()</dd>
+        </dl>
+    </div>
+</div>

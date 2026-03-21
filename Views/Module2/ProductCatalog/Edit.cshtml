@@ -1,0 +1,98 @@
+@model ProRental.Controllers.ProductFormViewModel
+@using ProRental.Domain.Enums
+
+@{
+    ViewData["Title"] = "Edit Product";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Edit Product</h2>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <form asp-action="Edit" method="post">
+            @Html.AntiForgeryToken()
+            <input asp-for="ProductId" type="hidden" />
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="CategoryId" class="form-label"></label>
+                    <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-select">
+                        <option value="">-- Select Category --</option>
+                    </select>
+                    <span asp-validation-for="CategoryId" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Sku" class="form-label"></label>
+                    <input asp-for="Sku" class="form-control" />
+                    <span asp-validation-for="Sku" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Status" class="form-label"></label>
+                    <select asp-for="Status" asp-items="Html.GetEnumSelectList<ProductStatus>()" class="form-select"></select>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Threshold" class="form-label"></label>
+                    <input asp-for="Threshold" class="form-control" type="number" step="0.01" min="0" max="1" />
+                    <span asp-validation-for="Threshold" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Name" class="form-label"></label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Price" class="form-label"></label>
+                    <input asp-for="Price" class="form-control" type="number" step="0.01" min="0" />
+                    <span asp-validation-for="Price" class="text-danger"></span>
+                </div>
+
+                <div class="col-12">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="TotalQuantity" class="form-label"></label>
+                    <input asp-for="TotalQuantity" class="form-control" type="number" min="0" />
+                    <span asp-validation-for="TotalQuantity" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="Weight" class="form-label"></label>
+                    <input asp-for="Weight" class="form-control" type="number" step="0.01" min="0" />
+                    <span asp-validation-for="Weight" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="DepositRate" class="form-label"></label>
+                    <input asp-for="DepositRate" class="form-control" type="number" step="0.01" min="0" max="1" />
+                    <span asp-validation-for="DepositRate" class="text-danger"></span>
+                </div>
+
+                <div class="col-12">
+                    <label asp-for="Image" class="form-label"></label>
+                    <input asp-for="Image" class="form-control" />
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn btn-warning">Save Changes</button>
+                <a asp-action="Details" asp-route-id="@Model.ProductId" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}
