@@ -1,0 +1,15 @@
+using ProRental.Domain.Enums;
+using ProRental.Domain.Entities;
+
+namespace ProRental.Interfaces.Module2.P2_3;
+
+public interface iAlertControl
+{
+    bool CreateAlert(Alert alert);
+    List<Alert> GetAlertsByStaff(int staffId);
+    List<Alert> GetAlertsByProduct(int productId);
+    bool SendAlertToStaff(int alertId, int staffId);
+    bool UpdateAlertStatus(int alertId, AlertStatus status);
+    bool ResolveAlert(int productId);
+    bool CheckLowStock(int productId, int threshold);
+}
