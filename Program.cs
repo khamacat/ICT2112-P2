@@ -12,6 +12,8 @@ using ProRental.Data;
 // using ProRental.Interfaces.Domain;
 using ProRental.Interfaces.Data;
 using ProRental.Controllers;
+using ProRental.Interfaces.Module2.P2_3;
+using ProRental.Domain.Module2.P2_3.Controls;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -155,7 +157,12 @@ builder.Services.AddScoped<IClearanceBatchMapper, ClearanceBatchMapper>();
 builder.Services.AddScoped<ILoanItemMapper, LoanItemMapper>();
 builder.Services.AddScoped<ILoanListMapper, LoanListMapper>();
 
-// Domain
+// Domain - Control Classes
+builder.Services.AddScoped<iInventoryCRUDControl, InventoryManagementControl>();
+builder.Services.AddScoped<iInventoryStatusControl, InventoryManagementControl>();
+builder.Services.AddScoped<iInventoryQueryControl, InventoryManagementControl>();
+builder.Services.AddScoped<iStockSubject, InventoryManagementControl>();
+builder.Services.AddScoped<iAlertControl, LowStockAlertControl>();
 
 // Presentation/Controllers
 

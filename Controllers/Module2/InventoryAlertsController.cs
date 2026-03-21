@@ -1,120 +1,100 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ProRental.Data.UnitOfWork;
 using ProRental.Domain.Entities;
 using ProRental.Domain.Enums;
+using ProRental.Interfaces.Module2.P2_3;
 
 namespace ProRental.Controllers.Module2;
 
 [Route("module2/[controller]")]
 public class InventoryAlertsController : Controller
 {
-    private readonly AppDbContext _dbContext;
+    private readonly iAlertControl _alertControl;
 
-    public InventoryAlertsController(AppDbContext dbContext)
+    public InventoryAlertsController(iAlertControl alertControl)
     {
-        _dbContext = dbContext;
+        _alertControl = alertControl;
     }
 
     [HttpGet("DisplayAllThresholds")]
-    public async Task<IActionResult> DisplayAllThresholds()
+    public IActionResult DisplayAllThresholds()
     {
-        var alerts = await _dbContext.Alerts
-            .AsNoTracking()
-            .OrderBy(a => EF.Property<int>(a, "Productid"))
-            .ThenBy(a => EF.Property<int>(a, "Alertid"))
-            .ToListAsync();
-
+        var alerts = _alertControl.GetAllAlerts();
         ViewData["Filter"] = "All Thresholds";
         return View("~/Views/Module2/Alerts.cshtml", alerts);
     }
 
     [HttpGet("DisplayThreshold/{threshold:int}")]
-    public async Task<IActionResult> DisplayThreshold(int threshold)
+    public IActionResult DisplayThreshold(int threshold)
     {
-        var alerts = await _dbContext.Alerts
-            .AsNoTracking()
-            .Where(a => EF.Property<int>(a, "Minthreshold") == threshold)
-            .OrderBy(a => EF.Property<int>(a, "Alertid"))
-            .ToListAsync();
-
+        var alerts = _alertControl.GetAlertsByThreshold(threshold);
         ViewData["Filter"] = $"Threshold = {threshold}";
         return View("~/Views/Module2/Alerts.cshtml", alerts);
     }
 
     [HttpPost("EditThreshold/{alertId:int}")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> EditThreshold(int alertId, int threshold)
+    public IActionResult EditThreshold(int alertId, int threshold)
     {
-        var alert = await _dbContext.Alerts.FirstOrDefaultAsync(a => EF.Property<int>(a, "Alertid") == alertId);
-        if (alert is null)
+        if (_alertControl.UpdateAlertThreshold(alertId, threshold))
         {
-            return NotFound();
+            TempData["Message"] = $"Threshold updated for alert #{alertId}.";
         }
-
-        alert.SetMinThreshold(threshold);
-        await _dbContext.SaveChangesAsync();
-
-        TempData["Message"] = $"Threshold updated for alert #{alertId}.";
+        else
+        {
+            TempData["Message"] = "Alert not found or could not be updated.";
+        }
         return RedirectToAction(nameof(DisplayAllAlerts));
     }
 
     [HttpGet("DisplayAllAlerts")]
-    public async Task<IActionResult> DisplayAllAlerts()
+    public IActionResult DisplayAllAlerts()
     {
-        var alerts = await _dbContext.Alerts
-            .AsNoTracking()
-            .OrderByDescending(a => EF.Property<DateTime>(a, "Createdat"))
-            .ToListAsync();
-
+        var alerts = _alertControl.GetAllAlerts();
         ViewData["Filter"] = "All Alerts";
         return View("~/Views/Module2/Alerts.cshtml", alerts);
     }
 
     [HttpGet("DisplayAlert/{alertId:int}")]
-    public async Task<IActionResult> DisplayAlert(int alertId)
+    public IActionResult DisplayAlert(int alertId)
     {
-        var alerts = await _dbContext.Alerts
-            .AsNoTracking()
-            .Where(a => EF.Property<int>(a, "Alertid") == alertId)
-            .ToListAsync();
+        var alert = _alertControl.GetAlertById(alertId);
+        if (alert is null)
+        {
+            return NotFound();
+        }
 
+        var alerts = new List<Alert> { alert };
         ViewData["Filter"] = $"Alert #{alertId}";
         return View("~/Views/Module2/Alerts.cshtml", alerts);
     }
 
     [HttpPost("AcknowledgeAlert/{alertId:int}")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AcknowledgeAlert(int alertId)
+    public IActionResult AcknowledgeAlert(int alertId)
     {
-        var alert = await _dbContext.Alerts.FirstOrDefaultAsync(a => EF.Property<int>(a, "Alertid") == alertId);
-        if (alert is null)
+        if (_alertControl.UpdateAlertStatus(alertId, AlertStatus.ACKNOWLEDGED))
         {
-            return NotFound();
+            TempData["Message"] = $"Alert #{alertId} acknowledged.";
         }
-
-        alert.SetAlertStatus(AlertStatus.ACKNOWLEDGED);
-        await _dbContext.SaveChangesAsync();
-
-        TempData["Message"] = $"Alert #{alertId} acknowledged.";
+        else
+        {
+            TempData["Message"] = "Alert not found or could not be updated.";
+        }
         return RedirectToAction(nameof(DisplayAllAlerts));
     }
 
     [HttpPost("ResolveAlert/{alertId:int}")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ResolveAlert(int alertId)
+    public IActionResult ResolveAlert(int alertId)
     {
-        var alert = await _dbContext.Alerts.FirstOrDefaultAsync(a => EF.Property<int>(a, "Alertid") == alertId);
-        if (alert is null)
+        if (_alertControl.ResolveAlert(alertId))
         {
-            return NotFound();
+            TempData["Message"] = $"Alert #{alertId} resolved.";
         }
-
-        alert.SetAlertStatus(AlertStatus.RESOLVED);
-        alert.SetResolvedAt(DateTime.UtcNow);
-        await _dbContext.SaveChangesAsync();
-
-        TempData["Message"] = $"Alert #{alertId} resolved.";
+        else
+        {
+            TempData["Message"] = "Alert not found or could not be resolved.";
+        }
         return RedirectToAction(nameof(DisplayAllAlerts));
     }
 }

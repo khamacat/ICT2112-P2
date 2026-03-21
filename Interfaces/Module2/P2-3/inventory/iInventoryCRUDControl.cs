@@ -1,11 +1,12 @@
 using ProRental.Domain.Entities;
+using ProRental.Domain.Enums;
 
 namespace ProRental.Interfaces.Module2.P2_3;
 
 public interface iInventoryCRUDControl
 {
-    bool CreateInventoryItem(Inventoryitem inventoryItem);
+    bool CreateInventoryItem(int productId, string serialNumber, InventoryStatus status, DateTime? expiryDate);
     Inventoryitem? GetInventoryItemById(int inventoryItemId);
-    bool UpdateInventoryItem(Inventoryitem inventoryItem);
+    bool UpdateInventoryItem(int inventoryItemId, int productId, string serialNumber, InventoryStatus status, DateTime? expiryDate);
     bool DeleteInventoryItem(int inventoryItemId);
 }

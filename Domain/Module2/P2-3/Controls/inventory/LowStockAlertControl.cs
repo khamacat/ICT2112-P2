@@ -16,12 +16,19 @@ public class LowStockAlertControl : iAlertControl, iStockObserver
         _inventoryQueryControl = inventoryQueryControl ?? throw new ArgumentNullException(nameof(inventoryQueryControl));
     }
 
-    public bool CreateAlert(Alert alert)
+    public bool CreateAlert(int productId, int minThreshold, int staffId = 0)
     {
-        if (alert is null || alert.GetProductId() <= 0)
+        if (productId <= 0 || minThreshold < 0)
         {
             return false;
         }
+
+        var alert = new Alert();
+        alert.SetProductId(productId);
+        alert.SetStaffId(staffId);
+        alert.SetMinThreshold(minThreshold);
+        alert.SetAlertStatus(AlertStatus.OPEN);
+        alert.SetCreatedAt(DateTime.UtcNow);
 
         try
         {
@@ -89,19 +96,78 @@ public class LowStockAlertControl : iAlertControl, iStockObserver
         }
     }
 
-    public bool ResolveAlert(int productId)
+    public List<Alert> GetAllAlerts()
     {
-        var alerts = _alertMapper.FindByProductId(productId) ?? new List<Alert>();
-        var openAlerts = alerts.Where(a => a.GetAlertStatus() != AlertStatus.RESOLVED).ToList();
+        return _alertMapper.FindAll()?.ToList() ?? new List<Alert>();
+    }
 
-        foreach (var alert in openAlerts)
+    public Alert? GetAlertById(int alertId)
+    {
+        return _alertMapper.FindById(alertId);
+    }
+
+    public List<Alert> GetAlertsByThreshold(int threshold)
+    {
+        var allAlerts = _alertMapper.FindAll();
+        if (allAlerts is null)
         {
-            alert.SetAlertStatus(AlertStatus.RESOLVED);
-            alert.SetResolvedAt(DateTime.UtcNow);
-            _alertMapper.Update(alert);
+            return new List<Alert>();
         }
 
-        return true;
+        return allAlerts.Where(a => a.GetMinThreshold() == threshold).ToList();
+    }
+
+    public bool UpdateAlertThreshold(int alertId, int newThreshold)
+    {
+        if (alertId <= 0 || newThreshold < 0)
+        {
+            return false;
+        }
+
+        var alert = _alertMapper.FindById(alertId);
+        if (alert is null)
+        {
+            return false;
+        }
+
+        alert.SetMinThreshold(newThreshold);
+
+        try
+        {
+            _alertMapper.Update(alert);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public bool ResolveAlert(int alertId)
+    {
+        if (alertId <= 0)
+        {
+            return false;
+        }
+
+        var alert = _alertMapper.FindById(alertId);
+        if (alert is null)
+        {
+            return false;
+        }
+
+        alert.SetAlertStatus(AlertStatus.RESOLVED);
+        alert.SetResolvedAt(DateTime.UtcNow);
+
+        try
+        {
+            _alertMapper.Update(alert);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public bool CheckLowStock(int productId, int threshold)
@@ -117,16 +183,8 @@ public class LowStockAlertControl : iAlertControl, iStockObserver
             return false;
         }
 
-        var alert = new Alert();
-
-        alert.SetProductId(productId);
-        alert.SetMinThreshold(threshold);
-        alert.SetCurrentStock(currentStock);
-        alert.SetAlertStatus(AlertStatus.OPEN);
-        alert.SetMessage($"Product {productId} is low in stock ({currentStock} <= {threshold}).");
-        alert.SetCreatedAt(DateTime.UtcNow);
-
-        return CreateAlert(alert);
+        // Create alert with no assigned staff (staffId defaults to 0)
+        return CreateAlert(productId, threshold);
     }
 
     public void Update(int productId)

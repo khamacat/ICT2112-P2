@@ -7,7 +7,18 @@
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">Staff Inventory Item</h2>
-        <a asp-controller="StaffInventory" asp-action="DisplayInventoryList" class="btn btn-outline-secondary btn-sm">Back to Inventory</a>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#updateInventoryModal">
+                <i class="bi bi-pencil"></i> Edit
+            </button>
+            <form asp-action="DeleteInventoryItem" asp-route-inventoryItemId="@Model.GetInventoryItemId()" method="post" style="display: inline;">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this item?');">
+                    <i class="bi bi-trash"></i> Delete
+                </button>
+            </form>
+            <a asp-controller="StaffInventory" asp-action="DisplayInventoryList" class="btn btn-outline-secondary btn-sm">Back to Inventory</a>
+        </div>
     </div>
 
     <div class="card shadow-sm">
@@ -37,3 +48,53 @@
         </div>
     </div>
 </div>
+
+<!-- Update Inventory Item Modal -->
+<div class="modal fade" id="updateInventoryModal" tabindex="-1" aria-labelledby="updateInventoryLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateInventoryLabel">Update Inventory Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-action="UpdateInventoryItemPost" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="inventoryItemId" value="@Model.GetInventoryItemId()">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="productId" class="form-label">Product ID <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="productId" name="productId" value="@Model.GetProductId()" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="serialNumber" class="form-label">Serial Number <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="serialNumber" name="serialNumber" value="@Model.GetSerialNumber()" required maxlength="255">
+                    </div>
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status" asp-items="Html.GetEnumSelectList<ProRental.Domain.Enums.InventoryStatus>()">
+                            <option value="">-- Select Status --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="expiryDate" class="form-label">Expiry Date</label>
+                        <input type="date" class="form-control" id="expiryDate" name="expiryDate" value="@(Model.GetExpiryDate()?.ToString("yyyy-MM-dd") ?? "")">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set current status in update form
+    const currentStatus = '@Model.GetStatus()?.ToString()';
+    if (currentStatus) {
+        document.getElementById('status').value = currentStatus;
+    }
+});
+</script>
