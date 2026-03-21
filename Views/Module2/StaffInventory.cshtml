@@ -1,0 +1,86 @@
+@model IReadOnlyList<ProRental.Domain.Entities.Inventoryitem>
+
+@{
+    ViewData["Title"] = "Staff Inventory";
+    var query = ViewData["Query"]?.ToString() ?? string.Empty;
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Staff Inventory</h2>
+        <a asp-controller="InventoryAlerts" asp-action="DisplayAllAlerts" class="btn btn-outline-secondary btn-sm">View Alerts</a>
+    </div>
+
+    @if (TempData["Message"] is string message)
+    {
+        <div class="alert alert-info">@message</div>
+    }
+
+    <form asp-action="HandleSearch" method="get" class="row g-2 mb-3">
+        <div class="col-md-6">
+            <input name="query" value="@query" class="form-control" placeholder="Search by inventory ID, product ID, or serial number" />
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Search</button>
+        </div>
+        <div class="col-auto">
+            <a asp-action="DisplayInventoryList" class="btn btn-outline-secondary">Reset</a>
+        </div>
+    </form>
+
+    <form asp-action="HandleBulkOperation" method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="row g-2 mb-3">
+            <div class="col-md-4">
+                <select name="status" class="form-select" asp-items="Html.GetEnumSelectList<ProRental.Domain.Enums.InventoryStatus>()"></select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-warning">Handle Bulk Operation</button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 36px;"></th>
+                        <th>Inventory ID</th>
+                        <th>Product ID</th>
+                        <th>Serial Number</th>
+                        <th>Status</th>
+                        <th>Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">No inventory items found.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <input type="checkbox" name="inventoryItemIds" value="@item.GetInventoryItemId()" />
+                                </td>
+                                <td>@item.GetInventoryItemId()</td>
+                                <td>@item.GetProductId()</td>
+                                <td>@item.GetSerialNumber()</td>
+                                <td>@item.GetStatus()</td>
+                                <td>@item.GetUpdatedDate().ToString("yyyy-MM-dd HH:mm")</td>
+                                <td>
+                                    <a asp-action="ShowProductDetails" asp-route-inventoryItemId="@item.GetInventoryItemId()" class="btn btn-sm btn-outline-primary">View Item</a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </form>
+</div>

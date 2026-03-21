@@ -41,11 +41,12 @@
 </head>
 <body>
 
-    <!-- ================================================================
+    @* ================================================================
          NAVBAR — Top navigation bar
          Add new <li class="nav-item"> entries here to extend the nav menu.
          See Bootstrap Navbar docs: https://getbootstrap.com/docs/5.3/components/navbar/
-         ================================================================ -->
+         ================================================================ 
+    *@
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
@@ -62,36 +63,41 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="StaffInventory" asp-action="DisplayInventoryList">Stock</a>
+                        </li>
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
 
-    <!-- ================================================================
+    @*
          MAIN CONTENT — Individual view output is injected here via @RenderBody().
          Do NOT add additional containers or wrappers inside view files.
-         ================================================================ -->
+    *@
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <!-- ================================================================
+    @* ================================================================
          FOOTER — Sticky footer (pinned to bottom via site.css .footer rules)
          ================================================================ -->
+    *@
     <footer class="border-top footer text-muted">
         <div class="container">
             &copy; @DateTime.Now.Year - ProRental
         </div>
     </footer>
 
-    <!-- ================================================================
+    @* <!-- ================================================================
          SCRIPTS — Load order matters; do not rearrange these.
          jQuery must come before Bootstrap JS.
          Add view-specific scripts via @@section Scripts { } in the view file.
          ================================================================ -->
+    *@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
