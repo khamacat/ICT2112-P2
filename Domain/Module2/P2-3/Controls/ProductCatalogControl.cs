@@ -230,4 +230,20 @@ public class ProductCatalogControl : IProductCRUD, IProductQuery, IProductBulkCo
 
         return true;
     }
+
+    public bool AddToProduct(int productId, int quantity)
+{
+    if (quantity <= 0) return false;
+
+    var product = _productMapper.FindById(productId);
+    if (product == null) return false;
+
+    var detail = product.GetProductdetail();
+    if (detail == null) return false;
+
+    detail.IncreaseTotalQuantity(quantity);
+    _productMapper.Update(product);
+
+    return true;
+}
 }

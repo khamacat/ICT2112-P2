@@ -12,6 +12,8 @@ public interface IProductCRUD
 	bool DeleteProduct(int productId);
 	bool ValidateProduct(Product product, Productdetail detail);
 	bool CheckProductConflicts(Product product);
+
+	bool AddToProduct(int productId, int quantity);
 }
 
 // ── Product Query ─────────────────────────────────────────────────────────────

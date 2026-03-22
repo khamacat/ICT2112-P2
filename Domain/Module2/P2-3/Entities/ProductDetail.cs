@@ -42,6 +42,12 @@ public partial class Productdetail
     public void UpdatePrice(decimal price) => SetPrice(price);
     public void UpdateDepositRate(decimal? depositRate) => SetDepositRate(depositRate);
 
+    public void IncreaseTotalQuantity(int quantity)
+{
+    if (quantity <= 0) return;
+    UpdateTotalQuantity(GetTotalQuantity() + quantity);
+}
+
     private void SetDetailsId(int detailsId) => _detailsid = detailsId;
     private void SetProductId(int productId) => _productid = productId;
     private void SetName(string name) => _name = name;
