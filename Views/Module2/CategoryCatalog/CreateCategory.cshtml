@@ -1,0 +1,15 @@
+@{
+    ViewData["Title"] = "Create Category";
+}
+
+<h1>Create New Category</h1>
+
+<form asp-action="HandleCategoryCRUD" method="post">
+    <div class="form-group">
+        <label>Category Name</label>
+        <input name="CategoryName" class="form-control" />
+    </div>
+    <br />
+    <button type="submit" class="btn btn-success">Save Category</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>

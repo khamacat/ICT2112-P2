@@ -32,7 +32,6 @@ public class CategoryMapper : ICategoryMapper
     public Category? FindById(int categoryId)
     {
         // RULE: Use EF.Property to access the private 'Categoryid'.
-        // RULE: Do NOT add .Include(c => c.Products). Respect aggregate boundaries.
         return _context.Categories
             .FirstOrDefault(c => EF.Property<int>(c, "Categoryid") == categoryId);
     }
@@ -45,18 +44,23 @@ public class CategoryMapper : ICategoryMapper
 
     public void Insert(Category category)
     {
+        // RULE: Use EF.Property for audit timestamps if they are private
         _context.Categories.Add(category);
         _context.SaveChanges();
     }
 
     public void Update(Category category)
     {
+        // RULE: Access private ID via EF.Property for the lookup
         var existing = _context.Categories
             .FirstOrDefault(c => EF.Property<int>(c, "Categoryid") == category.GetCategoryId());
 
         if (existing == null) return;
 
+        // RULE: Disconnected update using SetValues
         _context.Entry(existing).CurrentValues.SetValues(category);
+        
+        // RULE: Manually override the UTC timestamp for the shadow property
         _context.Entry(existing).Property("Updateddate").CurrentValue = DateTime.UtcNow;
 
         _context.SaveChanges();
@@ -64,6 +68,7 @@ public class CategoryMapper : ICategoryMapper
 
     public void Delete(Category category)
     {
+        // RULE: Find the tracked entity first before removing
         var existing = _context.Categories
             .FirstOrDefault(c => EF.Property<int>(c, "Categoryid") == category.GetCategoryId());
             
