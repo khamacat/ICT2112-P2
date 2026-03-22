@@ -1,0 +1,145 @@
+@{
+    ViewData["Title"] = "Add Items to Batch";
+    var batchId = ViewBag.BatchId;
+    var batchName = ViewBag.BatchName;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-plus-lg"></i> Add Items to: @batchName</h1>
+    <a asp-action="BatchDetails" asp-route-id="@batchId" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Back to Batch
+    </a>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card">
+    <div class="card-body">
+        <form asp-action="AddItems" method="post">
+            <input type="hidden" name="batchId" value="@batchId" />
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Enter Inventory Item IDs</label>
+                <p class="text-muted small">
+                    Enter the inventory item IDs you want to add to this clearance batch.
+                    Items must be in AVAILABLE status and inactive for 24+ months.
+                </p>
+            </div>
+
+            <div id="itemIdsContainer">
+                <div class="inventory-row mb-3">
+                    <div class="input-group mb-1">
+                        <span class="input-group-text"><i class="bi bi-hash"></i></span>
+                        <input type="number" class="form-control inventory-input" name="inventoryItemIds"
+                               placeholder="Inventory Item ID" min="1" required oninput="lookupItem(this)" />
+                        <button type="button" class="btn btn-outline-danger" onclick="removeRow(this)" style="display:none">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <div class="item-details small ms-1" style="min-height: 20px;">
+                        <span class="text-muted fst-italic">Type an ID to see item details...</span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-outline-primary btn-sm mb-3" onclick="addRow()">
+                <i class="bi bi-plus-circle"></i> Add Another Item
+            </button>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-lg"></i> Add Items to Batch
+                </button>
+                <a asp-action="BatchDetails" asp-route-id="@batchId" class="btn btn-outline-secondary">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function addRow() {
+            const container = document.getElementById('itemIdsContainer');
+            const div = document.createElement('div');
+            div.className = 'inventory-row mb-3';
+            div.innerHTML = `
+                <div class="input-group mb-1">
+                    <span class="input-group-text"><i class="bi bi-hash"></i></span>
+                    <input type="number" class="form-control inventory-input" name="inventoryItemIds"
+                           placeholder="Inventory Item ID" min="1" required oninput="lookupItem(this)" />
+                    <button type="button" class="btn btn-outline-danger" onclick="removeRow(this)">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <div class="item-details small ms-1" style="min-height: 20px;">
+                    <span class="text-muted fst-italic">Type an ID to see item details...</span>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function removeRow(btn) {
+            btn.closest('.inventory-row').remove();
+        }
+
+        // Cache for lookups to prevent spamming
+        const lookupCache = {};
+        // Debounce timer
+        let typingTimer;
+
+        function lookupItem(input) {
+            clearTimeout(typingTimer);
+            const id = input.value.trim();
+            const detailsDiv = input.closest('.inventory-row').querySelector('.item-details');
+
+            if (!id) {
+                detailsDiv.innerHTML = '<span class="text-muted fst-italic">Type an ID to see item details...</span>';
+                return;
+            }
+
+            detailsDiv.innerHTML = '<span class="text-muted"><i class="spinner-border spinner-border-sm"></i> Looking up...</span>';
+
+            typingTimer = setTimeout(() => {
+                if (lookupCache[id]) {
+                    renderDetails(detailsDiv, lookupCache[id]);
+                    return;
+                }
+
+                fetch(`/Clearance/GetInventoryDetails?id=${id}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        lookupCache[id] = data;
+                        renderDetails(detailsDiv, data);
+                    })
+                    .catch(err => {
+                        detailsDiv.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle"></i> Error checking item.</span>';
+                    });
+            }, 300); // 300ms debounce
+        }
+
+        function renderDetails(div, data) {
+            if (!data.isValid) {
+                div.innerHTML = `<span class="text-danger fw-bold"><i class="bi bi-x-circle"></i> ${data.error || 'Item not found'}</span>`;
+                return;
+            }
+            
+            let statusBadge = data.isAvailable 
+                ? '<span class="badge bg-success">Available</span>'
+                : '<span class="badge bg-warning text-dark">Not Available (Check Eligibility)</span>';
+                
+            div.innerHTML = `
+                <span class="text-primary fw-bold"><i class="bi bi-box-seam"></i> ${data.productName}</span> 
+                <span class="text-muted ms-2 px-2 border-start border-end">SN: ${data.serialNumber}</span>
+                <span class="ms-2">${statusBadge}</span>
+            `;
+        }
+    </script>
+}

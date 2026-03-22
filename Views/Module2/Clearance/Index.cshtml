@@ -1,0 +1,87 @@
+@model List<ProRental.Domain.Entities.Clearancebatch>
+@{
+    ViewData["Title"] = "Clearance Batches";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-tags"></i> Clearance Batches</h1>
+    <a asp-action="CreateBatch" class="btn btn-success">
+        <i class="bi bi-plus-circle"></i> New Batch
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (Model == null || Model.Count == 0)
+{
+    <div class="text-center py-5">
+        <i class="bi bi-inbox" style="font-size: 3rem; color: var(--bs-secondary);"></i>
+        <p class="mt-3 text-muted">No clearance batches yet. Create your first batch to get started.</p>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Batch Name</th>
+                    <th>Clearance Date</th>
+                    <th>Created</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var batch in Model)
+                {
+                    var statusClass = batch.GetStatus() switch
+                    {
+                        ProRental.Domain.Enums.ClearanceBatchStatus.SCHEDULED => "bg-warning text-dark",
+                        ProRental.Domain.Enums.ClearanceBatchStatus.ACTIVE => "bg-success",
+                        ProRental.Domain.Enums.ClearanceBatchStatus.CLOSED => "bg-secondary",
+                        _ => "bg-info"
+                    };
+
+                    <tr>
+                        <td>@batch.GetClearanceBatchId()</td>
+                        <td><strong>@batch.GetBatchName()</strong></td>
+                        <td>@(batch.GetClearanceDate()?.ToString("dd MMM yyyy") ?? "—")</td>
+                        <td>@batch.GetCreatedDate().ToString("dd MMM yyyy")</td>
+                        <td><span class="badge @statusClass">@batch.GetStatus()</span></td>
+                        <td class="text-end">
+                            <a asp-action="BatchDetails" asp-route-id="@batch.GetClearanceBatchId()"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                            @if (batch.GetStatus() == ProRental.Domain.Enums.ClearanceBatchStatus.SCHEDULED)
+                            {
+                                <form asp-action="DeleteBatch" method="post" class="d-inline"
+                                      onsubmit="return confirm('Delete this batch?');">
+                                    <input type="hidden" name="id" value="@batch.GetClearanceBatchId()" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
