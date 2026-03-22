@@ -8,8 +8,9 @@ using ProRental.Domain.Entities;
 // uncomment when ready to code
 using ProRental.Data;
 using ProRental.Domain.Controls;
-// using ProRental.Domain.Entities;
+using ProRental.Domain.Module2.P23.Controls;
 using ProRental.Interfaces.Domain;
+using ProRental.Interfaces.Module2;
 using ProRental.Interfaces.Data;
 using ProRental.Controllers;
 
@@ -33,6 +34,7 @@ dataSourceBuilder.MapEnum<CarbonStageType>("carbon_stage_type", new Npgsql.NameT
 dataSourceBuilder.MapEnum<CartStatus>("cart_status_enum", new Npgsql.NameTranslation.NpgsqlNullNameTranslator());
 dataSourceBuilder.MapEnum<CheckoutStatus>("checkout_status_enum", new Npgsql.NameTranslation.NpgsqlNullNameTranslator());
 dataSourceBuilder.MapEnum<ClearanceBatchStatus>("clearance_batch_status", new Npgsql.NameTranslation.NpgsqlNullNameTranslator());
+dataSourceBuilder.MapEnum<ClearanceStatus>("clearance_status", new Npgsql.NameTranslation.NpgsqlNullNameTranslator());
 dataSourceBuilder.MapEnum<DeliveryDuration>("delivery_duration_enum", new Npgsql.NameTranslation.NpgsqlNullNameTranslator());
 dataSourceBuilder.MapEnum<DeliveryType>("delivery_type_enum", new Npgsql.NameTranslation.NpgsqlNullNameTranslator());
 dataSourceBuilder.MapEnum<FileFormat>("file_format_enum", new Npgsql.NameTranslation.NpgsqlNullNameTranslator());
@@ -87,6 +89,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         o.MapEnum<CartStatus>("cart_status_enum");
         o.MapEnum<CheckoutStatus>("checkout_status_enum");
         o.MapEnum<ClearanceBatchStatus>("clearance_batch_status");
+        o.MapEnum<ClearanceStatus>("clearance_status");
         o.MapEnum<DeliveryDuration>("delivery_duration_enum");
         o.MapEnum<DeliveryType>("delivery_type_enum");
         o.MapEnum<FileFormat>("file_format_enum");
@@ -175,6 +178,19 @@ builder.Services.AddScoped<ProductCatalogControl>();
 builder.Services.AddScoped<IProductCRUD>(sp => sp.GetRequiredService<ProductCatalogControl>());
 builder.Services.AddScoped<IProductQuery>(sp => sp.GetRequiredService<ProductCatalogControl>());
 builder.Services.AddScoped<IProductBulkCommand>(sp => sp.GetRequiredService<ProductCatalogControl>());
+// Domain
+// builder.Services.AddScoped<InventoryManagementControl>();
+// builder.Services.AddScoped<iInventoryCRUDControl>(sp => sp.GetRequiredService<InventoryManagementControl>());
+// builder.Services.AddScoped<iInventoryStatusControl>(sp => sp.GetRequiredService<InventoryManagementControl>());
+// builder.Services.AddScoped<iInventoryQueryControl>(sp => sp.GetRequiredService<InventoryManagementControl>());
+builder.Services.AddScoped<ProductCatalogControl>();
+builder.Services.AddScoped<IProductQuery>(sp => sp.GetRequiredService<ProductCatalogControl>());
+builder.Services.AddScoped<IProductCRUD>(sp => sp.GetRequiredService<ProductCatalogControl>());
+builder.Services.AddScoped<IProductBulkCommand>(sp => sp.GetRequiredService<ProductCatalogControl>());
+builder.Services.AddScoped<iClearanceBatchControl, ClearanceBatchControl>();
+builder.Services.AddScoped<iClearanceBatchQuery, ClearanceBatchControl>();
+builder.Services.AddScoped<iClearanceItemControl, ClearanceItemControl>();
+builder.Services.AddScoped<iClearanceItemQuery, ClearanceItemControl>();
 
 // Presentation/Controllers
 
