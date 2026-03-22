@@ -1,34 +1,313 @@
-@model ProRental.Domain.Entities.Purchaseorder
-
 @{
-    ViewData["Title"] = "Supplier Purchase Order";
+    ViewData["Title"] = "Purchase Order Management";
+    Layout = null; @* Full-page homepage — renders its own navbar, footer, and styles *@
 }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pro Rentals — Purchase Order Management</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        body { margin-bottom: 0; }
 
-<div class="container py-4">
-    <h1 class="text-dark">Purchase Order page loaded</h1>
-    <p class="text-dark">Request ID: @ViewBag.RequestId</p>
+        .hero-banner {
+            background: linear-gradient(135deg, #0f2d1e 0%, #2d7a4f 60%, #1a5c3a 100%);
+            min-height: 420px;
+            display: flex;
+            align-items: center;
+        }
 
-    @if (Model == null)
-    {
-        <div class="alert alert-info">
-            Model is null
+        .module-header-1 { background-color: #2d7a4f; }
+        .module-header-2 { background-color: #0d6efd; }
+        .module-header-3 { background-color: #0a9396; }
+
+        .module-link-1 { color: #2d7a4f; text-decoration: none; }
+        .module-link-1:hover { color: #1e5435; text-decoration: underline; }
+        .module-link-2 { color: #0d6efd; text-decoration: none; }
+        .module-link-2:hover { color: #0b5ed7; text-decoration: underline; }
+        .module-link-3 { color: #0a9396; text-decoration: none; }
+        .module-link-3:hover { color: #088083; text-decoration: underline; }
+
+        .btn-module-1 { --bs-btn-bg: #2d7a4f; --bs-btn-border-color: #2d7a4f; --bs-btn-hover-bg: #1e5435; --bs-btn-hover-border-color: #1e5435; --bs-btn-active-bg: #1e5435; color: #fff; }
+        .btn-module-2 { --bs-btn-bg: #0d6efd; --bs-btn-border-color: #0d6efd; --bs-btn-hover-bg: #0b5ed7; --bs-btn-hover-border-color: #0b5ed7; --bs-btn-active-bg: #0b5ed7; color: #fff; }
+        .btn-module-3 { --bs-btn-bg: #0a9396; --bs-btn-border-color: #0a9396; --bs-btn-hover-bg: #088083; --bs-btn-hover-border-color: #088083; --bs-btn-active-bg: #088083; color: #fff; }
+
+        .role-accent { height: 4px; border-radius: calc(0.375rem - 1px) calc(0.375rem - 1px) 0 0; }
+        .staff-banner { background-color: #1a252f; }
+
+        /* New form section */
+        .enquiry-section {
+            background-color: #f8f9fa;
+        }
+
+        .enquiry-card {
+            border: 0;
+            border-radius: 1rem;
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.08);
+        }
+
+        .btn-enquiry {
+            background-color: #2d7a4f;
+            border-color: #2d7a4f;
+            color: #fff;
+        }
+
+        .btn-enquiry:hover {
+            background-color: #1e5435;
+            border-color: #1e5435;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">
+                <i class="bi bi-box-seam-fill me-2" style="color: #2d7a4f;"></i>Pro Rentals
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#mainNav"
+                    aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="mainNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-cart3 me-1"></i>Order Processing
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><h6 class="dropdown-header text-uppercase" style="color: #2d7a4f; font-size: 0.7rem;">Module 1</h6></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-plus-circle me-2" style="color: #2d7a4f;"></i>Place Order</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-search me-2" style="color: #2d7a4f;"></i>Track Order</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-truck me-2" style="color: #2d7a4f;"></i>Manage Dispatch</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-arrow-return-left me-2" style="color: #2d7a4f;"></i>Handle Returns</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-cash-coin me-2" style="color: #2d7a4f;"></i>Deposit Refunds</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-bell me-2" style="color: #2d7a4f;"></i>Order Notifications</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-boxes me-1"></i>Inventory Management
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><h6 class="dropdown-header text-uppercase" style="color: #0d6efd; font-size: 0.7rem;">Module 2</h6></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-grid me-2" style="color: #0d6efd;"></i>Product Catalogue</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-box-seam me-2" style="color: #0d6efd;"></i>Stock Management</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-arrow-repeat me-2" style="color: #0d6efd;"></i>Return Processing Pipeline</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-building-check me-2" style="color: #0d6efd;"></i>Trusted Supplier Registry</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-bar-chart-line me-2" style="color: #0d6efd;"></i>Analytics &amp; Reports</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-tag me-2" style="color: #0d6efd;"></i>Product Clearance</a></li>
+                            <li><a class="dropdown-item" href="/PurchaseOrderPage"><i class="bi bi-tag me-2" style="color: #0d6efd;"></i>Supplier Purchase Orders</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-leaf me-1"></i>Carbon Footprint
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><h6 class="dropdown-header text-uppercase" style="color: #0a9396; font-size: 0.7rem;">Module 3</h6></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-calculator me-2" style="color: #0a9396;"></i>Product Carbon Calculator</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-truck-flatbed me-2" style="color: #0a9396;"></i>Shipment Carbon Tracker</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-signpost-2 me-2" style="color: #0a9396;"></i>Route Distance Determination</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-building me-2" style="color: #0a9396;"></i>Warehouse Storage Emissions</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-recycle me-2" style="color: #0a9396;"></i>Return Process Carbon Lifecycle</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-collection me-2" style="color: #0a9396;"></i>Batch Delivery Consolidation</a></li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <div class="d-flex gap-2">
+                    <a href="#" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Login
+                    </a>
+                    <a href="#" class="btn btn-primary btn-sm">
+                        <i class="bi bi-person-plus me-1"></i>Register
+                    </a>
+                </div>
+            </div>
         </div>
+    </nav>
 
-        <form method="post" asp-action="BuildDraft">
-            <input type="hidden" name="reqId" value="@ViewBag.RequestId" />
+    @* FORM SECTION *@
+<section class="enquiry-section py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card enquiry-card">
+                    <div class="card-body p-4 p-md-5">
+                        <div class="text-center mb-4">
+                            <h2 class="fw-bold">Supplier Purchase Order Confirmation</h2>
+                            <p class="text-muted mb-0">
+                                Confirm replenishment request and generate purchase order
+                            </p>
+                        </div>
 
-            <div class="mb-3">
-                <label class="form-label text-dark">Supplier ID</label>
-                <input type="number" name="supplierId" class="form-control" required />
+                        <form method="post" asp-controller="PurchaseOrderPage" asp-action="ConfirmPO">
+                            <div class="row g-3">
+
+                                <div class="col-md-6">
+                                    <label for="reqID" class="form-label">Replenishment Request ID</label>
+                                    <input type="number" class="form-control" id="reqID" name="reqID" placeholder="Enter request ID" required />
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="stockID" class="form-label">Stock Item ID</label>
+                                    <input type="number" class="form-control" id="stockID" name="stockID" placeholder="Enter stock item ID" required />
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="qty" class="form-label">Quantity Required</label>
+                                    <input type="number" class="form-control" id="qty" name="qty" min="1" placeholder="Enter quantity" required />
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="supplierID" class="form-label">Eligible Supplier</label>
+                                    <select class="form-select" id="supplierID" name="supplierID" required>
+                                        <option selected disabled>Select supplier</option>
+                                        <option value="test">test</option>
+                                        @* Populate from model/ViewBag *@
+                                        @* Example:
+                                        @foreach (var supplier in ViewBag.EligibleSuppliers)
+                                        {
+                                            <option value="@supplier.supplierID">@supplier.name</option>
+                                        }
+                                        *@
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="expectedDeliveryDate" class="form-label">Expected Delivery Date</label>
+                                    <input type="date" class="form-control" id="expectedDeliveryDate" name="expectedDeliveryDate" required />
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="poDate" class="form-label">PO Date</label>
+                                    <input type="date" class="form-control" id="poDate" name="poDate" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="remarks" class="form-label">Remarks</label>
+                                    <textarea class="form-control" id="remarks" name="remarks" rows="4" placeholder="Enter any notes for this purchase order"></textarea>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="confirmDetails" name="confirmDetails" required />
+                                        <label class="form-check-label" for="confirmDetails">
+                                            I confirm that the supplier and purchase order details are correct
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 text-center pt-2">
+                                    <button type="submit" class="btn btn-enquiry btn-lg px-4">
+                                        <i class="bi bi-send me-2"></i>Confirm Purchase Order
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+    <section class="staff-banner py-4">
+        <div class="container">
+            <div class="row align-items-center justify-content-between gy-3">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center flex-wrap gap-3">
+                        <i class="bi bi-shield-lock-fill fs-2 text-warning"></i>
+                        <div>
+                            <h5 class="mb-0 fw-bold text-white">Staff &amp; Admin Portal</h5>
+                            <small class="text-secondary">
+                                Restricted access — authorised personnel only. All sessions are logged and audited.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-auto">
+                    <a href="#" class="btn btn-warning btn-lg fw-semibold">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Staff Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-dark text-light pt-5 pb-3">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-3 col-md-6">
+                    <h5 class="fw-bold mb-3">
+                        <i class="bi bi-box-seam-fill me-2" style="color: #2d7a4f;"></i>Pro Rentals
+                    </h5>
+                    <p class="text-secondary small">
+                        A unified order processing and inventory management platform for modern rental
+                        operations — fast, efficient, and sustainable.
+                    </p>
+                    <p class="text-secondary small mb-0">
+                        &copy; @DateTime.Now.Year Pro Rentals. All rights reserved.
+                    </p>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <h6 class="text-uppercase text-secondary fw-semibold small mb-3" style="letter-spacing: 0.05em;">Quick Links</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-1"><a href="#" class="text-secondary text-decoration-none small">Home</a></li>
+                        <li class="mb-1"><a href="#" class="text-secondary text-decoration-none small">Browse Equipment</a></li>
+                        <li class="mb-1"><a href="#" class="text-secondary text-decoration-none small">Track My Order</a></li>
+                        <li class="mb-1"><a href="#" class="text-secondary text-decoration-none small">Contact Us</a></li>
+                        <li class="mb-1"><a href="#" class="text-secondary text-decoration-none small">Privacy Policy</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <h6 class="text-uppercase text-secondary fw-semibold small mb-3" style="letter-spacing: 0.05em;">Modules</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-1"><a href="#" class="text-secondary text-decoration-none small"><i class="bi bi-cart3 me-1"></i>Order Processing</a></li>
+                        <li class="mb-1"><a href="#" class="text-secondary text-decoration-none small"><i class="bi bi-boxes me-1"></i>Inventory Management</a></li>
+                        <li class="mb-1"><a href="#" class="text-secondary text-decoration-none small"><i class="bi bi-leaf me-1"></i>Carbon Footprint</a></li>
+                        <li class="mb-1"><a href="#" class="text-secondary text-decoration-none small"><i class="bi bi-bar-chart me-1"></i>Analytics &amp; Reports</a></li>
+                        <li class="mb-1"><a href="#" class="text-secondary text-decoration-none small"><i class="bi bi-shield-lock me-1"></i>Staff Portal</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <h6 class="text-uppercase text-secondary fw-semibold small mb-3" style="letter-spacing: 0.05em;">Contact</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2 text-secondary small"><i class="bi bi-geo-alt me-2"></i>123 Rental Avenue, Singapore 123456</li>
+                        <li class="mb-2 text-secondary small"><i class="bi bi-telephone me-2"></i>+65 6123 4567</li>
+                        <li class="mb-2 text-secondary small"><i class="bi bi-envelope me-2"></i>support@@prorentals.sg</li>
+                        <li class="mb-2 text-secondary small"><i class="bi bi-clock me-2"></i>Mon – Fri, 9 AM – 6 PM SGT</li>
+                    </ul>
+                </div>
             </div>
 
-            <button type="submit" class="btn btn-primary">Build Draft</button>
-        </form>
-    }
-    else
-    {
-        <div class="alert alert-success">
-            Model loaded successfully
+            <hr class="border-secondary mt-3 mb-3" />
+            <p class="text-center text-secondary small mb-0">
+                Built with Bootstrap 5.3.3 &middot; Pro Rentals Order Processing System v1.0 &middot; 2026
+            </p>
         </div>
-    }
-</div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
