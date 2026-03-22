@@ -1,8 +1,8 @@
 using ProRental.Domain.Entities;
 using ProRental.Domain.Enums;
 using ProRental.Interfaces.Data;
+using ProRental.Interfaces.Domain;
 using ProRental.Interfaces.Module2;
-using ProRental.Interfaces.Module2.P2_3;
 
 namespace ProRental.Domain.Module2.P23.Controls;
 
@@ -12,7 +12,7 @@ public class ClearanceItemControl : iClearanceItemQuery, iClearanceItemControl
     private readonly IClearanceBatchMapper _batchMapper;
     private readonly iInventoryCRUDControl _inventoryCRUD;
     private readonly iInventoryStatusControl _inventoryStatus;
-    private readonly IProductMapper _productMapper;
+    private readonly IProductQuery _productQuery;
 
     // Default discount rate for recommended price calculation (30% off retail)
     private const decimal DefaultDiscountRate = 0.30m;
@@ -22,13 +22,13 @@ public class ClearanceItemControl : iClearanceItemQuery, iClearanceItemControl
         IClearanceBatchMapper batchMapper,
         iInventoryCRUDControl inventoryCRUD,
         iInventoryStatusControl inventoryStatus,
-        IProductMapper productMapper)
+        IProductQuery productQuery)
     {
         _itemMapper = itemMapper;
         _batchMapper = batchMapper;
         _inventoryCRUD = inventoryCRUD;
         _inventoryStatus = inventoryStatus;
-        _productMapper = productMapper;
+        _productQuery = productQuery;
     }
 
     // ── Item CRUD ──────────────────────────────────────────────────────────────
@@ -328,8 +328,8 @@ public class ClearanceItemControl : iClearanceItemQuery, iClearanceItemControl
 
         int productId = inventoryItem.GetProductId();
 
-        // Query product via IProductMapper (includes Productdetail composite)
-        var product = _productMapper.FindById(productId);
+        // Query product via IProductQuery (includes Productdetail composite)
+        var product = _productQuery.GetProductById(productId);
         if (product == null || product.Productdetail == null)
             return 0m;
 
