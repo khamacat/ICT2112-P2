@@ -100,6 +100,11 @@ public partial class AppDbContext
                   .HasColumnName("status").HasColumnType("clearance_status"); 
         });
 
+        modelBuilder.Entity<CustomerChoice>(entity =>
+        {
+            entity.Property("PreferenceType").HasField("_preferenceType").UsePropertyAccessMode(PropertyAccessMode.Field)
+                  .HasColumnName("preferencetype").HasColumnType("preference_type");
+        });
 
         // ==========================================
         // D - L
@@ -116,6 +121,11 @@ public partial class AppDbContext
                   .HasColumnName("status").HasColumnType("inventory_status");
         });
 
+        modelBuilder.Entity<LegCarbon>(entity =>
+        {
+            entity.Property("TransportMode").HasField("_transportMode").UsePropertyAccessMode(PropertyAccessMode.Field)
+                  .HasColumnName("transportmode").HasColumnType("transport_mode");
+        });
 
         modelBuilder.Entity<Lineitem>(entity =>
         {
