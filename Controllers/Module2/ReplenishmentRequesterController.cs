@@ -24,9 +24,17 @@ public class ReplenishmentRequesterController : Controller
     // Display list of all replenishment requests (ReplenishmentList.cshtml)
     public IActionResult List()
     {
-        // TODO: Implement GetAll method in Control layer
-        // For now, return empty list
-        return View("ReplenishmentList", new List<Replenishmentrequest>());
+        try
+        {
+            var requests = _control.GetAllRequests();
+            return View("~/Views/Module2/ReplenishmentList.cshtml", requests);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading replenishment requests list");
+            TempData["ErrorMessage"] = "An error occurred while loading the requests.";
+            return View("~/Views/Module2/ReplenishmentList.cshtml", new List<Replenishmentrequest>());
+        }
     }
 
     // Redirect default route to List
@@ -35,21 +43,18 @@ public class ReplenishmentRequesterController : Controller
         return RedirectToAction(nameof(List));
     }
 
-    // POST: /ReplenishmentRequester/Create
-    // Create a new replenishment request and redirect to form
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public IActionResult Create(string requestedBy)
+    // GET: /ReplenishmentRequester/Create
+    // Create a new replenishment request with current user and redirect to form
+    public IActionResult Create()
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(requestedBy))
-            {
-                TempData["ErrorMessage"] = "Staff ID is required";
-                return RedirectToAction(nameof(List));
-            }
+            // Get current logged-in user's ID from claims/session
+            var currentUserId = User.FindFirst("StaffId")?.Value ?? 
+                               User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ??
+                               "SYSTEM";
 
-            var request = _control.CreateRequest(requestedBy);
+            var request = _control.CreateRequest(currentUserId);
             TempData["SuccessMessage"] = $"Replenishment request #{request.RequestId} created. Add items below.";
             return RedirectToAction(nameof(Form), new { id = request.RequestId });
         }
@@ -81,7 +86,7 @@ public class ReplenishmentRequesterController : Controller
                 return RedirectToAction(nameof(Detail), new { id });
             }
 
-            return View("ReplenishmentForm", request);
+            return View("~/Views/Module2/ReplenishmentForm.cshtml", request);
         }
         catch (Exception ex)
         {
@@ -105,7 +110,7 @@ public class ReplenishmentRequesterController : Controller
                 return RedirectToAction(nameof(List));
             }
 
-            return View("ReplenishmentDetail", request);
+            return View("~/Views/Module2/ReplenishmentDetail.cshtml", request);
         }
         catch (Exception ex)
         {
@@ -194,6 +199,35 @@ public class ReplenishmentRequesterController : Controller
         {
             _logger.LogError(ex, "Error removing item {LineItemId}", lineItemId);
             TempData["ErrorMessage"] = "An error occurred while removing the item.";
+            return RedirectToAction(nameof(Form), new { id = requestId });
+        }
+    }
+
+    // POST: /ReplenishmentRequester/UpdateRequestRemarks
+    // Update request-level remarks (distinct from line-item remarks)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult UpdateRequestRemarks(int requestId, string? remarks)
+    {
+        try
+        {
+            var success = _control.UpdateRequestRemarks(requestId, remarks);
+
+            if (success)
+            {
+                TempData["SuccessMessage"] = "Request remarks updated successfully.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Failed to update request remarks.";
+            }
+
+            return RedirectToAction(nameof(Form), new { id = requestId });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating request remarks for request {RequestId}", requestId);
+            TempData["ErrorMessage"] = "An error occurred while updating request remarks.";
             return RedirectToAction(nameof(Form), new { id = requestId });
         }
     }

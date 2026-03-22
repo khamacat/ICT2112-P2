@@ -1,47 +1,72 @@
 namespace ProRental.Domain.Entities;
 using ProRental.Domain.Enums;
+using System.ComponentModel.DataAnnotations.Schema;
 
 public partial class Replenishmentrequest
 {
-    // Public accessors for scaffolded private fields
+    // Private field for enum (not scaffolded by EF Core)
+    private ReplenishmentStatus? _status;
+
+    // Public accessors for scaffolded private fields with column mappings
+    // TEST: avoid duplicate EF column mapping with scaffolded Requestid property
+    [NotMapped]
     public int RequestId
     {
         get => _requestid;
         set => _requestid = value;
     }
 
+    // TEST: avoid duplicate EF column mapping with scaffolded Requestedby property
+    [NotMapped]
     public string? RequestedBy
     {
         get => _requestedby;
         set => _requestedby = value;
     }
 
+    // Public accessor for Status with default value
+    [Column("status")]
     public ReplenishmentStatus Status
     {
-        get => _status;
+        get => _status ?? ReplenishmentStatus.DRAFT;
         set => _status = value;
     }
 
+    // TEST: avoid duplicate EF column mapping with scaffolded Createdat property
+    [NotMapped]
     public DateTime? CreatedAt
     {
         get => _createdat;
         set => _createdat = value;
     }
 
+    // TEST: avoid duplicate EF column mapping with scaffolded Completedat property
+    [NotMapped]
     public DateTime? CompletedAt
     {
         get => _completedat;
         set => _completedat = value;
     }
 
+    // TEST: avoid duplicate EF column mapping with scaffolded Completedby property
+    [NotMapped]
     public string? CompletedBy
     {
         get => _completedby;
         set => _completedby = value;
     }
 
-    // Private field for Status (enum)
-    private ReplenishmentStatus _status = ReplenishmentStatus.DRAFT;
+    // Request-level remarks helper (uses scaffolded backing field)
+    public string? GetRemarks()
+    {
+        return _remarks;
+    }
+
+    // Update request-level remarks (overall note for this request)
+    public void SetRemarks(string? remarks)
+    {
+        _remarks = remarks;
+    }
 
     // Business logic methods from class diagram
 

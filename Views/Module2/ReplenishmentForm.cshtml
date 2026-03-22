@@ -74,6 +74,31 @@
             </div>
         </div>
 
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-chat-left-text me-2"></i>Request Remarks</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="UpdateRequestRemarks" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="requestId" value="@Model.RequestId" />
+
+                    <div class="mb-3">
+                        <label for="requestRemarks" class="form-label">Overall request notes</label>
+                        <textarea id="requestRemarks"
+                                  name="remarks"
+                                  class="form-control"
+                                  rows="3"
+                                  placeholder="Add notes for the entire request (separate from line-item remarks).">@Model.GetRemarks()</textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-outline-primary w-100">
+                        <i class="bi bi-save me-1"></i>Save Request Remarks
+                    </button>
+                </form>
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Actions</h5>
@@ -127,69 +152,73 @@
                                     <th>Product</th>
                                     <th>Quantity</th>
                                     <th>Reason</th>
-                                    <th>Remarks</th>
+                                    <th>Line Item Remarks</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var item in Model.Lineitems)
-                                {
-                                    <tr>
-                                        <td>
-                                            <strong>Product #@item.ProductId</strong>
+                                 @foreach (var item in Model.Lineitems)
+                                 {
+                                     var formId = $"update-item-{item.LineItemId}";
+                                     <tr>
+                                         <td>
+                                             <strong>Product #@item.ProductId</strong>
                                             @if (item.Product != null)
                                             {
                                                 <br /><small class="text-muted">@item.Product</small>
                                             }
-                                        </td>
-                                        <td>
-                                            <form asp-action="UpdateItem" method="post" class="d-inline">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="requestId" value="@Model.RequestId" />
-                                                <input type="hidden" name="lineItemId" value="@item.LineItemId" />
-                                                <input type="hidden" name="reason" value="@item.Reason" />
-                                                <input type="hidden" name="remarks" value="" />
-                                                <div class="input-group input-group-sm" style="width: 120px;">
-                                                    <input type="number" class="form-control" name="quantity"
-                                                           value="@item.QuantityRequest" min="1" required />
-                                                    <button type="submit" class="btn btn-outline-primary">
-                                                        <i class="bi bi-check"></i>
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </td>
-                                        <td>
-                                            <form asp-action="UpdateItem" method="post" class="d-inline">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="requestId" value="@Model.RequestId" />
-                                                <input type="hidden" name="lineItemId" value="@item.LineItemId" />
-                                                <input type="hidden" name="quantity" value="@item.QuantityRequest" />
-                                                <input type="hidden" name="remarks" value="" />
-                                                <select name="reason" class="form-select form-select-sm" style="width: 140px;"
-                                                        onchange="this.form.submit()">
-                                                    @foreach (var reason in Enum.GetValues<ProRental.Domain.Enums.ReplenishmentReason>())
-                                                    {
-                                                        <option value="@reason" selected="@(item.Reason == reason)">@reason</option>
-                                                    }
-                                                </select>
-                                            </form>
-                                        </td>
-                                        <td>
-                                            <small class="text-muted">-</small>
-                                        </td>
-                                        <td>
-                                            <form asp-action="RemoveItem" method="post" class="d-inline">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="requestId" value="@Model.RequestId" />
+                                         </td>
+                                         <td>
+                                             <input type="number"
+                                                    class="form-control form-control-sm"
+                                                    style="width: 120px;"
+                                                    form="@formId"
+                                                    name="quantity"
+                                                    value="@item.QuantityRequest"
+                                                    min="1"
+                                                    required
+                                                    onchange="document.getElementById('@formId').submit()" />
+                                         </td>
+                                         <td>
+                                             <select name="reason"
+                                                     class="form-select form-select-sm"
+                                                     style="width: 160px;"
+                                                     form="@formId"
+                                                     onchange="document.getElementById('@formId').submit()">
+                                                 @foreach (var reason in Enum.GetValues<ProRental.Domain.Enums.ReplenishmentReason>())
+                                                 {
+                                                     <option value="@reason" selected="@(item.Reason == reason)">@reason</option>
+                                                 }
+                                             </select>
+                                         </td>
+                                         <td>
+                                             <input type="text"
+                                                    class="form-control form-control-sm"
+                                                    form="@formId"
+                                                    name="remarks"
+                                                    value="@item.GetRemarks()"
+                                                    placeholder="Add remarks"
+                                                    onchange="document.getElementById('@formId').submit()" />
+                                         </td>
+                                         <td>
+                                             <form id="@formId" asp-action="UpdateItem" method="post" class="d-none">
+                                                 @Html.AntiForgeryToken()
+                                                 <input type="hidden" name="requestId" value="@Model.RequestId" />
+                                                 <input type="hidden" name="lineItemId" value="@item.LineItemId" />
+                                             </form>
+
+                                             <form asp-action="RemoveItem" method="post" class="d-inline">
+                                                 @Html.AntiForgeryToken()
+                                                 <input type="hidden" name="requestId" value="@Model.RequestId" />
                                                 <input type="hidden" name="lineItemId" value="@item.LineItemId" />
                                                 <button type="submit" class="btn btn-sm btn-outline-danger"
                                                         onclick="return confirm('Remove this item?')">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                }
+                                             </form>
+                                         </td>
+                                     </tr>
+                                 }
                             </tbody>
                         </table>
                     </div>

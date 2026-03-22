@@ -97,6 +97,29 @@ public class ReplenishmentRequestControl
         return true;
     }
 
+    // Update request-level remarks
+    // <param name="requestId">The request ID</param>
+    // <param name="remarks">Overall request note</param>
+    // <returns>True if updated successfully</returns>
+    public bool UpdateRequestRemarks(int requestId, string? remarks)
+    {
+        var request = _mapper.FindById(requestId);
+
+        if (request == null)
+        {
+            return false;
+        }
+
+        if (!request.CanEdit())
+        {
+            return false;
+        }
+
+        request.SetRemarks(remarks?.Trim() ?? string.Empty);
+        _mapper.Update(request);
+        return true;
+    }
+
 
     // Remove a line item from a request
     // <param name="requestId">The request ID</param>
@@ -178,6 +201,13 @@ public class ReplenishmentRequestControl
     public Replenishmentrequest? GetRequest(int requestId)
     {
         return _mapper.FindById(requestId);
+    }
+
+    // Get all replenishment requests
+    // <returns>List of all replenishment requests</returns>
+    public List<Replenishmentrequest> GetAllRequests()
+    {
+        return _mapper.FindAll();
     }
 
 

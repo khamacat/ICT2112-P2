@@ -57,7 +57,16 @@ public class ReplenishmentRequestMapper : IReplenishmentRequestMapper, IReplenis
         return _context.Replenishmentrequests
             .Include(r => r.Lineitems)
                 .ThenInclude(li => li.Product)
-            .FirstOrDefault(r => r.RequestId == id);
+            .FirstOrDefault(r => EF.Property<int>(r, "Requestid") == id);
+    }
+
+    // Find all replenishment requests including their line items
+    public List<Replenishmentrequest> FindAll()
+    {
+        return _context.Replenishmentrequests
+            .Include(r => r.Lineitems)
+            .OrderByDescending(r => EF.Property<DateTime?>(r, "Createdat"))
+            .ToList();
     }
 
     // Find all line items for a specific replenishment request
@@ -65,7 +74,7 @@ public class ReplenishmentRequestMapper : IReplenishmentRequestMapper, IReplenis
     {
         return _context.Lineitems
             .Include(li => li.Product)
-            .Where(li => li.RequestId == requestId)
+            .Where(li => EF.Property<int?>(li, "Requestid") == requestId)
             .ToList();
     }
 

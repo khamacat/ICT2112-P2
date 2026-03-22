@@ -21,6 +21,10 @@ public interface IReplenishmentRequestMapper
     // <returns>The ReplenishmentRequest or null if not found</returns>
     Replenishmentrequest? FindById(int id);
 
+    // Find all replenishment requests including their line items
+    // <returns>List of all replenishment requests</returns>
+    List<Replenishmentrequest> FindAll();
+
     // Find all line items for a specific replenishment request
     // <param name="requestId">The request ID</param>
     // <returns>List of line items</returns>
