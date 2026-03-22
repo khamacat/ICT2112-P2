@@ -1,0 +1,200 @@
+@model ICollection<ProRental.Domain.Entities.Returnrequest>
+@using ProRental.Domain.Enums
+@using ProRental.Domain.Entities
+
+@{
+    ViewData["Title"] = "Return Processing Queue";
+    var itemMap   = ViewBag.ItemMap as Dictionary<int, List<Returnitem>> ?? new Dictionary<int, List<Returnitem>>();
+    var processing = Model.Where(r => r.GetStatus() == ReturnRequestStatus.PROCESSING).ToList();
+    var completed  = Model.Where(r => r.GetStatus() == ReturnRequestStatus.COMPLETED).ToList();
+}
+
+<div class="container py-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="bi bi-arrow-return-left me-2 text-primary"></i>Return Processing Queue
+            </h2>
+            <p class="text-muted mb-0">
+                Orders pending return processing. Each order's items must pass through all stages
+                before the order status changes to <strong>Completed</strong>.
+            </p>
+        </div>
+        <div class="text-end">
+            <span class="badge bg-warning text-dark fs-6 px-3 py-2 me-1">
+                <i class="bi bi-hourglass-split me-1"></i>@processing.Count In Queue
+            </span>
+            <span class="badge bg-success fs-6 px-3 py-2">
+                <i class="bi bi-check-circle me-1"></i>@completed.Count Completed
+            </span>
+        </div>
+    </div>
+
+    @if (TempData["Message"] is string message)
+    {
+        <div class="alert alert-info alert-dismissible fade show">
+            @message
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- ── IN QUEUE ──────────────────────────────────────────────────── -->
+    <h5 class="fw-semibold mb-3">
+        <i class="bi bi-hourglass-split me-1 text-warning"></i>Awaiting Processing
+    </h5>
+
+    @if (!processing.Any())
+    {
+        <div class="alert alert-success mb-4">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            No orders are currently in the return processing queue. All caught up!
+        </div>
+    }
+    else
+    {
+        <div class="row g-3 mb-5">
+            @foreach (var req in processing)
+            {
+                var items     = itemMap.TryGetValue(req.GetReturnRequestId(), out var its) ? its : new List<Returnitem>();
+                var total     = items.Count;
+                var done      = items.Count(i => i.GetStatus() == ReturnItemStatus.RETURN_TO_INVENTORY);
+                var pct       = total > 0 ? (int)((done / (double)total) * 100) : 0;
+                var inInspect = items.Count(i => i.GetStatus() == ReturnItemStatus.DAMAGE_INSPECTION);
+                var inRepair  = items.Count(i => i.GetStatus() == ReturnItemStatus.REPAIRING);
+                var inService = items.Count(i => i.GetStatus() == ReturnItemStatus.SERVICING);
+                var inClean   = items.Count(i => i.GetStatus() == ReturnItemStatus.CLEANING);
+
+                <div class="col-md-6 col-xl-4">
+                    <div class="card h-100 border-warning border-opacity-50 shadow-sm">
+                        <div class="card-header bg-warning bg-opacity-10 border-warning border-opacity-25">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold fs-6">
+                                    <i class="bi bi-box-seam me-1"></i>Order #@req.GetOrderId()
+                                </span>
+                                <span class="badge bg-warning text-dark">Processing</span>
+                            </div>
+                            <div class="text-muted small mt-1">
+                                Return Request #@req.GetReturnRequestId()
+                                &nbsp;·&nbsp; Customer #@req.GetCustomerId()
+                            </div>
+                            <div class="text-muted small">
+                                <i class="bi bi-calendar3 me-1"></i>@req.GetRequestDate().ToString("dd MMM yyyy")
+                            </div>
+                        </div>
+                        <div class="card-body">
+
+                            <!-- Overall progress bar -->
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small class="fw-semibold">Overall Progress</small>
+                                    <small class="text-muted">@done / @total items done</small>
+                                </div>
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar bg-success" role="progressbar"
+                                         style="width: @pct%;" aria-valuenow="@pct"
+                                         aria-valuemin="0" aria-valuemax="100">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Item stage breakdown badges -->
+                            <div class="d-flex flex-wrap gap-1">
+                                @if (inInspect > 0)
+                                {
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-search me-1"></i>@inInspect Inspecting
+                                    </span>
+                                }
+                                @if (inRepair > 0)
+                                {
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-tools me-1"></i>@inRepair Repairing
+                                    </span>
+                                }
+                                @if (inService > 0)
+                                {
+                                    <span class="badge bg-info">
+                                        <i class="bi bi-wrench-adjustable me-1"></i>@inService Servicing
+                                    </span>
+                                }
+                                @if (inClean > 0)
+                                {
+                                    <span class="badge bg-primary">
+                                        <i class="bi bi-droplet me-1"></i>@inClean Cleaning
+                                    </span>
+                                }
+                                @if (done > 0)
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle me-1"></i>@done Done
+                                    </span>
+                                }
+                                @if (total == 0)
+                                {
+                                    <span class="text-muted small">No items found</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <a asp-controller="ReturnProcessing"
+                               asp-action="ShowReturnDetails"
+                               asp-route-requestId="@req.GetReturnRequestId()"
+                               class="btn btn-warning btn-sm w-100">
+                                <i class="bi bi-pencil-square me-1"></i>Process Return Items
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- ── COMPLETED ─────────────────────────────────────────────────── -->
+    <h5 class="fw-semibold mb-3">
+        <i class="bi bi-check-circle me-1 text-success"></i>Completed Returns
+    </h5>
+
+    @if (!completed.Any())
+    {
+        <p class="text-muted">No completed return requests yet.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-hover table-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Request ID</th>
+                        <th>Customer ID</th>
+                        <th>Request Date</th>
+                        <th>Completed On</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var req in completed.OrderByDescending(r => r.GetCompletionDate()))
+                    {
+                        <tr>
+                            <td class="fw-semibold">#@req.GetOrderId()</td>
+                            <td>#@req.GetReturnRequestId()</td>
+                            <td>@req.GetCustomerId()</td>
+                            <td>@req.GetRequestDate().ToString("dd MMM yyyy")</td>
+                            <td>@req.GetCompletionDate()?.ToString("dd MMM yyyy")</td>
+                            <td class="text-end">
+                                <a asp-controller="ReturnProcessing"
+                                   asp-action="ShowReturnDetails"
+                                   asp-route-requestId="@req.GetReturnRequestId()"
+                                   class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-eye me-1"></i>View
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+</div>

@@ -1,0 +1,629 @@
+@model ProRental.Domain.Entities.Returnitem
+@using ProRental.Domain.Enums
+
+@{
+    ViewData["Title"] = $"Process Item #{Model.GetReturnItemId()}";
+    var damage        = ViewBag.DamageReport as ProRental.Domain.Entities.Damagereport;
+    var status        = Model.GetStatus();
+    bool isLocked     = status == ReturnItemStatus.RETURN_TO_INVENTORY;
+    bool hasDamage    = damage != null;
+    bool phase1Active = status == ReturnItemStatus.DAMAGE_INSPECTION;
+    bool phase2Active = status == ReturnItemStatus.REPAIRING;
+    bool phase3Active = status == ReturnItemStatus.SERVICING;
+    bool phase4Active = status == ReturnItemStatus.CLEANING;
+    bool wasDamaged   = hasDamage || phase2Active || (int)status > (int)ReturnItemStatus.REPAIRING;
+
+    string statusLabel = status switch
+    {
+        ReturnItemStatus.DAMAGE_INSPECTION   => "Damage Inspection",
+        ReturnItemStatus.REPAIRING           => "Repairing",
+        ReturnItemStatus.SERVICING           => "Servicing",
+        ReturnItemStatus.CLEANING            => "Cleaning",
+        ReturnItemStatus.RETURN_TO_INVENTORY => "Returned to Inventory",
+        _ => status.ToString()
+    };
+    string statusBadge = status switch
+    {
+        ReturnItemStatus.DAMAGE_INSPECTION   => "bg-warning text-dark",
+        ReturnItemStatus.REPAIRING           => "bg-danger",
+        ReturnItemStatus.SERVICING           => "bg-info",
+        ReturnItemStatus.CLEANING            => "bg-primary",
+        ReturnItemStatus.RETURN_TO_INVENTORY => "bg-success",
+        _ => "bg-secondary"
+    };
+}
+
+<div class="container py-4">
+
+    <!-- Breadcrumb-->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a asp-controller="ReturnProcessing" asp-action="DisplayReturnRequests">Return Requests</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a asp-controller="ReturnProcessing" asp-action="ShowReturnDetails"
+                   asp-route-requestId="@Model.GetReturnRequestId()">
+                    Request #@Model.GetReturnRequestId()
+                </a>
+            </li>
+            <li class="breadcrumb-item active">Item #@Model.GetReturnItemId()</li>
+        </ol>
+    </nav>
+
+    <!-- Header-->
+    <div class="d-flex align-items-start justify-content-between mb-4">
+        <div>
+            <h2 class="mb-1">
+                <i class="bi bi-clipboard2-pulse me-2"></i>Return Item #@Model.GetReturnItemId()
+            </h2>
+            <p class="text-muted mb-0">
+                Inventory Item ID: <strong>@Model.GetInventoryItemId()</strong>
+                &nbsp;·&nbsp; Return Request: <strong>#@Model.GetReturnRequestId()</strong>
+            </p>
+        </div>
+        <span class="badge @statusBadge fs-6 px-3 py-2">@statusLabel</span>
+    </div>
+
+    <!-- Alert-->
+    @if (TempData["Message"] is string message)
+    {
+        <div class="alert alert-info alert-dismissible fade show">
+            @message
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (isLocked)
+    {
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            This item has completed all stages and has been <strong>returned to inventory</strong>. Record is read-only.
+        </div>
+    }
+
+    <!-- Progress stepper-->
+    <div class="card mb-4">
+        <div class="card-body py-3">
+            <div class="d-flex align-items-center justify-content-between">
+                @{
+                    var steps = new[]
+                    {
+                        ("Damage Inspection", "bi-search",             ReturnItemStatus.DAMAGE_INSPECTION),
+                        ("Repairing",          "bi-tools",             ReturnItemStatus.REPAIRING),
+                        ("Servicing",          "bi-wrench-adjustable", ReturnItemStatus.SERVICING),
+                        ("Cleaning",           "bi-droplet",           ReturnItemStatus.CLEANING),
+                        ("Done",               "bi-check-circle",      ReturnItemStatus.RETURN_TO_INVENTORY),
+                    };
+                    int currentIdx = (int)status;
+                }
+                @for (int i = 0; i < steps.Length; i++)
+                {
+                    var (label, icon, stepStatus) = steps[i];
+                    bool done    = i < currentIdx;
+                    bool current = i == currentIdx;
+                    var circleClass = done    ? "bg-success text-white"
+                                    : current ? "bg-primary text-white"
+                                              : "bg-light text-muted border";
+                    var textClass   = done    ? "text-success fw-semibold"
+                                    : current ? "text-primary fw-semibold"
+                                              : "text-muted";
+
+                    if (stepStatus == ReturnItemStatus.REPAIRING && !wasDamaged && (int)status > (int)ReturnItemStatus.REPAIRING)
+                    {
+                        <div class="flex-fill text-center px-1">
+                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-1"
+                                 style="width:36px;height:36px;background:#e9ecef;color:#adb5bd">
+                                <i class="bi bi-dash"></i>
+                            </div>
+                            <div class="small text-muted">N/A</div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="flex-fill text-center px-1">
+                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-1 @circleClass"
+                                 style="width:36px;height:36px;font-size:1rem;">
+                                @if (done) { <i class="bi bi-check-lg"></i> } else { <i class="bi @icon"></i> }
+                            </div>
+                            <div class="small @textClass">@label</div>
+                        </div>
+                    }
+                    @if (i < steps.Length - 1)
+                    {
+                        <div class="flex-fill border-top border-2 @(i < currentIdx ? "border-success" : "border-light")"
+                             style="max-width:48px;margin-bottom:1.4rem"></div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         ACCORDION — 4 phases
+         ═══════════════════════════════════════════════════════-->
+    <div class="accordion" id="returnAccordion">
+
+        <!-- ── PHASE 1 — DAMAGE INSPECTION ──────────────────────-->
+        <div class="accordion-item border mb-3 rounded shadow-sm">
+            <h2 class="accordion-header">
+                <button class="accordion-button @(phase1Active ? "" : "collapsed") rounded"
+                        type="button" data-bs-toggle="collapse" data-bs-target="#phase1">
+                    <span class="d-flex align-items-center gap-2">
+                        @if ((int)status > 0) { <i class="bi bi-check-circle-fill text-success"></i> }
+                        else { <i class="bi bi-search text-warning"></i> }
+                        <strong>Phase 1 — Damage Inspection</strong>
+                        @if (hasDamage)          { <span class="badge bg-danger ms-2">Damage Found</span> }
+                        else if ((int)status > 0) { <span class="badge bg-success ms-2">No Damage</span> }
+                    </span>
+                </button>
+            </h2>
+            <div id="phase1" class="accordion-collapse collapse @(phase1Active ? "show" : "")">
+                <div class="accordion-body">
+                    @if (!phase1Active && (int)status > 0)
+                    {
+                        <div class="alert alert-secondary py-2 mb-3">
+                            <i class="bi bi-lock me-1"></i>Damage inspection is complete and locked.
+                        </div>
+                    }
+
+                    <form asp-controller="ReturnProcessing"
+                          asp-action="HandleReturnSubmission"
+                          asp-route-itemId="@Model.GetReturnItemId()"
+                          method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="stage" value="DAMAGE_INSPECTION" />
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Was any damage found?</label>
+                            <div class="d-flex gap-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="hasDamage"
+                                           id="damageYes" value="true"
+                                           @(hasDamage ? "checked" : "")
+                                           @(!phase1Active ? "disabled" : "")
+                                           onchange="onDamageChange(this)" />
+                                    <label class="form-check-label" for="damageYes">
+                                        <i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>
+                                        Yes — damage found
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="hasDamage"
+                                           id="damageNo" value="false"
+                                           @(!hasDamage && (int)status > 0 ? "checked" : "")
+                                           @(!phase1Active ? "disabled" : "")
+                                           onchange="onDamageChange(this)" />
+                                    <label class="form-check-label" for="damageNo">
+                                        <i class="bi bi-check-circle-fill text-success me-1"></i>
+                                        No damage
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Re-open damage report button (shown after modal closed)-->
+                        @if (hasDamage && phase1Active)
+                        {
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-outline-danger btn-sm"
+                                        data-bs-toggle="modal" data-bs-target="#damageReportModal">
+                                    <i class="bi bi-file-earmark-medical me-1"></i>Re-open Damage Report
+                                </button>
+                                <span class="ms-2 text-muted small">
+                                    Damage report saved. Edit before submitting.
+                                </span>
+                            </div>
+                        }
+
+                        @if (phase1Active)
+                        {
+                            <button type="submit" class="btn btn-primary"
+                                    onclick="return confirm('Submit damage inspection? This cannot be undone.')">
+                                <i class="bi bi-send me-1"></i>Submit Inspection
+                            </button>
+                        }
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── PHASE 2 — REPAIRING ──────────────────────────────-->
+        <div class="accordion-item border mb-3 rounded shadow-sm">
+            <h2 class="accordion-header">
+                <button class="accordion-button @(phase2Active ? "" : "collapsed") rounded"
+                        type="button" data-bs-toggle="collapse" data-bs-target="#phase2">
+                    <span class="d-flex align-items-center gap-2">
+                        @if ((int)status > (int)ReturnItemStatus.REPAIRING) { <i class="bi bi-check-circle-fill text-success"></i> }
+                        else if (phase2Active) { <i class="bi bi-tools text-danger"></i> }
+                        else { <i class="bi bi-tools text-muted"></i> }
+                        <strong>Phase 2 — Repairing</strong>
+                        @if (!wasDamaged && (int)status >= (int)ReturnItemStatus.SERVICING)
+                        { <span class="badge bg-secondary ms-2">Not Applicable</span> }
+                    </span>
+                </button>
+            </h2>
+            <div id="phase2" class="accordion-collapse collapse @(phase2Active ? "show" : "")">
+                <div class="accordion-body">
+                    @if (!wasDamaged && !phase2Active)
+                    {
+                        <div class="alert alert-secondary py-2">
+                            <i class="bi bi-dash-circle me-1"></i>
+                            <strong>Not Applicable</strong> — No damage was found. This stage is skipped.
+                        </div>
+                    }
+                    else if (!phase2Active && (int)status > (int)ReturnItemStatus.REPAIRING)
+                    {
+                        <div class="alert alert-secondary py-2 mb-3">
+                            <i class="bi bi-lock me-1"></i>Repair stage is complete and locked.
+                        </div>
+                    }
+                    else if (!phase2Active)
+                    {
+                        <div class="alert alert-secondary py-2">
+                            <i class="bi bi-lock me-1"></i>This stage is not yet active.
+                        </div>
+                    }
+
+                    <form asp-controller="ReturnProcessing"
+                          asp-action="HandleReturnSubmission"
+                          asp-route-itemId="@Model.GetReturnItemId()"
+                          method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="stage" value="REPAIRING" />
+                        <fieldset @(!phase2Active ? "disabled" : "")>
+                            <div class="row g-3 mb-3">
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">
+                                        <i class="bi bi-gear me-1"></i>Parts Used for Repair
+                                    </label>
+                                    <textarea class="form-control" name="partsUsed" rows="3"
+                                              placeholder="List parts used..."></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">
+                                        <i class="bi bi-journal-text me-1"></i>Technician Notes
+                                    </label>
+                                    <textarea class="form-control" name="technicianNotes" rows="3"
+                                              placeholder="Describe what was repaired..."></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">
+                                        <i class="bi bi-camera me-1"></i>Before Repair Image URL
+                                    </label>
+                                    <input type="text" class="form-control" name="beforeImageUrl"
+                                           placeholder="https://..." />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">
+                                        <i class="bi bi-camera-fill me-1"></i>After Repair Image URL
+                                    </label>
+                                    <input type="text" class="form-control" name="afterImageUrl"
+                                           placeholder="https://..." />
+                                </div>
+                            </div>
+                            @if (phase2Active)
+                            {
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary"
+                                            onclick="return confirm('Submit repair? Status will change to Servicing.')">
+                                        <i class="bi bi-send me-1"></i>Submit Repair
+                                    </button>
+                                    <button type="reset" class="btn btn-outline-secondary">
+                                        <i class="bi bi-x-circle me-1"></i>Clear
+                                    </button>
+                                </div>
+                            }
+                        </fieldset>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── PHASE 3 — SERVICING ──────────────────────────────-->
+        <div class="accordion-item border mb-3 rounded shadow-sm">
+            <h2 class="accordion-header">
+                <button class="accordion-button @(phase3Active ? "" : "collapsed") rounded"
+                        type="button" data-bs-toggle="collapse" data-bs-target="#phase3">
+                    <span class="d-flex align-items-center gap-2">
+                        @if ((int)status > (int)ReturnItemStatus.SERVICING) { <i class="bi bi-check-circle-fill text-success"></i> }
+                        else if (phase3Active) { <i class="bi bi-wrench-adjustable text-info"></i> }
+                        else { <i class="bi bi-wrench-adjustable text-muted"></i> }
+                        <strong>Phase 3 — Servicing</strong>
+                    </span>
+                </button>
+            </h2>
+            <div id="phase3" class="accordion-collapse collapse @(phase3Active ? "show" : "")">
+                <div class="accordion-body">
+                    @if (!phase3Active && (int)status > (int)ReturnItemStatus.SERVICING)
+                    {
+                        <div class="alert alert-secondary py-2 mb-3">
+                            <i class="bi bi-lock me-1"></i>Servicing stage is complete and locked.
+                        </div>
+                    }
+                    else if (!phase3Active)
+                    {
+                        <div class="alert alert-secondary py-2">
+                            <i class="bi bi-lock me-1"></i>This stage is not yet active.
+                        </div>
+                    }
+
+                    <form asp-controller="ReturnProcessing"
+                          asp-action="HandleReturnSubmission"
+                          asp-route-itemId="@Model.GetReturnItemId()"
+                          method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="stage" value="SERVICING" />
+                        <fieldset @(!phase3Active ? "disabled" : "")>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">
+                                        <i class="bi bi-list-check me-1"></i>Service Type
+                                    </label>
+                                    <select class="form-select" name="serviceType">
+                                        <option value="">— Select —</option>
+                                        <option>Full Service</option>
+                                        <option>Minor Service</option>
+                                        <option>Safety Check</option>
+                                        <option>Performance Test</option>
+                                        <option>Calibration</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">
+                                        <i class="bi bi-person-badge me-1"></i>Technician Name
+                                    </label>
+                                    <input type="text" class="form-control" name="technicianName"
+                                           placeholder="Full name" />
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">
+                                        <i class="bi bi-ui-checks me-1"></i>Parts / Systems Checked
+                                    </label>
+                                    <textarea class="form-control" name="partsChecked" rows="2"
+                                              placeholder="e.g. motor, battery, controls..."></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">
+                                        <i class="bi bi-journal-text me-1"></i>Service Notes
+                                    </label>
+                                    <textarea class="form-control" name="serviceNotes" rows="3"
+                                              placeholder="Observations and actions taken..."></textarea>
+                                </div>
+                            </div>
+                            @if (phase3Active)
+                            {
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary"
+                                            onclick="return confirm('Submit servicing? Status will change to Cleaning.')">
+                                        <i class="bi bi-send me-1"></i>Submit Servicing
+                                    </button>
+                                    <button type="reset" class="btn btn-outline-secondary">
+                                        <i class="bi bi-x-circle me-1"></i>Clear
+                                    </button>
+                                </div>
+                            }
+                        </fieldset>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── PHASE 4 — CLEANING ───────────────────────────────-->
+        <div class="accordion-item border mb-3 rounded shadow-sm">
+            <h2 class="accordion-header">
+                <button class="accordion-button @(phase4Active || isLocked ? "" : "collapsed") rounded"
+                        type="button" data-bs-toggle="collapse" data-bs-target="#phase4">
+                    <span class="d-flex align-items-center gap-2">
+                        @if (isLocked)         { <i class="bi bi-check-circle-fill text-success"></i> }
+                        else if (phase4Active) { <i class="bi bi-droplet text-primary"></i> }
+                        else                   { <i class="bi bi-droplet text-muted"></i> }
+                        <strong>Phase 4 — Cleaning</strong>
+                        @if (isLocked) { <span class="badge bg-success ms-2">Complete</span> }
+                    </span>
+                </button>
+            </h2>
+            <div id="phase4" class="accordion-collapse collapse @(phase4Active || isLocked ? "show" : "")">
+                <div class="accordion-body">
+                    @if (isLocked)
+                    {
+                        <div class="alert alert-secondary py-2 mb-3">
+                            <i class="bi bi-lock me-1"></i>Cleaning stage is complete and locked.
+                        </div>
+                    }
+                    else if (!phase4Active)
+                    {
+                        <div class="alert alert-secondary py-2">
+                            <i class="bi bi-lock me-1"></i>This stage is not yet active.
+                        </div>
+                    }
+
+                    <form asp-controller="ReturnProcessing"
+                          asp-action="HandleReturnSubmission"
+                          asp-route-itemId="@Model.GetReturnItemId()"
+                          method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="stage" value="CLEANING" />
+                        <fieldset @(!phase4Active ? "disabled" : "")>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">
+                                        <i class="bi bi-droplet-half me-1"></i>Cleaning Method
+                                    </label>
+                                    <select class="form-select" name="cleaningMethod">
+                                        <option value="">— Select —</option>
+                                        <option>Wipe Down</option>
+                                        <option>Deep Clean</option>
+                                        <option>Steam Clean</option>
+                                        <option>Ultrasonic Clean</option>
+                                        <option>Dry Wipe</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">
+                                        <i class="bi bi-droplet-fill me-1"></i>Cleaning Agent Used
+                                    </label>
+                                    <input type="text" class="form-control" name="cleaningAgent"
+                                           placeholder="e.g. Isopropyl alcohol..." />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">
+                                        <i class="bi bi-person me-1"></i>Cleaned By
+                                    </label>
+                                    <input type="text" class="form-control" name="cleanedBy"
+                                           placeholder="Name" />
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">
+                                        <i class="bi bi-journal-text me-1"></i>Cleaning Notes
+                                    </label>
+                                    <textarea class="form-control" name="cleaningNotes" rows="3"
+                                              placeholder="Any observations..."></textarea>
+                                </div>
+                            </div>
+                            @if (phase4Active)
+                            {
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-success"
+                                            onclick="return confirm('Complete cleaning? Item will be returned to inventory. This is the final step.')">
+                                        <i class="bi bi-check-circle me-1"></i>Complete &amp; Return to Inventory
+                                    </button>
+                                    <button type="reset" class="btn btn-outline-secondary">
+                                        <i class="bi bi-x-circle me-1"></i>Clear
+                                    </button>
+                                </div>
+                            }
+                        </fieldset>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /accordion-->
+</div><!-- /container-->
+
+<!-- ═══════════════════════════════════════════════════════════════
+     DAMAGE REPORT MODAL (popup — appears when "Yes damage" is ticked)
+     ═══════════════════════════════════════════════════════════════-->
+<div class="modal fade" id="damageReportModal" tabindex="-1"
+     data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger bg-opacity-10">
+                <h5 class="modal-title text-danger fw-bold">
+                    <i class="bi bi-file-earmark-medical me-2"></i>
+                    Damage Report — Item #@Model.GetReturnItemId()
+                </h5>
+            </div>
+            <form asp-controller="ReturnProcessing"
+                  asp-action="HandleReturnSubmission"
+                  asp-route-itemId="@Model.GetReturnItemId()"
+                  method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="stage" value="SAVE_DAMAGE_REPORT" />
+                <div class="modal-body">
+                    <div class="alert alert-warning py-2 mb-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Fill in damage details below. Changes are <strong>saved when you close</strong> this report.
+                        Once the inspection is <strong>submitted</strong>, this report is locked.
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-card-text me-1"></i>
+                                Damage Description <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" name="description" rows="3" required
+                                      placeholder="Describe the damage found in detail...">@(damage?.GetDescription())</textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                Severity <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" name="severity" required>
+                                <option value="">— Select —</option>
+                                @if (damage != null && damage.GetSeverity() == "Minor")    { <option value="Minor" selected>Minor</option> }
+                                else                                                        { <option value="Minor">Minor</option> }
+                                @if (damage != null && damage.GetSeverity() == "Moderate") { <option value="Moderate" selected>Moderate</option> }
+                                else                                                        { <option value="Moderate">Moderate</option> }
+                                @if (damage != null && damage.GetSeverity() == "Severe")   { <option value="Severe" selected>Severe</option> }
+                                else                                                        { <option value="Severe">Severe</option> }
+                                @if (damage != null && damage.GetSeverity() == "Critical") { <option value="Critical" selected>Critical</option> }
+                                else                                                        { <option value="Critical">Critical</option> }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-currency-dollar me-1"></i>
+                                Estimated Repair Cost (SGD) <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" name="repairCost"
+                                       min="0" step="0.01" required
+                                       value="@(damage?.GetRepairCost()?.ToString("F2") ?? "0.00")" />
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-images me-1"></i>Damage Image URL(s)
+                            </label>
+                            <input type="text" class="form-control" name="images"
+                                   value="@(damage?.GetImages())"
+                                   placeholder="https://... (separate multiple with commas)" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-calendar-date me-1"></i>Date Reported
+                            </label>
+                            <input type="text" class="form-control"
+                                   value="@(damage?.GetReportDate().ToString("dd MMM yyyy HH:mm") ?? DateTime.UtcNow.ToString("dd MMM yyyy HH:mm"))"
+                                   readonly />
+                            <div class="form-text">Auto-set to current date/time on save.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary"
+                            onclick="clearDamageReport()">
+                        <i class="bi bi-x-circle me-1"></i>Clear Fields
+                    </button>
+                    <button type="submit" class="btn btn-danger"
+                            onclick="return validateDamageReport()">
+                        <i class="bi bi-save me-1"></i>Save &amp; Close Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function onDamageChange(radio) {
+    if (radio.value === 'true') {
+        new bootstrap.Modal(document.getElementById('damageReportModal')).show();
+    }
+}
+function clearDamageReport() {
+    document.querySelector('#damageReportModal [name="description"]').value = '';
+    document.querySelector('#damageReportModal [name="severity"]').value = '';
+    document.querySelector('#damageReportModal [name="repairCost"]').value = '0.00';
+    document.querySelector('#damageReportModal [name="images"]').value = '';
+}
+function validateDamageReport() {
+    var desc = document.querySelector('#damageReportModal [name="description"]').value.trim();
+    var sev  = document.querySelector('#damageReportModal [name="severity"]').value;
+    if (!desc || !sev) {
+        alert('Please fill in Damage Description and Severity before saving.');
+        return false;
+    }
+    return true;
+}
+document.addEventListener('DOMContentLoaded', function () {
+    @if (hasDamage) {
+        <text>var el = document.getElementById('damageYes'); if (el) el.checked = true;</text>
+    }
+});
+</script>
+}
