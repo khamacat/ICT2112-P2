@@ -163,7 +163,7 @@ builder.Services.AddScoped<ILoanItemMapper, LoanItemMapper>();
 builder.Services.AddScoped<ILoanListMapper, LoanListMapper>();
 
 // Domain - Control Classes
-// Inventory
+//inventory
 builder.Services.AddScoped<InventoryManagementControl>();
 builder.Services.AddScoped<iInventoryCRUDControl>(sp => sp.GetRequiredService<InventoryManagementControl>());
 builder.Services.AddScoped<iInventoryQueryControl>(sp => sp.GetRequiredService<InventoryManagementControl>());
@@ -171,19 +171,35 @@ builder.Services.AddScoped<iInventoryStatusControl>(sp => sp.GetRequiredService<
 builder.Services.AddScoped<iStockSubject>(sp => sp.GetRequiredService<InventoryManagementControl>());
 builder.Services.AddScoped<iAlertControl, LowStockAlertControl>();
 
-//Product
+//product
 builder.Services.AddScoped<ProductCatalogControl>();
-builder.Services.AddScoped<IProductCRUD>(sp => sp.GetRequiredService<ProductCatalogControl>());
 builder.Services.AddScoped<IProductQuery>(sp => sp.GetRequiredService<ProductCatalogControl>());
+builder.Services.AddScoped<IProductCRUD>(sp => sp.GetRequiredService<ProductCatalogControl>());
 builder.Services.AddScoped<IProductBulkCommand>(sp => sp.GetRequiredService<ProductCatalogControl>());
 
-// Clearance
+//clearance
 builder.Services.AddScoped<ClearanceBatchControl>();
 builder.Services.AddScoped<iClearanceBatchControl>(sp => sp.GetRequiredService<ClearanceBatchControl>());
 builder.Services.AddScoped<iClearanceBatchQuery>(sp => sp.GetRequiredService<ClearanceBatchControl>());
+
 builder.Services.AddScoped<ClearanceItemControl>();
 builder.Services.AddScoped<iClearanceItemControl>(sp => sp.GetRequiredService<ClearanceItemControl>());
 builder.Services.AddScoped<iClearanceItemQuery>(sp => sp.GetRequiredService<ClearanceItemControl>());
+
+
+//return
+builder.Services.AddScoped<ReturnOrderControl>();
+builder.Services.AddScoped<iReturnOrderQuery>(sp => sp.GetRequiredService<ReturnOrderControl>());
+builder.Services.AddScoped<iReturnOrderCRUD>(sp => sp.GetRequiredService<ReturnOrderControl>());
+builder.Services.AddScoped<iReturnProcess>(sp => sp.GetRequiredService<ReturnOrderControl>());
+ 
+builder.Services.AddScoped<ReturnItemControl>();
+builder.Services.AddScoped<iReturnItemQuery>(sp => sp.GetRequiredService<ReturnItemControl>());
+builder.Services.AddScoped<iReturnItemCRUD>(sp => sp.GetRequiredService<ReturnItemControl>());
+ 
+builder.Services.AddScoped<DamageReportControl>();
+builder.Services.AddScoped<iDamageReportQuery>(sp => sp.GetRequiredService<DamageReportControl>());
+builder.Services.AddScoped<iDamageReportCRUD>(sp => sp.GetRequiredService<DamageReportControl>());
 
 // Presentation/Controllers
 
