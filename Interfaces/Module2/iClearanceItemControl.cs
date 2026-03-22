@@ -1,6 +1,6 @@
 using ProRental.Domain.Entities;
 
-namespace ProRental.Interfaces.Module2;
+namespace ProRental.Interfaces.Domain;
 
 public interface iClearanceItemControl
 {

@@ -8,9 +8,7 @@ using ProRental.Domain.Entities;
 // uncomment when ready to code
 using ProRental.Data;
 using ProRental.Domain.Controls;
-using ProRental.Domain.Module2.P23.Controls;
 using ProRental.Interfaces.Domain;
-using ProRental.Interfaces.Module2;
 using ProRental.Interfaces.Data;
 using ProRental.Controllers;
 

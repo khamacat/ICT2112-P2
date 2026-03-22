@@ -2,9 +2,8 @@ using ProRental.Domain.Entities;
 using ProRental.Domain.Enums;
 using ProRental.Interfaces.Data;
 using ProRental.Interfaces.Domain;
-using ProRental.Interfaces.Module2;
 
-namespace ProRental.Domain.Module2.P23.Controls;
+namespace ProRental.Domain.Controls;
 
 public class ClearanceItemControl : iClearanceItemQuery, iClearanceItemControl
 {

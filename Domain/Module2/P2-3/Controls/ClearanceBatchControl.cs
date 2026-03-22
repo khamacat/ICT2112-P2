@@ -1,9 +1,9 @@
 using ProRental.Domain.Entities;
 using ProRental.Domain.Enums;
 using ProRental.Interfaces.Data;
-using ProRental.Interfaces.Module2;
+using ProRental.Interfaces.Domain;
 
-namespace ProRental.Domain.Module2.P23.Controls;
+namespace ProRental.Domain.Controls;
 
 public class ClearanceBatchControl : iClearanceBatchQuery, iClearanceBatchControl
 {

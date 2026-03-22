@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using ProRental.Domain.Entities;
 using ProRental.Domain.Enums;
 using ProRental.Interfaces.Domain;
-using ProRental.Interfaces.Module2;
 
 namespace ProRental.Controllers;
 
