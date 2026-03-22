@@ -27,12 +27,12 @@ public class StaffInventoryController : Controller
         try
         {
             var items = _queryControl.GetAllInventoryItems();
-            return View("~/Views/Module2/StaffInventory.cshtml", items);
+            return View("~/Views/Module2/Inventory/StaffInventory.cshtml", items);
         }
         catch
         {
             TempData["Message"] = "Unable to load inventory items. Please verify database access permissions for the application user.";
-            return View("~/Views/Module2/StaffInventory.cshtml", new List<Inventoryitem>());
+            return View("~/Views/Module2/Inventory/StaffInventory.cshtml", new List<Inventoryitem>());
         }
     }
 
@@ -46,7 +46,7 @@ public class StaffInventoryController : Controller
             return NotFound();
         }
 
-        return View("~/Views/Module2/StaffInventoryItem.cshtml", item);
+        return View("~/Views/Module2/Inventory/StaffInventoryItem.cshtml", item);
     }
 
     [HttpPost("HandleBulkOperation")]
@@ -116,24 +116,14 @@ public class StaffInventoryController : Controller
         {
             var items = _queryControl.SearchInventoryItems(query ?? "");
             ViewData["Query"] = query;
-            return View("~/Views/Module2/StaffInventory.cshtml", items);
+            return View("~/Views/Module2/Inventory/StaffInventory.cshtml", items);
         }
         catch
         {
             TempData["Message"] = "Unable to search inventory items. Please verify database access permissions for the application user.";
             ViewData["Query"] = query;
-            return View("~/Views/Module2/StaffInventory.cshtml", new List<Inventoryitem>());
+            return View("~/Views/Module2/Inventory/StaffInventory.cshtml", new List<Inventoryitem>());
         }
-    }
-
-    [HttpGet("CreateInventoryItem")]
-    public IActionResult CreateInventoryItem()
-    {
-        var inventoryItem = new Inventoryitem();
-        inventoryItem.SetCreatedDate(DateTime.UtcNow);
-        inventoryItem.SetUpdatedDate(DateTime.UtcNow);
-        
-        return PartialView("~/Views/Module2/Partials/CreateInventoryItemForm.cshtml", inventoryItem);
     }
 
     [HttpPost("CreateInventoryItem")]
@@ -166,17 +156,42 @@ public class StaffInventoryController : Controller
         }
     }
 
-    [HttpGet("UpdateInventoryItem/{inventoryItemId:int}")]
-    public IActionResult UpdateInventoryItem(int inventoryItemId)
+    [HttpPost("CreateBulkInventoryItemsPost")]
+    [ValidateAntiForgeryToken]
+    public IActionResult CreateBulkInventoryItemsPost(int productId, int quantity)
     {
-        var item = _crudControl.GetInventoryItemById(inventoryItemId);
-
-        if (item is null)
+        try
         {
-            return NotFound();
-        }
+            if (productId <= 0)
+            {
+                TempData["Message"] = "Product ID must be greater than 0.";
+                return RedirectToAction(nameof(DisplayInventoryList));
+            }
 
-        return PartialView("~/Views/Module2/Partials/UpdateInventoryItemForm.cshtml", item);
+            if (quantity <= 0 || quantity > 100)
+            {
+                TempData["Message"] = "Quantity must be between 1 and 100.";
+                return RedirectToAction(nameof(DisplayInventoryList));
+            }
+
+            int createdCount = _crudControl.CreateBulkInventoryItems(productId, quantity);
+
+            if (createdCount > 0)
+            {
+                TempData["Message"] = $"Successfully created {createdCount} inventory item(s) with RESERVED status and temporary serial numbers. Click 'View' on each item to replace the temporary serial number with the actual one.";
+            }
+            else
+            {
+                TempData["Message"] = $"Failed to create inventory items. Please check console output for details. Common causes: Product ID {productId} may not exist, or database connectivity issues.";
+            }
+
+            return RedirectToAction(nameof(DisplayInventoryList));
+        }
+        catch (Exception ex)
+        {
+            TempData["Message"] = $"An error occurred: {ex.Message}";
+            return RedirectToAction(nameof(DisplayInventoryList));
+        }
     }
 
     [HttpPost("UpdateInventoryItem")]
@@ -217,24 +232,28 @@ public class StaffInventoryController : Controller
         }
     }
 
-    [HttpPost("DeleteInventoryItem/{inventoryItemId:int}")]
+    [HttpPost("DeleteInventoryItem")]
     [ValidateAntiForgeryToken]
     public IActionResult DeleteInventoryItem(int inventoryItemId)
     {
         try
         {
+            Console.WriteLine($"DeleteInventoryItem POST: Attempting to delete item {inventoryItemId}");
             if (_crudControl.DeleteInventoryItem(inventoryItemId))
             {
                 TempData["Message"] = "Inventory item deleted successfully.";
+                Console.WriteLine($"DeleteInventoryItem POST: Item {inventoryItemId} deletion succeeded");
             }
             else
             {
                 TempData["Message"] = "Inventory item not found or could not be deleted.";
+                Console.WriteLine($"DeleteInventoryItem POST: Item {inventoryItemId} deletion failed (returned false)");
             }
         }
         catch (Exception ex)
         {
             TempData["Message"] = $"An error occurred: {ex.Message}";
+            Console.WriteLine($"DeleteInventoryItem POST: Exception - {ex.GetType().Name}: {ex.Message}");
         }
 
         return RedirectToAction(nameof(DisplayInventoryList));

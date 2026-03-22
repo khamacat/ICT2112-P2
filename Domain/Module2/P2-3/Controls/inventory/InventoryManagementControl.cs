@@ -43,6 +43,67 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
         }
     }
 
+    public int CreateBulkInventoryItems(int productId, int quantity)
+    {
+        if (productId <= 0 || quantity <= 0 || quantity > 100)
+        {
+            Console.WriteLine($"CreateBulkInventoryItems: Validation failed - ProductId={productId}, Quantity={quantity}");
+            return 0;
+        }
+
+        int createdCount = 0;
+
+        try
+        {
+            Console.WriteLine($"CreateBulkInventoryItems: Starting creation of {quantity} items for ProductId={productId}");
+            
+            for (int i = 0; i < quantity; i++)
+            {
+                var inventoryItem = new Inventoryitem();
+                inventoryItem.SetProductId(productId);
+                // Use temp serial number with UUID to ensure uniqueness for bulk items
+                inventoryItem.SetSerialNumber($"TEMP-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}");
+                inventoryItem.SetStatus(InventoryStatus.RESERVED);  // Mark as reserved/incomplete
+                inventoryItem.SetCreatedDate(DateTime.UtcNow);
+                inventoryItem.SetUpdatedDate(DateTime.UtcNow);
+                inventoryItem.SetExpiryDate(null);
+
+                try
+                {
+                    _inventoryItemMapper.Insert(inventoryItem);
+                    createdCount++;
+                    Console.WriteLine($"  Item {i + 1}/{quantity} created successfully with serial: {inventoryItem.GetSerialNumber()}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"  Item {i + 1}/{quantity} FAILED: {ex.GetType().Name} - {ex.Message}");
+                    if (ex.InnerException != null)
+                    {
+                        Console.WriteLine($"    Inner Exception: {ex.InnerException.Message}");
+                    }
+                }
+            }
+
+            Console.WriteLine($"CreateBulkInventoryItems: Completed - {createdCount}/{quantity} items created");
+
+            if (createdCount > 0)
+            {
+                NotifyObservers(productId);
+            }
+
+            return createdCount;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"CreateBulkInventoryItems: CRITICAL ERROR - {ex.GetType().Name}: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"  Inner Exception: {ex.InnerException.Message}");
+            }
+            return createdCount;
+        }
+    }
+
     public Inventoryitem? GetInventoryItemById(int inventoryItemId)
     {
         return _inventoryItemMapper.FindById(inventoryItemId);
@@ -84,19 +145,28 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
         var existingItem = _inventoryItemMapper.FindById(inventoryItemId);
         if (existingItem is null)
         {
+            Console.WriteLine($"DeleteInventoryItem: Item {inventoryItemId} not found");
             return false;
         }
 
         var productId = existingItem.GetProductId();
+        var serialNumber = existingItem.GetSerialNumber();
 
         try
         {
+            Console.WriteLine($"DeleteInventoryItem: Deleting item {inventoryItemId} (ProductId={productId}, Serial={serialNumber}, Status={existingItem.GetStatus()})");
             _inventoryItemMapper.Delete(existingItem);
             NotifyObservers(productId);
+            Console.WriteLine($"DeleteInventoryItem: Item {inventoryItemId} deleted successfully");
             return true;
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine($"DeleteInventoryItem: FAILED to delete item {inventoryItemId}: {ex.GetType().Name} - {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"  Inner Exception: {ex.InnerException.Message}");
+            }
             return false;
         }
     }
@@ -164,7 +234,21 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
 
     private bool CheckInventoryConflicts(Inventoryitem inventoryItem)
     {
-        if (inventoryItem is null || string.IsNullOrWhiteSpace(inventoryItem.GetSerialNumber()))
+        if (inventoryItem is null)
+        {
+            return false;
+        }
+
+        var serialNumber = inventoryItem.GetSerialNumber();
+        
+        // RESERVED items with empty serial numbers bypass duplicate check
+        if (inventoryItem.GetStatus() == InventoryStatus.RESERVED && string.IsNullOrWhiteSpace(serialNumber))
+        {
+            return true;
+        }
+
+        // For other items, serial number is required
+        if (string.IsNullOrWhiteSpace(serialNumber))
         {
             return false;
         }
@@ -195,7 +279,9 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
 
     public List<Inventoryitem> GetAllInventoryItems()
     {
-        return _inventoryItemMapper.FindAll()?.ToList() ?? new List<Inventoryitem>();
+        var items = _inventoryItemMapper.FindAll()?.ToList() ?? new List<Inventoryitem>();
+        // Sort to show RESERVED items at top
+        return items.OrderByDescending(i => i.GetStatus() == InventoryStatus.RESERVED).ToList();
     }
 
     public List<Inventoryitem> SearchInventoryItems(string query)
@@ -203,7 +289,8 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
         var allItems = _inventoryItemMapper.FindAll();
         if (allItems is null || string.IsNullOrWhiteSpace(query))
         {
-            return allItems?.ToList() ?? new List<Inventoryitem>();
+            var items = allItems?.ToList() ?? new List<Inventoryitem>();
+            return items.OrderByDescending(i => i.GetStatus() == InventoryStatus.RESERVED).ToList();
         }
 
         var normalized = query.Trim().ToLower();
@@ -213,6 +300,7 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
             item.GetSerialNumber().ToLower().Contains(normalized) ||
             (hasNumericQuery && item.GetProductId() == numericQuery) ||
             (hasNumericQuery && item.GetInventoryItemId() == numericQuery))
+        .OrderByDescending(i => i.GetStatus() == InventoryStatus.RESERVED)
         .ToList();
 
         return results;
