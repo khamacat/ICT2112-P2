@@ -1,0 +1,63 @@
+@model IEnumerable<ProRental.Domain.Entities.Category>
+
+@{
+    ViewData["Title"] = "Category Catalog";
+}
+
+<div class="container mt-4">
+    <h1 class="display-6 mb-4">Category Management</h1>
+
+    <div class="card shadow-sm mb-5">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Create New Category</h5>
+        </div>
+        <div class="card-body">
+            @* Note: asp-controller must match the name of your Controller class (CategoryController) *@
+            <form asp-controller="CategoryCatalog" asp-action="HandleCategoryCRUD" method="post">
+                <div class="form-group mb-3">
+                    <label class="form-label font-weight-bold">Category Name</label>
+                    <input type="text" name="categoryName" class="form-control" placeholder="e.g. Tripod, Camera, Lens" required />
+                </div>
+                <button type="submit" class="btn btn-success px-4">Save Category</button>
+            </form>
+        </div>
+    </div>
+
+    <hr />
+
+    <h2 class="mt-4">Category List</h2>
+    <div class="table-responsive">
+        <table class="table table-hover mt-3 shadow-sm">
+            <thead class="thead-light">
+                <tr>
+                    <th style="width: 75%">Category Name</th>
+                    <th class="text-end">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="align-middle">@item.GetName()</td>
+                            <td class="text-end align-middle">
+                                <span class="badge @(item.GetIsActive() ? "bg-success" : "bg-secondary")">
+                                    @(item.GetIsActive() ? "Active" : "Inactive")
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="2" class="text-center text-muted py-4">
+                            No categories found. Start by creating one above!
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

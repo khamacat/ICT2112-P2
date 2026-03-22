@@ -1,9 +1,7 @@
 using ProRental.Data.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
 using ProRental.Domain.Enums;
-using ProRental.Domain.Entities;
 
 // uncomment when ready to code
 using ProRental.Data;
@@ -163,6 +161,11 @@ builder.Services.AddScoped<ILoanItemMapper, LoanItemMapper>();
 builder.Services.AddScoped<ILoanListMapper, LoanListMapper>();
 
 // Domain - Control Classes
+// category
+builder.Services.AddScoped<CategoryControl>();
+builder.Services.AddScoped<ICategoryCRUD>(sp => sp.GetRequiredService<CategoryControl>());
+builder.Services.AddScoped<ICategoryQuery>(sp => sp.GetRequiredService<CategoryControl>());
+
 //inventory
 builder.Services.AddScoped<InventoryManagementControl>();
 builder.Services.AddScoped<iInventoryCRUDControl>(sp => sp.GetRequiredService<InventoryManagementControl>());
