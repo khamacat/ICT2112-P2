@@ -5,18 +5,11 @@ using ProRental.Interfaces;
 
 namespace ProRental.Data.Gateways;
 
-/// <summary>
-/// Data mapper for the ReportExport table.
-/// Implements IReportExportMapper.
-/// </summary>
 public class ReportMapper : IReportExportMapper
 {
     private readonly AppDbContext _db;
 
-    public ReportMapper(AppDbContext db)
-    {
-        _db = db;
-    }
+    public ReportMapper(AppDbContext db) => _db = db;
 
     public async Task<bool> InsertAsync(Reportexport report)
     {
@@ -28,8 +21,9 @@ public class ReportMapper : IReportExportMapper
         => await _db.Reportexports.FindAsync(id);
 
     public async Task<Reportexport?> FindByTitleAsync(string title)
-        => await _db.Reportexports
-            .FirstOrDefaultAsync(r => r.Title == title);
+        // Load into memory — EF cannot translate private property access
+        => (await _db.Reportexports.ToListAsync())
+            .FirstOrDefault(r => r.GetTitle() == title);
 
     public async Task<bool> UpdateAsync(Reportexport report)
     {

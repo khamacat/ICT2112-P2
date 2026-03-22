@@ -28,38 +28,33 @@ public class AnalyticsController : Controller
     {
         var analytics = await _analyticsControl.GetAnalyticsByDateRangeAsync(
             DateTime.UtcNow.AddMonths(-1), DateTime.UtcNow);
-        return View(analytics);
+        return View("~/Views/Module2/Analytics/Index.cshtml", analytics);
     }
 
-    /// <summary>Display a single analytics record by ID.</summary>
     public async Task<IActionResult> Details(int id)
     {
         var analytics = await _analyticsControl.GetAnalyticsAsync(id);
         if (analytics is null) return NotFound();
-        return View(analytics);
+        return View("~/Views/Module2/Analytics/Details.cshtml", analytics);
     }
 
-    /// <summary>Filter analytics by date range.</summary>
     public async Task<IActionResult> ByDateRange(DateTime start, DateTime end)
     {
         var analytics = await _analyticsControl.GetAnalyticsByDateRangeAsync(start, end);
-        return View("Index", analytics);
+        return View("~/Views/Module2/Analytics/Index.cshtml", analytics);
     }
 
-    /// <summary>Filter analytics by supplier name.</summary>
     public async Task<IActionResult> BySupplier(string supplier)
     {
         var analytics = await _analyticsControl.GetAnalyticsBySupplierAsync(supplier);
-        return View("Index", analytics);
+        return View("~/Views/Module2/Analytics/Index.cshtml", analytics);
     }
 
-    /// <summary>Filter analytics by product name.</summary>
     public async Task<IActionResult> ByProduct(string product)
     {
         var analytics = await _analyticsControl.GetAnalyticsByProductAsync(product);
-        return View("Index", analytics);
+        return View("~/Views/Module2/Analytics/Index.cshtml", analytics);
     }
-
     // ── Report Views ─────────────────────────────────────────────────────────────
 
     /// <summary>Display a report export record.</summary>
@@ -67,16 +62,14 @@ public class AnalyticsController : Controller
     {
         var report = await _reportControl.GetReportAsync(id);
         if (report is null) return NotFound();
-        return View(report);
+        return View("~/Views/Module2/Analytics/Report.cshtml", report);
     }
 
-    /// <summary>Render report — returns a formatted string representation.</summary>
     public async Task<IActionResult> RenderReport(int id, string format)
     {
         var report = await _reportControl.GetReportAsync(id);
         if (report is null) return NotFound();
-        // Rendered output passed to view for display
-        return View("ReportRender", report);
+        return View("~/Views/Module2/Analytics/Report.cshtml", report);
     }
 
     /// <summary>Export report as a file download.</summary>
@@ -85,8 +78,8 @@ public class AnalyticsController : Controller
         var report = await _reportControl.GetReportAsync(id);
         if (report is null) return NotFound();
 
-        // File served from stored URL — extend with actual file generation as needed
-        return Redirect(report.Url ?? "/");
+        // File served from stored URL via public partial class accessor
+        return Redirect(report.GetFileURL() ?? "/");
     }
 
     // ── Report CRUD ──────────────────────────────────────────────────────────────

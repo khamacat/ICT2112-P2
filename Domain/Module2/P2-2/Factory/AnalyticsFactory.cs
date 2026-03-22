@@ -6,14 +6,11 @@ namespace ProRental.Domain.Control;
 
 /// <summary>
 /// Factory Pattern — centralises creation of Analytics product types.
-/// AnalyticsControl calls this factory instead of instantiating concrete types directly,
-/// decoupling the control from DailyLog, SupplierTrend, and ProductTrend.
+/// All three types (DailyLog, SupplierTrend, ProductTrend) are the same
+/// Analytic entity differentiated by AnalyticsType enum.
 /// </summary>
 public class AnalyticsFactory
 {
-    /// <summary>
-    /// Creates a DailyLog analytics record (base daily transactional data).
-    /// </summary>
     public IAnalytics CreateDailyLog()
     {
         var entity = new Analytic();
@@ -21,52 +18,43 @@ public class AnalyticsFactory
         return new DailyLogAnalytics(entity);
     }
 
-    /// <summary>
-    /// Creates a SupplierTrend analytics record (derived supplier reliability metrics).
-    /// </summary>
     public IAnalytics CreateSupplierTrend()
     {
-        var entity = new SupplierTrend();
+        var entity = new Analytic();
         entity.UpdateType(AnalyticsType.SUPTREND);
         return new SupplierTrendAnalytics(entity);
     }
 
-    /// <summary>
-    /// Creates a ProductTrend analytics record (derived product turnover metrics).
-    /// </summary>
     public IAnalytics CreateProductTrend()
     {
-        var entity = new ProductTrend();
+        var entity = new Analytic();
         entity.UpdateType(AnalyticsType.PRODTREND);
         return new ProductTrendAnalytics(entity);
     }
 }
 
-// ── Wrappers — adapt concrete entities to IAnalytics ──────────────────────────
+// ── Wrappers — all wrap Analytic, differentiated by type ─────────────────────
 
-/// <summary>Adapts Analytic (DailyLog) to IAnalytics interface.</summary>
 internal class DailyLogAnalytics : IAnalytics
 {
     private readonly Analytic _entity;
     public DailyLogAnalytics(Analytic entity) => _entity = entity;
-    public string GetType() => "DAILY";
-    public int GetID() => _entity.Analyticsid;
+    public string GetAnalyticsType() => _entity.GetAnalyticsType();
+    public int GetID()               => _entity.GetID();
 }
 
-/// <summary>Adapts SupplierTrend to IAnalytics interface.</summary>
 internal class SupplierTrendAnalytics : IAnalytics
 {
-    private readonly SupplierTrend _entity;
-    public SupplierTrendAnalytics(SupplierTrend entity) => _entity = entity;
-    public string GetType() => "SUPTREND";
-    public int GetID() => _entity.Analyticsid;
+    private readonly Analytic _entity;                        // Analytic, not SupplierTrend
+    public SupplierTrendAnalytics(Analytic entity) => _entity = entity;
+    public string GetAnalyticsType() => _entity.GetAnalyticsType();
+    public int GetID()               => _entity.GetID();
 }
 
-/// <summary>Adapts ProductTrend to IAnalytics interface.</summary>
 internal class ProductTrendAnalytics : IAnalytics
 {
-    private readonly ProductTrend _entity;
-    public ProductTrendAnalytics(ProductTrend entity) => _entity = entity;
-    public string GetType() => "PRODTREND";
-    public int GetID() => _entity.Analyticsid;
+    private readonly Analytic _entity;                        // Analytic, not ProductTrend
+    public ProductTrendAnalytics(Analytic entity) => _entity = entity;
+    public string GetAnalyticsType() => _entity.GetAnalyticsType();
+    public int GetID()               => _entity.GetID();
 }

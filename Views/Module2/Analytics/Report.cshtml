@@ -1,11 +1,11 @@
 @model ProRental.Domain.Entities.Reportexport
 @{
-    ViewData["Title"] = "Report — " + Model.Title;
+    ViewData["Title"] = "Report — " + Model.GetTitle();
 }
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>@Model.Title</h2>
+        <h2>@Model.GetTitle()</h2>
         <a asp-action="Index" class="btn btn-outline-secondary">← Back</a>
     </div>
 
@@ -13,26 +13,23 @@
         <div class="card-body">
             <dl class="row">
                 <dt class="col-sm-3">Report ID</dt>
-                <dd class="col-sm-9">@Model.Reportid</dd>
-
+                <dd class="col-sm-9">@Model.GetReportID()</dd>
                 <dt class="col-sm-3">Linked Analytics ID</dt>
                 <dd class="col-sm-9">
-                    <a asp-action="Details" asp-route-id="@Model.Refanalyticsid">
-                        #@Model.Refanalyticsid
+                    <a asp-action="Details" asp-route-id="@Model.GetRefAnalyticsID()">
+                        #@Model.GetRefAnalyticsID()
                     </a>
                 </dd>
-
                 <dt class="col-sm-3">Visual Type</dt>
-                <dd class="col-sm-9">@Model.Visualtype</dd>
-
+                <dd class="col-sm-9">@Model.GetVisualType()</dd>
                 <dt class="col-sm-3">File Format</dt>
-                <dd class="col-sm-9">@Model.Fileformat</dd>
+                <dd class="col-sm-9">@Model.GetFileFormat()</dd>
             </dl>
         </div>
         <div class="card-footer d-flex gap-2">
-            <a asp-action="ExportReport" asp-route-id="@Model.Reportid"
-               asp-route-format="@Model.Fileformat" class="btn btn-success">
-                ⬇ Export @Model.Fileformat
+            <a asp-action="ExportReport" asp-route-id="@Model.GetReportID()"
+               asp-route-format="@Model.GetFileFormat()" class="btn btn-success">
+                ⬇ Export @Model.GetFileFormat()
             </a>
             <button class="btn btn-outline-danger"
                     onclick="document.getElementById('deleteForm').submit()">
@@ -41,34 +38,33 @@
         </div>
     </div>
 
-    <!-- Update Form -->
     <div class="card">
         <div class="card-header">Edit Report</div>
         <div class="card-body">
             <form method="post" asp-action="UpdateReport">
-                <input type="hidden" name="id" value="@Model.Reportid" />
+                <input type="hidden" name="id" value="@Model.GetReportID()" />
                 <div class="mb-3">
                     <label class="form-label">Title</label>
-                    <input type="text" name="title" class="form-control" value="@Model.Title" required />
+                    <input type="text" name="title" class="form-control" value="@Model.GetTitle()" required />
                 </div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Visual Type</label>
                         <select name="visualType" class="form-select">
-                            <option value="Table">Table</option>
-                            <option value="Bar">Bar</option>
-                            <option value="Line">Line</option>
-                            <option value="Pie">Pie</option>
-                            <option value="Column">Column</option>
-                            <option value="Area">Area</option>
+                            <option value="TABLE">Table</option>
+                            <option value="BAR">Bar</option>
+                            <option value="LINE">Line</option>
+                            <option value="PIE">Pie</option>
+                            <option value="COLUMN">Column</option>
+                            <option value="AREA">Area</option>
                         </select>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">File Format</label>
                         <select name="fileFormat" class="form-select">
-                            <option value="Pdf">PDF</option>
-                            <option value="Xlsx">XLSX</option>
-                            <option value="Csv">CSV</option>
+                            <option value="PDF">PDF</option>
+                            <option value="XLSX">XLSX</option>
+                            <option value="CSV">CSV</option>
                         </select>
                     </div>
                 </div>
@@ -78,7 +74,6 @@
     </div>
 </div>
 
-<!-- Hidden delete form -->
 <form id="deleteForm" method="post" asp-action="DeleteReport">
-    <input type="hidden" name="id" value="@Model.Reportid" />
+    <input type="hidden" name="id" value="@Model.GetReportID()" />
 </form>

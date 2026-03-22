@@ -5,69 +5,63 @@
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Analytics #@Model.Analyticsid</h2>
+        <h2>Analytics #@Model.GetID()</h2>
         <a asp-action="Index" class="btn btn-outline-secondary">← Back</a>
     </div>
 
     <div class="card mb-4">
         <div class="card-header">
-            <span class="badge @(Model.Analyticstype?.ToString() == "DAILY" ? "bg-info" :
-                                  Model.Analyticstype?.ToString() == "SUPTREND" ? "bg-warning text-dark" :
+            <span class="badge @(Model.GetAnalyticsType() == "DAILY" ? "bg-info" :
+                                  Model.GetAnalyticsType() == "SUPTREND" ? "bg-warning text-dark" :
                                   "bg-success") fs-6">
-                @Model.Analyticstype
+                @Model.GetAnalyticsType()
             </span>
         </div>
         <div class="card-body">
             <dl class="row">
                 <dt class="col-sm-3">Date Range</dt>
                 <dd class="col-sm-9">
-                    @Model.Startdate?.ToString("yyyy-MM-dd") — @Model.Enddate?.ToString("yyyy-MM-dd")
+                    @Model.GetStartDate()?.ToString("yyyy-MM-dd") — @Model.GetEndDate()?.ToString("yyyy-MM-dd")
                 </dd>
-
                 <dt class="col-sm-3">Loan Amount</dt>
-                <dd class="col-sm-9">@Model.Loanamt</dd>
-
+                <dd class="col-sm-9">@Model.GetLoanAmt()</dd>
                 <dt class="col-sm-3">Return Amount</dt>
-                <dd class="col-sm-9">@Model.Returnamt</dd>
-
+                <dd class="col-sm-9">@Model.GetReturnAmt()</dd>
                 <dt class="col-sm-3">Reference</dt>
-                <dd class="col-sm-9">@Model.Refprimaryname (@Model.Refprimaryid)</dd>
-
+                <dd class="col-sm-9">@Model.GetRefPrimaryName() (@Model.GetRefPrimaryID())</dd>
                 <dt class="col-sm-3">Reference Value</dt>
-                <dd class="col-sm-9">@Model.Refvalue?.ToString("C")</dd>
+                <dd class="col-sm-9">@Model.GetRefValue()?.ToString("C")</dd>
             </dl>
         </div>
     </div>
 
-    <!-- Generate Report from this Analytics -->
     <div class="card">
         <div class="card-header">Generate Report</div>
         <div class="card-body">
             <form method="post" asp-action="GenerateReport">
-                <input type="hidden" name="refAnalyticsID" value="@Model.Analyticsid" />
+                <input type="hidden" name="refAnalyticsID" value="@Model.GetID()" />
                 <div class="mb-3">
                     <label class="form-label">Report Title</label>
-                    <input type="text" name="title" class="form-control" required
-                           placeholder="e.g. March Supplier Trend Report" />
+                    <input type="text" name="title" class="form-control" required />
                 </div>
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Visual Type</label>
                         <select name="visualType" class="form-select">
-                            <option value="Table">Table</option>
-                            <option value="Bar">Bar</option>
-                            <option value="Line">Line</option>
-                            <option value="Pie">Pie</option>
-                            <option value="Column">Column</option>
-                            <option value="Area">Area</option>
+                            <option value="TABLE">Table</option>
+                            <option value="BAR">Bar</option>
+                            <option value="LINE">Line</option>
+                            <option value="PIE">Pie</option>
+                            <option value="COLUMN">Column</option>
+                            <option value="AREA">Area</option>
                         </select>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">File Format</label>
                         <select name="fileFormat" class="form-select">
-                            <option value="Pdf">PDF</option>
-                            <option value="Xlsx">XLSX</option>
-                            <option value="Csv">CSV</option>
+                            <option value="PDF">PDF</option>
+                            <option value="XLSX">XLSX</option>
+                            <option value="CSV">CSV</option>
                         </select>
                     </div>
                 </div>

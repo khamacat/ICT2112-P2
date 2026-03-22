@@ -9,12 +9,12 @@ using ProRental.Data.Gateways;
 using ProRental.Interfaces;
 
 // uncomment when ready to code
-// using ProRental.Data;
-// using ProRental.Domain.Controls;
-// using ProRental.Domain.Entities;
-// using ProRental.Interfaces.Domain;
-// using ProRental.Interfaces.Data;
-// using ProRental.Controllers;
+using ProRental.Data;
+//using ProRental.Domain.Controls;
+//using ProRental.Domain.Entities;
+//using ProRental.Interfaces.Domain;
+//using ProRental.Interfaces.Data;
+using ProRental.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 

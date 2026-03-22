@@ -1,8 +1,10 @@
 namespace ProRental.Domain.Entities;
 using ProRental.Domain.Enums;
-public partial class SupplierTrend
+public partial class Analytic  // NOT a separate class. Variant of Analytic
 {
-    private AnalyticsType _type;
-    private AnalyticsType type { get => _type; set => _type = value; }
-    public void UpdateType(AnalyticsType newValue) => _type = newValue;
+    // Supplier-specific helpers — reads from RefPrimaryID/Name + RefValue
+    // which the Analytics table already has
+    public string? GetSupplierName()     => Refprimaryname;
+    public int? GetSupplierID()          => Refprimaryid;
+    public float? GetSupReliability()    => (float?)Refvalue;
 }

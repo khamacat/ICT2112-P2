@@ -66,11 +66,11 @@ public partial class AppDbContext
                   .HasColumnName("status").HasColumnType("alert_status");
         });
 
-        modelBuilder.Entity<Analytic>(entity =>
-        {
-            entity.Property("type").HasField("_type").UsePropertyAccessMode(PropertyAccessMode.Field)
-                  .HasColumnName("type").HasColumnType("analytics_type_enum");
-        });
+      //   modelBuilder.Entity<Analytic>(entity =>
+      //   {
+      //       entity.Property("type").HasField("_type").UsePropertyAccessMode(PropertyAccessMode.Field)
+      //             .HasColumnName("type").HasColumnType("analytics_type_enum");
+      //   });
 
         modelBuilder.Entity<Cart>(entity =>
         {
@@ -198,14 +198,14 @@ public partial class AppDbContext
                   .HasColumnName("status").HasColumnType("replenishment_status_enum");
         });
 
-        modelBuilder.Entity<Reportexport>(entity =>
-        {
-            entity.Property("type").HasField("_type").UsePropertyAccessMode(PropertyAccessMode.Field)
-                  .HasColumnName("type").HasColumnType("visual_type_enum");
+      //   modelBuilder.Entity<Reportexport>(entity =>
+      //   {
+      //       entity.Property("type").HasField("_type").UsePropertyAccessMode(PropertyAccessMode.Field)
+      //             .HasColumnName("type").HasColumnType("visual_type_enum");
 
-            entity.Property("format").HasField("_format").UsePropertyAccessMode(PropertyAccessMode.Field)
-                  .HasColumnName("format").HasColumnType("file_format_enum");
-        });
+      //       entity.Property("format").HasField("_format").UsePropertyAccessMode(PropertyAccessMode.Field)
+      //             .HasColumnName("format").HasColumnType("file_format_enum");
+      //   });
 
         modelBuilder.Entity<Returnitem>(entity =>
         {

@@ -2,10 +2,10 @@ namespace ProRental.Interfaces;
 
 /// <summary>
 /// Common contract for all Analytics product types returned by AnalyticsFactory.
-/// AnalyticsControl depends on this interface, never on concrete entity types.
+/// GetType() renamed to GetAnalyticsType() to avoid hiding object.GetType().
 /// </summary>
 public interface IAnalytics
 {
-    string GetType();
+    string GetAnalyticsType();   // was GetType() — renamed to avoid CS0108
     int GetID();
 }

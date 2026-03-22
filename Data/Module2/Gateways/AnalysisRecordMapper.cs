@@ -6,18 +6,11 @@ using ProRental.Interfaces;
 
 namespace ProRental.Data.Gateways;
 
-/// <summary>
-/// Data mapper for the Analytics table.
-/// Implements IAnalyticsMapper — the control layer only depends on the interface.
-/// </summary>
 public class AnalysisRecordMapper : IAnalyticsMapper
 {
     private readonly AppDbContext _db;
 
-    public AnalysisRecordMapper(AppDbContext db)
-    {
-        _db = db;
-    }
+    public AnalysisRecordMapper(AppDbContext db) => _db = db;
 
     public async Task<bool> InsertAsync(Analytic analytics)
     {
@@ -29,21 +22,18 @@ public class AnalysisRecordMapper : IAnalyticsMapper
         => await _db.Analytics.FindAsync(id);
 
     public async Task<IEnumerable<Analytic>> FindByDateAsync(DateTime start, DateTime end)
-        => await _db.Analytics
-            .Where(a => a.Startdate >= start && a.Enddate <= end)
-            .ToListAsync();
+        => (await _db.Analytics.ToListAsync())
+            .Where(a => a.GetStartDate() >= start && a.GetEndDate() <= end);
 
     public async Task<IEnumerable<Analytic>> FindBySupplierAsync(int supplierID)
-        => await _db.Analytics
-            .Where(a => a.Analyticstype == AnalyticsType.Suptrend
-                     && a.Refprimaryid == supplierID)
-            .ToListAsync();
+        => (await _db.Analytics.ToListAsync())
+            .Where(a => a.GetAnalyticsType() == AnalyticsType.SUPTREND.ToString()
+                     && a.GetRefPrimaryID() == supplierID);
 
     public async Task<IEnumerable<Analytic>> FindByProductAsync(int productID)
-        => await _db.Analytics
-            .Where(a => a.Analyticstype == AnalyticsType.Prodtrend
-                     && a.Refprimaryid == productID)
-            .ToListAsync();
+        => (await _db.Analytics.ToListAsync())
+            .Where(a => a.GetAnalyticsType() == AnalyticsType.PRODTREND.ToString()
+                     && a.GetRefPrimaryID() == productID);
 
     public async Task<bool> UpdateAsync(Analytic analytics)
     {

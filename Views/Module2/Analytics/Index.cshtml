@@ -4,68 +4,55 @@
 }
 
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Analytics</h2>
-        <a asp-action="GenerateReport" class="btn btn-primary">+ New Report</a>
-    </div>
+    <h2 class="mb-3">Analytics</h2>
 
-    <!-- Date Range Filter -->
     <form method="get" asp-action="ByDateRange" class="row g-2 mb-4">
         <div class="col-auto">
-            <input type="date" name="start" class="form-control" placeholder="Start Date" />
+            <input type="date" name="start" class="form-control" />
         </div>
         <div class="col-auto">
-            <input type="date" name="end" class="form-control" placeholder="End Date" />
+            <input type="date" name="end" class="form-control" />
         </div>
         <div class="col-auto">
             <button type="submit" class="btn btn-outline-secondary">Filter by Date</button>
         </div>
     </form>
 
-    <!-- Analytics Table -->
     <table class="table table-striped table-hover">
         <thead class="table-dark">
             <tr>
-                <th>ID</th>
-                <th>Type</th>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>Loan Amt</th>
-                <th>Return Amt</th>
-                <th>Ref Name</th>
-                <th>Ref Value</th>
-                <th>Actions</th>
+                <th>ID</th><th>Type</th><th>Start</th><th>End</th>
+                <th>Loan</th><th>Return</th><th>Ref Name</th><th>Value</th><th></th>
             </tr>
         </thead>
         <tbody>
             @foreach (var item in Model)
             {
                 <tr>
-                    <td>@item.Analyticsid</td>
+                    <td>@item.GetID()</td>
                     <td>
-                        <span class="badge @(item.Analyticstype?.ToString() == "DAILY" ? "bg-info" :
-                                             item.Analyticstype?.ToString() == "SUPTREND" ? "bg-warning text-dark" :
+                        <span class="badge @(item.GetAnalyticsType() == "DAILY" ? "bg-info" :
+                                             item.GetAnalyticsType() == "SUPTREND" ? "bg-warning text-dark" :
                                              "bg-success")">
-                            @item.Analyticstype
+                            @item.GetAnalyticsType()
                         </span>
                     </td>
-                    <td>@item.Startdate?.ToString("yyyy-MM-dd")</td>
-                    <td>@item.Enddate?.ToString("yyyy-MM-dd")</td>
-                    <td>@item.Loanamt</td>
-                    <td>@item.Returnamt</td>
-                    <td>@item.Refprimaryname</td>
-                    <td>@item.Refvalue?.ToString("C")</td>
+                    <td>@item.GetStartDate()?.ToString("yyyy-MM-dd")</td>
+                    <td>@item.GetEndDate()?.ToString("yyyy-MM-dd")</td>
+                    <td>@item.GetLoanAmt()</td>
+                    <td>@item.GetReturnAmt()</td>
+                    <td>@item.GetRefPrimaryName()</td>
+                    <td>@item.GetRefValue()?.ToString("C")</td>
                     <td>
-                        <a asp-action="Details" asp-route-id="@item.Analyticsid"
+                        <a asp-action="Details" asp-route-id="@item.GetID()"
                            class="btn btn-sm btn-outline-primary">View</a>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
-
     @if (!Model.Any())
     {
-        <div class="alert alert-info">No analytics records found for the selected period.</div>
+        <div class="alert alert-info">No analytics records found.</div>
     }
 </div>
