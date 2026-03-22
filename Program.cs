@@ -33,6 +33,7 @@ dataSourceBuilder.MapEnum<CarbonStageType>("carbon_stage_type", new Npgsql.NameT
 dataSourceBuilder.MapEnum<CartStatus>("cart_status_enum", new Npgsql.NameTranslation.NpgsqlNullNameTranslator());
 dataSourceBuilder.MapEnum<CheckoutStatus>("checkout_status_enum", new Npgsql.NameTranslation.NpgsqlNullNameTranslator());
 dataSourceBuilder.MapEnum<ClearanceBatchStatus>("clearance_batch_status", new Npgsql.NameTranslation.NpgsqlNullNameTranslator());
+dataSourceBuilder.MapEnum<ClearanceStatus>("clearance_status", new Npgsql.NameTranslation.NpgsqlNullNameTranslator());
 dataSourceBuilder.MapEnum<DeliveryDuration>("delivery_duration_enum", new Npgsql.NameTranslation.NpgsqlNullNameTranslator());
 dataSourceBuilder.MapEnum<DeliveryType>("delivery_type_enum", new Npgsql.NameTranslation.NpgsqlNullNameTranslator());
 dataSourceBuilder.MapEnum<FileFormat>("file_format_enum", new Npgsql.NameTranslation.NpgsqlNullNameTranslator());
@@ -87,6 +88,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         o.MapEnum<CartStatus>("cart_status_enum");
         o.MapEnum<CheckoutStatus>("checkout_status_enum");
         o.MapEnum<ClearanceBatchStatus>("clearance_batch_status");
+        o.MapEnum<ClearanceStatus>("clearance_status");
         o.MapEnum<DeliveryDuration>("delivery_duration_enum");
         o.MapEnum<DeliveryType>("delivery_type_enum");
         o.MapEnum<FileFormat>("file_format_enum");

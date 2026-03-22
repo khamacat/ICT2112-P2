@@ -213,32 +213,6 @@ CREATE TABLE route_leg (
 
 
 -- ============================================================
--- Carbon Results & Leg Carbon
--- ============================================================
-CREATE TABLE carbon_result (
-    carbon_result_id  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    total_carbon_kg   DOUBLE PRECISION,
-    created_at        TIMESTAMPTZ DEFAULT NOW(),
-    validation_passed BOOLEAN   DEFAULT FALSE
-);
-
-CREATE TABLE leg_carbon (
-    leg_id           INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    transport_mode   transport_mode,
-    distance_km      DOUBLE PRECISION,
-    weight_kg        DOUBLE PRECISION,
-    carbon_kg        DOUBLE PRECISION,
-    carbon_rate      DOUBLE PRECISION,
-    carbon_result_id INT,
-    route_leg_id     INT,
-    CONSTRAINT fk_leg_carbon_result FOREIGN KEY (carbon_result_id)
-        REFERENCES carbon_result(carbon_result_id),
-    CONSTRAINT fk_leg_carbon_leg    FOREIGN KEY (route_leg_id)
-        REFERENCES route_leg(leg_id)
-);
-
-
--- ============================================================
 -- Shipping Options & Pricing Rules
 -- ============================================================
 CREATE TABLE shipping_option (
@@ -262,20 +236,6 @@ CREATE TABLE pricing_rule (
     is_active        BOOLEAN        DEFAULT TRUE,
     -- NOTE: ERD typed carbon_surcharge as DateTime — corrected to NUMERIC(10,4)
     carbon_surcharge NUMERIC(10, 4)
-);
-
-
--- ============================================================
--- Customer Choice (Composite PK)
--- NOTE: customer_id and order_id reference external Customer/Order
---       tables not defined in this ERD — FK constraints omitted.
--- ============================================================
-CREATE TABLE customer_choice (
-    customer_id     INT             NOT NULL,
-    order_id        INT             NOT NULL,
-    preference_type preference_type,
-    created_at      TIMESTAMPTZ       DEFAULT NOW(),
-    PRIMARY KEY (customer_id, order_id)
 );
 
 
@@ -1266,14 +1226,6 @@ ALTER TABLE ReturnLog
 ALTER TABLE ClearanceLog
 	ADD CONSTRAINT fk_clearance_batch
 		FOREIGN KEY (ClearanceBatchId) REFERENCES ClearanceBatch(ClearanceBatchId) ON DELETE CASCADE;
-
--- Team 1 → Team 4/6: Customer and "Order" references
-ALTER TABLE customer_choice
-    ADD CONSTRAINT fk_customerchoice_customer
-        FOREIGN KEY (customer_id) REFERENCES Customer(customerId) ON DELETE CASCADE;
-ALTER TABLE customer_choice
-    ADD CONSTRAINT fk_customerchoice_order
-        FOREIGN KEY (order_id) REFERENCES "Order"(orderId) ON DELETE CASCADE;
 
 -- Team 1 → Team 6: batch_order.order_id
 ALTER TABLE batch_order

@@ -32,8 +32,6 @@ public partial class RouteLeg
     private int? _transportId;
     private int? TransportId { get => _transportId; set => _transportId = value; }
 
-    public virtual ICollection<LegCarbon> LegCarbons { get; private set; } = new List<LegCarbon>();
-
     public virtual DeliveryRoute Route { get; private set; } = null!;
 
     public virtual Transport? Transport { get; private set; }
