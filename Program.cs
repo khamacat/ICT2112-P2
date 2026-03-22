@@ -8,7 +8,7 @@ using ProRental.Data;
 using ProRental.Domain.Controls;
 using ProRental.Interfaces.Domain;
 using ProRental.Interfaces.Data;
-using ProRental.Domain.Module2.P2_3.Controls.category;
+using ProRental.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
