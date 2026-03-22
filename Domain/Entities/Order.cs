@@ -29,8 +29,6 @@ public partial class Order
 
     public virtual Customer Customer { get; private set; } = null!;
 
-    public virtual ICollection<CustomerChoice> CustomerChoices { get; private set; } = new List<CustomerChoice>();
-
     public virtual ICollection<Deposit> Deposits { get; private set; } = new List<Deposit>();
 
     public virtual ICollection<Loanlist> Loanlists { get; private set; } = new List<Loanlist>();
