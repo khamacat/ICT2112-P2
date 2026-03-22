@@ -13,6 +13,11 @@ using ProRental.Domain.Entities;
 // using ProRental.Interfaces.Data;
 // using ProRental.Controllers;
 
+using ProRental.Data.Gateways;
+using ProRental.Data.Interfaces;
+using ProRental.Domain.Control;
+using ProRental.Interfaces;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -137,6 +142,13 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 
 //Team P2-2
+builder.Services.AddScoped<IPurchaseOrderGateway, PurchaseOrderGateway>();
+builder.Services.AddScoped<IPOLineItemGateway, POLineItemGateway>();
+builder.Services.AddScoped<IReplenishmentRequestQuery, ReplenishmentRequestQuery>();
+builder.Services.AddScoped<ISupplierGateway, SupplierGateway>();
+builder.Services.AddScoped<ISupplierSelectionStrategy, FastestSupplierStrategy>();
+
+builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderControl>();
 // Data source
 
 // Domain
