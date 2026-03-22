@@ -148,7 +148,7 @@ public class ProductCatalogController : Controller
 
         if (!success)
         {
-            TempData["ErrorMessage"] = "Could not delete product.";
+            TempData["ErrorMessage"] = "Could not delete product because it is still being used elsewhere.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -156,6 +156,8 @@ public class ProductCatalogController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+
+// need to edit this once category is implemented
     private void PopulateCategoryDropdown(int? selectedId = null)
 {
     var categories = _categoryMapper.FindAll() ?? new List<Category>();
@@ -236,30 +238,29 @@ public class ProductFormViewModel
     [System.ComponentModel.DataAnnotations.Display(Name = "Deposit Rate")]
     public decimal? DepositRate { get; set; } = 0.10m;
 
-    public (Product product, Productdetail detail) ToDomain()
-    {
-        var product = Product.Create(CategoryId, Sku, Threshold, Status);
+public (Product product, Productdetail detail) ToDomain()
+{
+    var product = Product.Create(CategoryId, Sku, Threshold, Status);
 
-        if (ProductId > 0)
-            product.SetProductId(ProductId);
+    if (ProductId > 0)
+        product.AssignProductId(ProductId);
 
-        var detail = Productdetail.Create(
-            Name,
-            Description,
-            TotalQuantity,
-            Weight,
-            Image,
-            Price,
-            DepositRate);
+    var detail = Productdetail.Create(
+        Name,
+        Description,
+        TotalQuantity,
+        Weight,
+        Image,
+        Price,
+        DepositRate);
 
-        if (ProductId > 0)
-            detail.SetProductId(ProductId);
+    if (ProductId > 0)
+        detail.AssignProductId(ProductId);
 
-        product.SetProductdetail(detail);
+    product.AttachProductdetail(detail);
 
-        return (product, detail);
-    }
-
+    return (product, detail);
+}
     public static ProductFormViewModel FromDomain(Product product)
     {
         var detail = product.GetProductdetail();

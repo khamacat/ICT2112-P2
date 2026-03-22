@@ -76,22 +76,35 @@ public class ProductMapper : IProductMapper
         if (existing == null)
             return;
 
+        // Update root Product values through public domain methods
+        existing.AssignCategory(product.GetCategoryId());
+        existing.UpdateSku(product.GetSku());
+        existing.UpdateStatus(product.GetStatus());
+        existing.UpdateThreshold(product.GetThreshold());
+
         // 2. Elegantly update all root scalar properties using EF Core native mapping
         _context.Entry(existing).CurrentValues.SetValues(product);
 
         // 3. Handle the composite Productdetail
         var incomingDetail = product.GetProductdetail();
+        var existingDetail = existing.GetProductdetail();
         
         if (incomingDetail != null)
         {
-            if (existing.GetProductdetail() == null)
+            if (existingDetail == null)
             {
-                existing.SetProductdetail(incomingDetail);
+                incomingDetail.AssignProductId(existing.GetProductId());
+                existing.AttachProductdetail(incomingDetail);
             }
             else
             {
-                // Elegantly update all detail scalar properties natively
-                _context.Entry(existing.GetProductdetail()!).CurrentValues.SetValues(incomingDetail);
+                existingDetail.UpdateName(incomingDetail.GetName());
+                existingDetail.UpdateDescription(incomingDetail.GetDescription());
+                existingDetail.UpdateTotalQuantity(incomingDetail.GetTotalQuantity());
+                existingDetail.UpdateWeight(incomingDetail.GetWeight());
+                existingDetail.UpdateImage(incomingDetail.GetImage());
+                existingDetail.UpdatePrice(incomingDetail.GetPrice());
+                existingDetail.UpdateDepositRate(incomingDetail.GetDepositRate());
             }
         }
 

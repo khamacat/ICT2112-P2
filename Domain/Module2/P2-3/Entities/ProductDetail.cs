@@ -12,33 +12,43 @@ public partial class Productdetail
         decimal? depositRate)
     {
         var detail = new Productdetail();
-        detail.Name = name;
-        detail.Description = description;
-        detail.Totalquantity = totalQuantity;
-        detail.Weight = weight;
-        detail.Image = image;
-        detail.Price = price;
-        detail.Depositrate = depositRate;
+        detail.UpdateName(name);
+        detail.UpdateDescription(description);
+        detail.UpdateTotalQuantity(totalQuantity);
+        detail.UpdateWeight(weight);
+        detail.UpdateImage(image);
+        detail.UpdatePrice(price);
+        detail.UpdateDepositRate(depositRate);
         return detail;
     }
 
-    public int GetDetailsId() => Detailsid;
-    public int GetProductId() => Productid;
-    public int GetTotalQuantity() => Totalquantity;
-    public string GetName() => Name;
-    public string? GetDescription() => Description;
-    public decimal? GetWeight() => Weight;
-    public string? GetImage() => Image;
-    public decimal GetPrice() => Price;
-    public decimal? GetDepositRate() => Depositrate;
+    public int GetDetailsId() => _detailsid;
+    public int GetProductId() => _productid;
+    public string GetName() => _name;
+    public string? GetDescription() => _description;
+    public int GetTotalQuantity() => _totalquantity;
+    public decimal? GetWeight() => _weight;
+    public string? GetImage() => _image;
+    public decimal GetPrice() => _price;
+    public decimal? GetDepositRate() => _depositrate;
 
-    public void SetDetailsId(int detailsId) => Detailsid = detailsId;
-    public void SetProductId(int productId) => Productid = productId;
-    public void SetTotalQuantity(int totalQuantity) => Totalquantity = totalQuantity;
-    public void SetName(string name) => Name = name;
-    public void SetDescription(string? description) => Description = description;
-    public void SetWeight(decimal? weight) => Weight = weight;
-    public void SetImage(string? image) => Image = image;
-    public void SetPrice(decimal price) => Price = price;
-    public void SetDepositRate(decimal? depositRate) => Depositrate = depositRate;
+    public void AssignDetailsId(int detailsId) => SetDetailsId(detailsId);
+    public void AssignProductId(int productId) => SetProductId(productId);
+    public void UpdateName(string name) => SetName(name);
+    public void UpdateDescription(string? description) => SetDescription(description);
+    public void UpdateTotalQuantity(int totalQuantity) => SetTotalQuantity(totalQuantity);
+    public void UpdateWeight(decimal? weight) => SetWeight(weight);
+    public void UpdateImage(string? image) => SetImage(image);
+    public void UpdatePrice(decimal price) => SetPrice(price);
+    public void UpdateDepositRate(decimal? depositRate) => SetDepositRate(depositRate);
+
+    private void SetDetailsId(int detailsId) => _detailsid = detailsId;
+    private void SetProductId(int productId) => _productid = productId;
+    private void SetName(string name) => _name = name;
+    private void SetDescription(string? description) => _description = description;
+    private void SetTotalQuantity(int totalQuantity) => _totalquantity = totalQuantity;
+    private void SetWeight(decimal? weight) => _weight = weight;
+    private void SetImage(string? image) => _image = image;
+    private void SetPrice(decimal price) => _price = price;
+    private void SetDepositRate(decimal? depositRate) => _depositrate = depositRate;
 }

@@ -1,6 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Npgsql;
-
 using ProRental.Domain.Entities;
 using ProRental.Domain.Enums;
 using ProRental.Interfaces.Data;
@@ -29,7 +26,7 @@ public class ProductCatalogControl : IProductCRUD, IProductQuery, IProductBulkCo
         var category = _categoryMapper.FindById(product.GetCategoryId());
         if (category == null) return false;
 
-        product.SetProductdetail(detail);
+        product.AttachProductdetail(detail);
         _productMapper.Insert(product);
         return true;
     }
@@ -46,8 +43,8 @@ public class ProductCatalogControl : IProductCRUD, IProductQuery, IProductBulkCo
 
         if (CheckProductConflicts(product)) return false;
 
-        detail.SetProductId(product.GetProductId());
-        product.SetProductdetail(detail);
+        detail.AssignProductId(product.GetProductId());
+        product.AttachProductdetail(detail);
 
         _productMapper.Update(product);
         return true;
@@ -58,8 +55,15 @@ public class ProductCatalogControl : IProductCRUD, IProductQuery, IProductBulkCo
         var existing = _productMapper.FindById(productId);
         if (existing == null) return false;
 
-        _productMapper.Delete(existing);
-        return true;
+        try
+        {
+            _productMapper.Delete(existing);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public bool ValidateProduct(Product product, Productdetail detail)
