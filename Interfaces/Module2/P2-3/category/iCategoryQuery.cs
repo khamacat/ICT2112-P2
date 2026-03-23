@@ -6,5 +6,4 @@ public interface ICategoryQuery
 {
         Category GetCategoryById(int categoryId);
     List<Category> GetAllCategories();
-    List<Category> GetActiveCategories();
 }

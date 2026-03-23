@@ -1,28 +1,30 @@
 using ProRental.Domain.Entities;
 using ProRental.Interfaces.Domain;
+using ProRental.Interfaces.Data;
 
 namespace ProRental.Domain.Controls;
+
 public class CategoryControl : ICategoryCRUD, ICategoryQuery
 {
-    private static List<Category> _categoryList = new List<Category>();
+    private readonly ICategoryMapper _categoryMapper;
 
-    // Query Implementation
-    public List<Category> GetAllCategories() => _categoryList;
-    
-    // Use GetCategoryId() instead of .CategoryId
-    public Category GetCategoryById(int id) => 
-        _categoryList.FirstOrDefault(c => c.GetCategoryId() == id);
-    
-    // Use GetIsActive() instead of .IsActive
-    public List<Category> GetActiveCategories() => 
-        _categoryList.Where(c => c.GetIsActive()).ToList();
+    public CategoryControl(ICategoryMapper categoryMapper)
+    {
+        _categoryMapper = categoryMapper;
+    }
 
-    // CRUD Implementation
+    // --- Query Implementation ---
+    public List<Category> GetAllCategories() => 
+        _categoryMapper.FindAll()?.ToList() ?? new List<Category>();
+    
+    public Category? GetCategoryById(int id) => _categoryMapper.FindById(id);
+
+    // --- CRUD Implementation ---
     public bool CreateCategory(Category category)
     {
         if (ValidateCategory(category) && !CheckCategoryConflicts(category))
         {
-            _categoryList.Add(category);
+            _categoryMapper.Insert(category);
             return true;
         }
         return false;
@@ -33,29 +35,37 @@ public class CategoryControl : ICategoryCRUD, ICategoryQuery
         var existing = GetCategoryById(category.GetCategoryId());
         if (existing == null) return false;
         
-        // Use SetName() and GetName()
         existing.SetName(category.GetName());
+        existing.SetDescription(category.GetDescription());
+        
+        _categoryMapper.Update(existing);
         return true;
     }
 
-    public bool DeleteCategory(int id) => 
-        _categoryList.RemoveAll(c => c.GetCategoryId() == id) > 0;
-    
-    public bool ValidateCategory(Category c) => 
-        !string.IsNullOrEmpty(c.GetName());
-    
-    public bool CheckCategoryConflicts(Category c) => 
-        _categoryList.Any(ex => ex.GetName().Equals(c.GetName(), StringComparison.OrdinalIgnoreCase));
-    
-    public bool UpdateCategoryStatus(int id)
+    public bool DeleteCategory(int id) 
     {
-        var category = GetCategoryById(id);
-        if (category != null)
+        var existing = GetCategoryById(id);
+        if (existing != null)
         {
-            // Use SetIsActive() and GetIsActive()
-            category.SetIsActive(!category.GetIsActive());
+            _categoryMapper.Delete(existing);
             return true;
         }
         return false;
     }
+    
+    public bool ValidateCategory(Category c) => !string.IsNullOrEmpty(c.GetName());
+    
+    public bool CheckCategoryConflicts(Category c) 
+    {
+        var existing = _categoryMapper.FindAll();
+        return existing != null && existing.Any(ex => 
+            ex.GetName().Equals(c.GetName(), StringComparison.OrdinalIgnoreCase));
+    }
+
+    public bool UpdateCategoryStatus(int categoryId)
+    {
+        throw new NotImplementedException();
+    }
+
+    // UpdateCategoryStatus removed as requested
 }

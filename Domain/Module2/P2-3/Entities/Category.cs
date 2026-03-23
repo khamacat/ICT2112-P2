@@ -2,31 +2,19 @@ using System;
 
 namespace ProRental.Domain.Entities;
 
+// Ensure this namespace exactly matches the one in your base Entity file
 public partial class Category
 {
-    private bool _isActiive;
-
-    // Existing method
     public int GetCategoryId() => _categoryid;
 
-    // Added to handle Category Name
     public string GetName() => _name;
+    public void SetName(string value) => _name = value;
 
-    public void SetName(string value)
+    // This is the missing piece causing your error
+    public string? GetDescription() => _description;
+    
+    public void SetDescription(string? value) 
     {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            throw new ArgumentException("Category name cannot be empty.");
-        }
-        _name = value;
-    }
-
-    // Added to handle Category Status (Logic based on project requirements)
-    // Since _isActiive was mentioned in your diagram, we map it here
-    public bool GetIsActive() => _isActiive;
-
-    public void SetIsActive(bool value)
-    {
-        _isActiive = value;
+        _description = value;
     }
 }
