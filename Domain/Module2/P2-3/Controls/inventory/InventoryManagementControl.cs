@@ -306,7 +306,15 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
         return results;
     }
 
+    public List<int> AllocateAvailableItems(int productId, int quantity)
+    {
+        var availableItems = GetInventoryByProduct(productId)
+            .Where(item => item.GetStatus() == InventoryStatus.AVAILABLE)
+            .Take(quantity)
+            .ToList();
 
+        return availableItems.Select(item => item.GetInventoryItemId()).ToList();
+    }
 
     public bool UpdateInventoryStatus(int inventoryItemId, InventoryStatus status)
     {
