@@ -5,17 +5,17 @@ using ProRental.Interfaces.Domain;
 
 namespace ProRental.Domain.Controls;
 
-public class ProductCatalogControl : IProductCRUD, IProductQuery, IProductBulkCommand
+public class ProductCatalogControl : IProductCRUD, IProductQuery, IProductBulkCommand, IProductStatusControl
 {
     private readonly IProductMapper _productMapper;
-    private readonly ICategoryMapper _categoryMapper;
+    private readonly ICategoryQuery _categoryQuery;
 
     public ProductCatalogControl(
         IProductMapper productMapper,
-        ICategoryMapper categoryMapper)
+        ICategoryQuery categoryQuery)
     {
         _productMapper = productMapper;
-        _categoryMapper = categoryMapper;
+        _categoryQuery = categoryQuery;
     }
 
     public bool CreateProduct(Product product, Productdetail detail)
@@ -23,7 +23,7 @@ public class ProductCatalogControl : IProductCRUD, IProductQuery, IProductBulkCo
         if (!ValidateProduct(product, detail)) return false;
         if (CheckProductConflicts(product)) return false;
 
-        var category = _categoryMapper.FindById(product.GetCategoryId());
+        var category = _categoryQuery.GetCategoryById(product.GetCategoryId());
         if (category == null) return false;
 
         product.AttachProductdetail(detail);
@@ -38,7 +38,7 @@ public class ProductCatalogControl : IProductCRUD, IProductQuery, IProductBulkCo
         var existing = _productMapper.FindById(product.GetProductId());
         if (existing == null) return false;
 
-        var category = _categoryMapper.FindById(product.GetCategoryId());
+        var category = _categoryQuery.GetCategoryById(product.GetCategoryId());
         if (category == null) return false;
 
         if (CheckProductConflicts(product)) return false;
@@ -135,7 +135,10 @@ public class ProductCatalogControl : IProductCRUD, IProductQuery, IProductBulkCo
                 .Where(p => p.GetSku().Contains(value, StringComparison.OrdinalIgnoreCase))
                 .ToList(),
 
-            "category" => new List<Product>(),
+            "category" => allProducts
+                .Where(p => (p.GetCategoryEntity()?.GetName() ?? string.Empty)
+                .Contains(value, StringComparison.OrdinalIgnoreCase))
+                .ToList(),
 
             "status" => Enum.TryParse<ProductStatus>(value, true, out var parsedStatus)
                 ? allProducts.Where(p => p.GetStatus() == parsedStatus).ToList()
@@ -246,4 +249,31 @@ public class ProductCatalogControl : IProductCRUD, IProductQuery, IProductBulkCo
 
     return true;
 }
+
+public bool UpdateProductStatus(int productId, ProductStatus productStatus)
+{
+    var product = _productMapper.FindById(productId);
+    if (product == null) return false;
+
+    product.UpdateStatus(productStatus);
+    _productMapper.Update(product);
+    return true;
+}
+
+public int GetThresholdQuantityForProduct(int productId)
+{
+    var product = _productMapper.FindById(productId);
+    if (product == null)
+        throw new InvalidOperationException($"Product {productId} not found.");
+
+    var detail = product.GetProductdetail();
+    if (detail == null)
+        throw new InvalidOperationException($"Product detail for product {productId} not found.");
+
+    var totalQuantity = detail.GetTotalQuantity();
+    var thresholdPercentage = product.GetThreshold();
+
+    return (int)Math.Ceiling(totalQuantity * thresholdPercentage);
+}
+
 }

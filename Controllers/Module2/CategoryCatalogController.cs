@@ -1,19 +1,20 @@
 using Microsoft.AspNetCore.Mvc;
 using ProRental.Domain.Entities;
-using ProRental.Interfaces.Data; // Ensure this is imported for ICategoryMapper
+using ProRental.Interfaces.Domain;
 
 namespace ProRental.Controllers;
 
 [Route("CategoryCatalog")]
 public class CategoryCatalogController : Controller
 {
-    // Switch from CategoryControl to the Mapper to enable Database persistence
-    private readonly ICategoryMapper _categoryMapper;
+    private readonly ICategoryCRUD _categoryCRUD;
+    private readonly ICategoryQuery _categoryQuery;
 
-    // Use Constructor Injection (Standard for ProductCatalog layout)
-    public CategoryCatalogController(ICategoryMapper categoryMapper)
+    // Use Constructor Injection for the Domain Interfaces
+    public CategoryCatalogController(ICategoryCRUD categoryCRUD, ICategoryQuery categoryQuery)
     {
-        _categoryMapper = categoryMapper;
+        _categoryCRUD = categoryCRUD;
+        _categoryQuery = categoryQuery;
     }
 
     // GET: /CategoryCatalog
@@ -21,8 +22,8 @@ public class CategoryCatalogController : Controller
     [Route("")] 
     public IActionResult Index()
     {
-        // Fetch real data from PostgreSQL via the Mapper
-        var list = _categoryMapper.FindAll() ?? new List<Category>();
+        // Use the Query interface to fetch data
+        var list = _categoryQuery.GetAllCategories() ?? new List<Category>();
         
         return View("~/Views/Module2/CategoryCatalog/CategoryCatalog.cshtml", list);
     }
@@ -31,21 +32,35 @@ public class CategoryCatalogController : Controller
     [HttpPost]
     [Route("HandleCategoryCRUD")]
     [ValidateAntiForgeryToken]
-    public IActionResult HandleCategoryCRUD(string categoryName)
+    public IActionResult HandleCategoryCRUD(string categoryName, string categoryDescription)
     {
         if (!string.IsNullOrEmpty(categoryName))
         {
             // 1. Instantiate the Entity
             var newCat = new Category();
 
-            // 2. Use DDD methods to set data
+            // 2. Use DDD methods from your partial class to set data
             newCat.SetName(categoryName);
-            newCat.SetIsActive(true);
+            
+            // Set description from form
+            newCat.SetDescription(categoryDescription);
 
-            // 3. Persist to Database via Mapper
-            _categoryMapper.Insert(newCat);
+            // 3. Use the CRUD interface for business logic and persistence
+            _categoryCRUD.CreateCategory(newCat);
         }
 
+        return RedirectToAction(nameof(Index));
+    }
+
+    // POST: /CategoryCatalog/Delete
+    [HttpPost]
+    [Route("Delete")]
+    [ValidateAntiForgeryToken]
+    public IActionResult Delete(int id)
+    {
+        // Call the Domain Interface (ICategoryCRUD) to handle the deletion logic
+        bool success = _categoryCRUD.DeleteCategory(id);
+        
         return RedirectToAction(nameof(Index));
     }
 }
