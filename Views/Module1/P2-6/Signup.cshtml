@@ -1,0 +1,155 @@
+@{
+    ViewData["Title"] = "Sign Up";
+}
+
+<div class="row justify-content-center py-5">
+    <div class="col-12 col-sm-10 col-md-8 col-lg-6">
+
+        <!-- Page heading -->
+        <div class="text-center mb-4">
+            <span class="bi bi-person-plus fs-1 text-primary"></span>
+            <h1 class="h3 mt-2 fw-semibold">Create your ProRental account</h1>
+            <p class="text-muted">Join the unified rental management platform.</p>
+        </div>
+
+        <!-- Signup form card -->
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+
+                <form asp-action="Signup" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <!-- Name row -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold" for="FirstName">
+                                <i class="bi bi-person me-1 text-primary"></i>First name
+                            </label>
+                            <input type="text"
+                                   id="FirstName"
+                                   name="FirstName"
+                                   class="form-control"
+                                   placeholder="Jane"
+                                   autocomplete="given-name"
+                                   required />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-semibold" for="LastName">
+                                Last name
+                            </label>
+                            <input type="text"
+                                   id="LastName"
+                                   name="LastName"
+                                   class="form-control"
+                                   placeholder="Doe"
+                                   autocomplete="family-name"
+                                   required />
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="Email">
+                            <i class="bi bi-envelope me-1 text-primary"></i>Email address
+                        </label>
+                        <input type="email"
+                               id="Email"
+                               name="Email"
+                               class="form-control"
+                               placeholder="you@example.com"
+                               autocomplete="email"
+                               required />
+                    </div>
+
+                    <!-- Phone (optional) -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="Phone">
+                            <i class="bi bi-telephone me-1 text-primary"></i>Phone number
+                            <span class="text-muted fw-normal small">(optional)</span>
+                        </label>
+                        <input type="tel"
+                               id="Phone"
+                               name="Phone"
+                               class="form-control"
+                               placeholder="+65 6123 4567"
+                               autocomplete="tel" />
+                    </div>
+
+                    <!-- Password -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="Password">
+                            <i class="bi bi-lock me-1 text-primary"></i>Password
+                        </label>
+                        <input type="password"
+                               id="Password"
+                               name="Password"
+                               class="form-control"
+                               placeholder="Minimum 8 characters"
+                               autocomplete="new-password"
+                               minlength="8"
+                               required />
+                        <div class="form-text">Use at least 8 characters with a mix of letters and numbers.</div>
+                    </div>
+
+                    <!-- Confirm password -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold" for="ConfirmPassword">
+                            <i class="bi bi-lock-fill me-1 text-primary"></i>Confirm password
+                        </label>
+                        <input type="password"
+                               id="ConfirmPassword"
+                               name="ConfirmPassword"
+                               class="form-control"
+                               placeholder="Re-enter your password"
+                               autocomplete="new-password"
+                               required />
+                    </div>
+
+                    <!-- Terms checkbox -->
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   id="AgreeTerms"
+                                   name="AgreeTerms"
+                                   required />
+                            <label class="form-check-label small text-muted" for="AgreeTerms">
+                                I agree to the
+                                <a asp-action="Privacy" class="fw-semibold">Privacy Policy</a>
+                                and
+                                <a asp-action="Terms" class="fw-semibold">Terms of Service</a>.
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-person-check me-2"></i>Create Account
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+
+        <!-- Info badge -->
+        <div class="alert alert-success d-flex align-items-start gap-2 mt-4 py-3" role="alert">
+            <i class="bi bi-leaf-fill flex-shrink-0 mt-1"></i>
+            <div class="small">
+                <strong>Sustainability first.</strong> Your account helps track and reduce carbon footprint
+                across every rental order — efficient and eco-friendly by design.
+            </div>
+        </div>
+
+        <!-- Divider -->
+        <hr class="my-4" />
+
+        <!-- Already have account -->
+        <p class="text-center text-muted small">
+            Already have an account?
+            <a asp-action="Login" class="fw-semibold">Sign in here</a>
+        </p>
+
+    </div>
+</div>

@@ -637,3 +637,62 @@ INSERT INTO ReportExport (RefAnalyticsID, Title, VisualType, FileFormat, URL) VA
 INSERT INTO AnalyticsList (AnalyticsID, TransactionLogID) VALUES
 (1, 3),
 (1, 4);
+
+
+-- Test account for authentication/authorization testing
+BEGIN;
+
+WITH inserted_users AS (
+    INSERT INTO "User" (userrole, name, email, passwordhash, phonecountry, phonenumber)
+    VALUES
+        ('CUSTOMER', 'Alice Tan', 'alice@test.com', 'Test1234', 65, '91234567'),
+        ('CUSTOMER', 'Bob Lim',   'bob@test.com',   'Test1234', 65, '92345678'),
+        ('STAFF',    'Carol Ng',  'carol@test.com',  'Test1234', 65, '93456789'),
+        ('ADMIN',    'Dave Ong',  'dave@test.com',   'Test1234', 65, '94567890')
+    RETURNING userid, email, userrole
+),
+
+inserted_customers AS (
+    INSERT INTO Customer (userid, address, customertype)
+    SELECT userid,
+           CASE email
+               WHEN 'alice@test.com' THEN '10 Bedok North Ave 1, Singapore 460010'
+               WHEN 'bob@test.com'   THEN '22 Tampines St 45, Singapore 520022'
+           END,
+           1
+    FROM inserted_users
+    WHERE email IN ('alice@test.com', 'bob@test.com')
+    RETURNING customerid, userid
+),
+
+inserted_staff AS (
+    INSERT INTO Staff (userid, department)
+    SELECT userid, 'Operations'
+    FROM inserted_users
+    WHERE email = 'carol@test.com'
+    RETURNING staffid, userid
+)
+
+SELECT
+    u.email,
+    u.userid,
+    u.userrole,
+    c.customerid,
+    s.staffid
+FROM inserted_users u
+LEFT JOIN inserted_customers c ON c.userid = u.userid
+LEFT JOIN inserted_staff     s ON s.userid = u.userid;
+
+COMMIT;
+
+-- Customer query test
+SELECT c.customerid, u.email, u.name
+FROM customer c
+JOIN "User" u ON u.userid = c.userid
+WHERE u.email = 'alice@test.com';
+
+-- Staff query test
+SELECT u.userid, u.email, u.userrole, s.staffid, s.department
+FROM "User" u
+JOIN staff s ON s.userid = u.userid
+WHERE u.email = 'carol@test.com';

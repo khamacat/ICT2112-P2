@@ -3,18 +3,23 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
 using ProRental.Domain.Enums;
-using ProRental.Domain.Entities;
 using ProRental.Domain.Control;
 using ProRental.Data.Gateways;
 using ProRental.Interfaces;
+using ProRental.Interfaces.Data;
+using ProRental.Data;
+using ProRental.Interfaces.Domain;
+using ProRental.Domain.Controls;
+using ProRental.Controllers.Module1;
+using ProRental.Data.Services;
 
 // uncomment when ready to code
-using ProRental.Data;
-//using ProRental.Domain.Controls;
-//using ProRental.Domain.Entities;
-//using ProRental.Interfaces.Domain;
-//using ProRental.Interfaces.Data;
-using ProRental.Controllers;
+// using ProRental.Data;
+// using ProRental.Domain.Controls;
+// //using ProRental.Domain.Entities;
+// using ProRental.Interfaces.Domain;
+// using ProRental.Interfaces.Data;
+// using ProRental.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -81,7 +86,7 @@ var dataSource = dataSourceBuilder.Build();
 // builder.Services.AddDbContext<AppDbContext>(options =>
 //     options.UseNpgsql(dataSource));
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(dataSource, o => 
+    options.UseNpgsql(dataSource, o =>
     {
         o.MapEnum<AccessEventType>("access_event_type");
         o.MapEnum<AlertStatus>("alert_status");
@@ -178,11 +183,38 @@ builder.Services.AddScoped<IAnalyticsData, AnalyticsControl>();
 
 //Team P2-6
 // Data source
+// builder.Services.AddScoped<IOrderMapper, OrderMapper>();
+// builder.Services.AddScoped<IOrderService, OrderManagementControl>();
+// builder.Services.AddScoped<IInventoryService, FakeInventoryService>();
+// // Domain
 
-// Domain
+// // Presentation/Controllers
+// builder.Services.AddScoped<IOrderService, OrderManagementControl>();
+
+// Data source (mappers / DB-backed service implementations)
+builder.Services.AddScoped<ISessionMapper, SessionMapper>();
+builder.Services.AddScoped<IAuthenticationService, ProRentalAuthenticationService>();
+builder.Services.AddScoped<ICustomerValidationService, CustomerValidationService>();
+
+// Domain (controls — pure business logic, no DB dependency)
+builder.Services.AddScoped<ISessionService, SessionControl>();
+builder.Services.AddScoped<AuthenticationControl>();
+builder.Services.AddScoped<CustomerIDValidationControl>();
+
+// HTTP context accessor (required for session access in Razor layouts)
+builder.Services.AddHttpContextAccessor();
+
+// Session middleware (required for HttpContext.Session)
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(2);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
 
 // Presentation/Controllers
-
+builder.Services.AddScoped<Module1Controller>();
 
 var app = builder.Build();
 
@@ -197,8 +229,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseSession();      
 app.UseRouting();
-
 app.UseAuthorization();
 
 app.MapControllerRoute(
