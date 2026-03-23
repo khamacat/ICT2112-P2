@@ -234,6 +234,64 @@ namespace ProRental.Domain.Control
                     cmd.Parameters.AddWithValue("@reqId", reqId);
                     cmd.ExecuteNonQuery();
                 }
+                // 6. INSERT into TransactionLog (parent)
+int transactionLogId;
+
+using (var cmd = new NpgsqlCommand(@"
+    INSERT INTO transactionlog (logtype)
+    VALUES ('PURCHASE_ORDER'::log_type_enum)
+    RETURNING transactionlogid;", conn, tx))
+{
+    transactionLogId = Convert.ToInt32(cmd.ExecuteScalar());
+}
+
+// 7. INSERT into PurchaseOrderLog (child)
+using (var cmd = new NpgsqlCommand(@"
+    INSERT INTO purchaseorderlog (
+        purchaseorderlogid,
+        poid,
+        podate,
+        supplierid,
+        status,
+        expecteddeliverydate,
+        totalamount,
+        detailsjson
+    )
+    OVERRIDING SYSTEM VALUE
+    VALUES (
+        @logId,
+        @poId,
+        CURRENT_TIMESTAMP,
+        @supplierId,
+        'CONFIRMED'::rental_status_enum,
+        @expectedDeliveryDate,
+        @totalAmount,
+        @detailsJson
+    );", conn, tx))
+{
+    cmd.Parameters.AddWithValue("@logId", transactionLogId);
+    cmd.Parameters.AddWithValue("@poId", poId);
+    cmd.Parameters.AddWithValue("@supplierId", supplierId);
+    cmd.Parameters.AddWithValue("@totalAmount", totalAmount);
+
+    cmd.Parameters.AddWithValue(
+        "@expectedDeliveryDate",
+        expectedDeliveryDate.HasValue
+            ? expectedDeliveryDate.Value.ToDateTime(TimeOnly.MinValue)
+            : DBNull.Value
+    );
+
+    string detailsJson = $@"{{
+        ""poId"": {poId},
+        ""supplierId"": {supplierId},
+        ""totalAmount"": {totalAmount},
+        ""status"": ""CONFIRMED""
+    }}";
+
+    cmd.Parameters.AddWithValue("@detailsJson", detailsJson);
+
+    cmd.ExecuteNonQuery();
+}
 
                 tx.Commit();
                 return poId;

@@ -102,5 +102,52 @@ namespace ProRental.Controllers
             TempData["Success"] = "Replenishment Request cancelled.";
             return RedirectToAction(nameof(Index));
         }
+        [HttpPost]
+[ValidateAntiForgeryToken]
+public IActionResult ApprovePO(int poId)
+{
+    try
+    {
+        if (poId <= 0)
+        {
+            TempData["Error"] = "Invalid purchase order ID.";
+            return RedirectToAction("Index", "PurchaseOrderPage");
+        }
+
+        _purchaseOrderService.ApprovePurchaseOrder(poId);
+        TempData["Success"] = $"Purchase Order #{poId} approved successfully.";
+
+        return RedirectToAction("Index", "PurchaseOrderPage");
+    }
+    catch (Exception ex)
+    {
+        TempData["Error"] = $"Failed to approve purchase order: {ex.Message}";
+        return RedirectToAction("Index", "PurchaseOrderPage");
+    }
+}
+
+[HttpPost]
+[ValidateAntiForgeryToken]
+public IActionResult CompletePO(int poId)
+{
+    try
+    {
+        if (poId <= 0)
+        {
+            TempData["Error"] = "Invalid purchase order ID.";
+            return RedirectToAction("Index", "PurchaseOrderPage");
+        }
+
+        _purchaseOrderService.CompletePurchaseOrder(poId);
+        TempData["Success"] = $"Purchase Order #{poId} completed successfully.";
+
+        return RedirectToAction("Index", "PurchaseOrderPage");
+    }
+    catch (Exception ex)
+    {
+        TempData["Error"] = $"Failed to complete purchase order: {ex.Message}";
+        return RedirectToAction("Index", "PurchaseOrderPage");
+    }
+}
     }
 }
