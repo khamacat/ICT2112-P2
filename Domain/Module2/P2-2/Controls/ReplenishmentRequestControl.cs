@@ -22,12 +22,8 @@ public class ReplenishmentRequestControl
     // <returns>The newly created ReplenishmentRequest</returns>
     public Replenishmentrequest CreateRequest(string requestedByStaffId)
     {
-        var request = new Replenishmentrequest
-        {
-            RequestedBy = requestedByStaffId,
-            Status = ReplenishmentStatus.DRAFT,
-            CreatedAt = DateTime.UtcNow
-        };
+        var request = new Replenishmentrequest();
+        request.InitializeDraft(requestedByStaffId, DateTime.UtcNow);
 
         _mapper.Insert(request);
         return request;
@@ -224,14 +220,10 @@ public class ReplenishmentRequestControl
             return false;
         }
 
-        if (request.Status != ReplenishmentStatus.SUBMITTED)
+        if (!request.MarkComplete(staffId, DateTime.UtcNow))
         {
-            return false; // Can only complete submitted requests
+            return false;
         }
-
-        request.Status = ReplenishmentStatus.COMPLETED;
-        request.CompletedAt = DateTime.UtcNow;
-        request.CompletedBy = staffId;
 
         _mapper.Update(request);
         return true;

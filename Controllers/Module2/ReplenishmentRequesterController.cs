@@ -55,8 +55,8 @@ public class ReplenishmentRequesterController : Controller
                                "SYSTEM";
 
             var request = _control.CreateRequest(currentUserId);
-            TempData["SuccessMessage"] = $"Replenishment request #{request.RequestId} created. Add items below.";
-            return RedirectToAction(nameof(Form), new { id = request.RequestId });
+            TempData["SuccessMessage"] = $"Replenishment request #{request.GetRequestId()} created. Add items below.";
+            return RedirectToAction(nameof(Form), new { id = request.GetRequestId() });
         }
         catch (Exception ex)
         {

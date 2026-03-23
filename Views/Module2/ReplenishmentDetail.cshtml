@@ -1,13 +1,13 @@
 @model ProRental.Domain.Entities.Replenishmentrequest
 @{
-    ViewData["Title"] = $"Request #{Model.RequestId} Details";
+    ViewData["Title"] = $"Request #{Model.GetRequestId()} Details";
 }
 
 <div class="mb-4">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a asp-action="List">Replenishment Requests</a></li>
-            <li class="breadcrumb-item active">Request #@Model.RequestId</li>
+            <li class="breadcrumb-item active">Request #@Model.GetRequestId()</li>
         </ol>
     </nav>
 </div>
@@ -37,7 +37,7 @@
             <div class="card-body">
                 <dl class="row mb-0">
                     <dt class="col-sm-5">Request ID</dt>
-                    <dd class="col-sm-7">#@Model.RequestId</dd>
+                    <dd class="col-sm-7">#@Model.GetRequestId()</dd>
 
                     <dt class="col-sm-5">Status</dt>
                     <dd class="col-sm-7">
@@ -59,18 +59,18 @@
                     </dd>
 
                     <dt class="col-sm-5">Requested By</dt>
-                    <dd class="col-sm-7">@Model.RequestedBy</dd>
+                    <dd class="col-sm-7">@Model.GetRequestedBy()</dd>
 
                     <dt class="col-sm-5">Created At</dt>
-                    <dd class="col-sm-7">@Model.CreatedAt?.ToString("yyyy-MM-dd HH:mm")</dd>
+                    <dd class="col-sm-7">@Model.GetCreatedAt()?.ToString("yyyy-MM-dd HH:mm")</dd>
 
-                    @if (Model.CompletedAt.HasValue)
+                    @if (Model.GetCompletedAt().HasValue)
                     {
                         <dt class="col-sm-5">Completed At</dt>
-                        <dd class="col-sm-7">@Model.CompletedAt?.ToString("yyyy-MM-dd HH:mm")</dd>
+                        <dd class="col-sm-7">@Model.GetCompletedAt()?.ToString("yyyy-MM-dd HH:mm")</dd>
 
                         <dt class="col-sm-5">Completed By</dt>
-                        <dd class="col-sm-7">@Model.CompletedBy</dd>
+                        <dd class="col-sm-7">@Model.GetCompletedBy()</dd>
                     }
                 </dl>
             </div>
@@ -83,14 +83,14 @@
             <div class="card-body d-grid gap-2">
                 @if (Model.CanEdit())
                 {
-                    <a asp-action="Form" asp-route-id="@Model.RequestId" class="btn btn-primary w-100">
+                    <a asp-action="Form" asp-route-id="@Model.GetRequestId()" class="btn btn-primary w-100">
                         <i class="bi bi-pencil me-1"></i>Edit Request
                     </a>
                 }
 
                 @if (Model.Status == ProRental.Domain.Enums.ReplenishmentStatus.SUBMITTED)
                 {
-                    <form asp-action="Complete" asp-route-id="@Model.RequestId" method="post">
+                    <form asp-action="Complete" asp-route-id="@Model.GetRequestId()" method="post">
                         @Html.AntiForgeryToken()
                         <div class="input-group">
                             <input type="text" class="form-control" name="completedBy"
@@ -101,7 +101,7 @@
                         </div>
                     </form>
 
-                    <form asp-action="Cancel" asp-route-id="@Model.RequestId" method="post">
+                    <form asp-action="Cancel" asp-route-id="@Model.GetRequestId()" method="post">
                         @Html.AntiForgeryToken()
                         <button type="submit" class="btn btn-outline-danger w-100"
                                 onclick="return confirm('Are you sure you want to cancel this request?')">
@@ -141,13 +141,13 @@
                                 {
                                     <tr>
                                         <td>
-                                            <strong>#@item.ProductId</strong>
+                                            <strong>#@item.GetProductId()</strong>
                                             @if (item.Product != null)
                                             {
                                                 <br /><small class="text-muted">@item.Product</small>
                                             }
                                         </td>
-                                        <td>@item.QuantityRequest</td>
+                                        <td>@item.GetQuantityRequest()</td>
                                         <td>
                                             <span class="badge bg-info">@item.Reason</span>
                                         </td>
