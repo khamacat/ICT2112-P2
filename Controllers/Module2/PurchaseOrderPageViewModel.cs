@@ -10,11 +10,11 @@ namespace ProRental.Controllers
 
         public List<PurchaseOrderItemViewModel> Items { get; set; } = new();
         public List<PurchaseOrderSupplierViewModel> Suppliers { get; set; } = new();
-
         public List<PurchaseOrderRequestListItemViewModel> Requests { get; set; } = new();
 
+        public List<PurchaseOrderListItemViewModel> PurchaseOrders { get; set; } = new();
+
         public int? CreatedPoId { get; set; }
-        
     }
 
     public class PurchaseOrderItemViewModel
@@ -43,7 +43,15 @@ namespace ProRental.Controllers
         public DateTime? CreatedAt { get; set; }
         public string Status { get; set; } = "";
         public string Remarks { get; set; } = "";
-        
     }
-    
+
+    public class PurchaseOrderListItemViewModel
+    {
+        public int PoId { get; set; }
+        public int SupplierId { get; set; }
+        public DateTime? PoDate { get; set; }
+        public DateTime? ExpectedDeliveryDate { get; set; }
+        public string Status { get; set; } = "";
+        public decimal? TotalAmount { get; set; }
+    }
 }

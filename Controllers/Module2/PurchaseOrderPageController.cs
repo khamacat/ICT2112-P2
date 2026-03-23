@@ -19,7 +19,9 @@ namespace ProRental.Controllers
             {
                 var vm = new PurchaseOrderPageViewModel
                 {
-                    Requests = _purchaseOrderService.GetAllRequests()
+                    Requests = _purchaseOrderService.GetAllRequests(),
+                    PurchaseOrders = _purchaseOrderService.GetAllPurchaseOrders(),
+                    CreatedPoId = poId
                 };
 
                 return View("~/Views/Module2/PurchaseOrder.cshtml", vm);
@@ -27,6 +29,7 @@ namespace ProRental.Controllers
 
             var loadedVm = _purchaseOrderService.GetPurchaseOrderPageData(reqId);
             loadedVm.Requests = _purchaseOrderService.GetAllRequests();
+            loadedVm.PurchaseOrders = _purchaseOrderService.GetAllPurchaseOrders();
             loadedVm.CreatedPoId = poId;
 
             return View("~/Views/Module2/PurchaseOrder.cshtml", loadedVm);
@@ -41,80 +44,9 @@ namespace ProRental.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            PurchaseOrderPageViewModel loadedVm;
-
-            try
-            {
-                // Try load real DB data
-                loadedVm = _purchaseOrderService.GetPurchaseOrderPageData(reqId);
-                loadedVm.Requests = _purchaseOrderService.GetAllRequests();
-            }
-            catch
-            {
-                // 🔥 FALLBACK DEMO DATA (FOR PRESENTATION)
-                loadedVm = new PurchaseOrderPageViewModel
-                {
-                    RequestId = 102,
-                    RequestedBy = "Ben Lim",
-                    CreatedAt = DateTime.Now.AddDays(-1),
-                    Status = "Approved",
-                    Remarks = "Approved demo request",
-
-                    Items = new List<PurchaseOrderItemViewModel>
-                    {
-                        new PurchaseOrderItemViewModel
-                        {
-                            LineItemId = 1,
-                            ProductId = 2001,
-                            ProductName = "Excavator",
-                            Qty = 2,
-                            Remarks = "Urgent restock"
-                        },
-                        new PurchaseOrderItemViewModel
-                        {
-                            LineItemId = 2,
-                            ProductId = 2002,
-                            ProductName = "Safety Helmet",
-                            Qty = 10,
-                            Remarks = "For new crew"
-                        }
-                    },
-
-                    Suppliers = new List<PurchaseOrderSupplierViewModel>
-                    {
-                        new PurchaseOrderSupplierViewModel
-                        {
-                            SupplierId = 301,
-                            SupplierName = "BuildMax Supplies",
-                            Details = "Preferred industrial supplier",
-                            CreditPeriod = 30,
-                            AvgTurnaroundTime = 2.5,
-                            IsVerified = true
-                        },
-                        new PurchaseOrderSupplierViewModel
-                        {
-                            SupplierId = 302,
-                            SupplierName = "Prime Equipment Co",
-                            Details = "Backup supplier",
-                            CreditPeriod = 14,
-                            AvgTurnaroundTime = 4.0,
-                            IsVerified = true
-                        }
-                    },
-
-                    Requests = new List<PurchaseOrderRequestListItemViewModel>
-                    {
-                        new PurchaseOrderRequestListItemViewModel
-                        {
-                            RequestId = 102,
-                            RequestedBy = "Ben Lim",
-                            CreatedAt = DateTime.Now.AddDays(-1),
-                            Status = "Approved",
-                            Remarks = "Approved demo request"
-                        }
-                    }
-                };
-            }
+            var loadedVm = _purchaseOrderService.GetPurchaseOrderPageData(reqId);
+            loadedVm.Requests = _purchaseOrderService.GetAllRequests();
+            loadedVm.PurchaseOrders = _purchaseOrderService.GetAllPurchaseOrders();
 
             return View("~/Views/Module2/PurchaseOrderView.cshtml", loadedVm);
         }
@@ -126,7 +58,7 @@ namespace ProRental.Controllers
             if (reqId <= 0)
             {
                 TempData["Error"] = "Invalid request ID.";
-                return RedirectToAction(nameof(Index), new { reqId });
+                return RedirectToAction(nameof(Index));
             }
 
             if (supplierId <= 0)

@@ -23,7 +23,7 @@ namespace ProRental.Domain.Control
                 RequestId = reqId
             };
 
-            using var conn = (NpgsqlConnection)_context.Database.GetDbConnection();
+            var conn = (NpgsqlConnection)_context.Database.GetDbConnection();
             if (conn.State != ConnectionState.Open)
                 conn.Open();
 
@@ -49,11 +49,12 @@ namespace ProRental.Domain.Control
                 SELECT 
                     li.lineitemid,
                     li.productid,
-                    COALESCE(p.name, 'Unknown Product') AS productname,
+                    COALESCE(pd.name, 'Unknown Product') AS productname,
                     li.quantityrequest,
                     li.remarks
                 FROM lineitem li
                 LEFT JOIN product p ON p.productid = li.productid
+                LEFT JOIN productdetails pd ON pd.productid = p.productid
                 WHERE li.requestid = @reqId
                 ORDER BY li.lineitemid;", conn))
             {
@@ -97,9 +98,68 @@ namespace ProRental.Domain.Control
             return vm;
         }
 
+        public List<PurchaseOrderRequestListItemViewModel> GetAllRequests()
+        {
+            var requests = new List<PurchaseOrderRequestListItemViewModel>();
+
+            var conn = (NpgsqlConnection)_context.Database.GetDbConnection();
+            if (conn.State != ConnectionState.Open)
+                conn.Open();
+
+            using var cmd = new NpgsqlCommand(@"
+                SELECT requestid, requestedby, createdat, status::text, remarks
+                FROM replenishmentrequest
+                ORDER BY createdat DESC, requestid DESC;", conn);
+
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                requests.Add(new PurchaseOrderRequestListItemViewModel
+                {
+                    RequestId = reader.GetInt32(0),
+                    RequestedBy = reader.IsDBNull(1) ? "" : reader.GetString(1),
+                    CreatedAt = reader.IsDBNull(2) ? null : reader.GetDateTime(2),
+                    Status = reader.IsDBNull(3) ? "" : reader.GetString(3),
+                    Remarks = reader.IsDBNull(4) ? "" : reader.GetString(4)
+                });
+            }
+
+            return requests;
+        }
+
+        public List<PurchaseOrderListItemViewModel> GetAllPurchaseOrders()
+        {
+            var purchaseOrders = new List<PurchaseOrderListItemViewModel>();
+
+            var conn = (NpgsqlConnection)_context.Database.GetDbConnection();
+            if (conn.State != ConnectionState.Open)
+                conn.Open();
+
+            using var cmd = new NpgsqlCommand(@"
+                SELECT poid, supplierid, podate, expecteddeliverydate, status::text, totalamount
+                FROM purchaseorder
+                ORDER BY poid DESC;", conn);
+
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                purchaseOrders.Add(new PurchaseOrderListItemViewModel
+                {
+                    PoId = reader.GetInt32(0),
+                    SupplierId = reader.IsDBNull(1) ? 0 : reader.GetInt32(1),
+                    PoDate = reader.IsDBNull(2) ? null : reader.GetDateTime(2),
+                    ExpectedDeliveryDate = reader.IsDBNull(3) ? null : reader.GetDateTime(3),
+                    Status = reader.IsDBNull(4) ? "" : reader.GetString(4),
+                    TotalAmount = reader.IsDBNull(5) ? null : reader.GetDecimal(5)
+                });
+            }
+
+            return purchaseOrders;
+        }
+
         public int ConfirmPurchaseOrder(int reqId, int supplierId, DateOnly? expectedDeliveryDate)
         {
-            using var conn = (NpgsqlConnection)_context.Database.GetDbConnection();
+            var conn = (NpgsqlConnection)_context.Database.GetDbConnection();
             if (conn.State != ConnectionState.Open)
                 conn.Open();
 
@@ -111,7 +171,7 @@ namespace ProRental.Domain.Control
 
                 using (var cmd = new NpgsqlCommand(@"
                     INSERT INTO purchaseorder (supplierid, podate, status, expecteddeliverydate, totalamount)
-                    VALUES (@supplierId, CURRENT_DATE, 'CONFIRMED', @expectedDeliveryDate, 0)
+                    VALUES (@supplierId, CURRENT_DATE, 'CONFIRMED'::po_status_enum, @expectedDeliveryDate, 0)
                     RETURNING poid;", conn, tx))
                 {
                     cmd.Parameters.AddWithValue("@supplierId", supplierId);
@@ -135,22 +195,6 @@ namespace ProRental.Domain.Control
                     cmd.ExecuteNonQuery();
                 }
 
-                using (var cmd = new NpgsqlCommand(@"
-                    INSERT INTO purchaseorderlog (purchaseorderid, supplierid, status, expecteddeliverydate, totalamount, detailsjson)
-                    VALUES (@poId, @supplierId, 'CONFIRMED', @expectedDeliveryDate, 0, @detailsJson);", conn, tx))
-                {
-                    cmd.Parameters.AddWithValue("@poId", poId);
-                    cmd.Parameters.AddWithValue("@supplierId", supplierId);
-                    cmd.Parameters.AddWithValue(
-                        "@expectedDeliveryDate",
-                        expectedDeliveryDate.HasValue
-                            ? expectedDeliveryDate.Value.ToDateTime(TimeOnly.MinValue)
-                            : DBNull.Value);
-                    cmd.Parameters.AddWithValue("@detailsJson", $@"{{""requestId"":{reqId}}}");
-
-                    cmd.ExecuteNonQuery();
-                }
-
                 tx.Commit();
                 return poId;
             }
@@ -159,34 +203,6 @@ namespace ProRental.Domain.Control
                 tx.Rollback();
                 throw;
             }
-        }
-        public List<PurchaseOrderRequestListItemViewModel> GetAllRequests()
-        {
-            var requests = new List<PurchaseOrderRequestListItemViewModel>();
-
-            using var conn = (NpgsqlConnection)_context.Database.GetDbConnection();
-            if (conn.State != ConnectionState.Open)
-                conn.Open();
-
-            using var cmd = new NpgsqlCommand(@"
-        SELECT requestid, requestedby, createdat, status::text, remarks
-        FROM replenishmentrequest
-        ORDER BY createdat DESC, requestid DESC;", conn);
-
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                requests.Add(new PurchaseOrderRequestListItemViewModel
-                {
-                    RequestId = reader.GetInt32(0),
-                    RequestedBy = reader.IsDBNull(1) ? "" : reader.GetString(1),
-                    CreatedAt = reader.IsDBNull(2) ? null : reader.GetDateTime(2),
-                    Status = reader.IsDBNull(3) ? "" : reader.GetString(3),
-                    Remarks = reader.IsDBNull(4) ? "" : reader.GetString(4)
-                });
-            }
-
-            return requests;
         }
     }
 }

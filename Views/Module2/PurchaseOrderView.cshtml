@@ -26,10 +26,10 @@
         </div>
     }
 
-    @if (Model.CreatedPoId.HasValue)
+    @if (TempData["Success"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
-            Purchase Order #@Model.CreatedPoId created successfully.
+            @TempData["Success"]
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
@@ -61,17 +61,21 @@
                 <div class="col-md-3">
                     <label class="form-label text-muted">Status</label>
                     <div>
-                        @if (Model.Status == "Approved")
+                        @if (Model.Status == "COMPLETED" || Model.Status == "Completed")
                         {
                             <span class="badge bg-success">@Model.Status</span>
                         }
-                        else if (Model.Status == "Rejected")
+                        else if (Model.Status == "CANCELLED" || Model.Status == "Cancelled")
                         {
                             <span class="badge bg-danger">@Model.Status</span>
                         }
-                        else if (Model.Status == "Pending")
+                        else if (Model.Status == "SUBMITTED" || Model.Status == "Submitted")
                         {
                             <span class="badge bg-warning text-dark">@Model.Status</span>
+                        }
+                        else if (Model.Status == "DRAFT" || Model.Status == "Draft")
+                        {
+                            <span class="badge bg-secondary">@Model.Status</span>
                         }
                         else
                         {
@@ -115,7 +119,7 @@
                                 <tr>
                                     <td class="fw-semibold">@item.LineItemId</td>
                                     <td>@item.ProductId</td>
-                                    <td>@item.ProductName</td>
+                                    <td>@(string.IsNullOrWhiteSpace(item.ProductName) ? "-" : item.ProductName)</td>
                                     <td>@item.Qty</td>
                                     <td>@(string.IsNullOrWhiteSpace(item.Remarks) ? "-" : item.Remarks)</td>
                                 </tr>
@@ -133,7 +137,7 @@
         </div>
     </div>
 
-    <div class="card shadow-sm border-0">
+    <div class="card shadow-sm border-0 mb-4">
         <div class="card-header bg-white">
             <h5 class="mb-0">
                 <i class="bi bi-truck me-2"></i>
@@ -160,10 +164,10 @@
                             {
                                 <tr>
                                     <td class="fw-semibold">@supplier.SupplierId</td>
-                                    <td>@supplier.SupplierName</td>
+                                    <td>@(string.IsNullOrWhiteSpace(supplier.SupplierName) ? "-" : supplier.SupplierName)</td>
                                     <td>@(string.IsNullOrWhiteSpace(supplier.Details) ? "-" : supplier.Details)</td>
-                                    <td>@(supplier.CreditPeriod?.ToString() ?? "-") days</td>
-                                    <td>@(supplier.AvgTurnaroundTime?.ToString("0.##") ?? "-") days</td>
+                                    <td>@(supplier.CreditPeriod.HasValue ? supplier.CreditPeriod + " days" : "-")</td>
+                                    <td>@(supplier.AvgTurnaroundTime.HasValue ? supplier.AvgTurnaroundTime.Value.ToString("0.##") + " days" : "-")</td>
                                     <td>
                                         @if (supplier.IsVerified)
                                         {
@@ -184,6 +188,77 @@
             {
                 <div class="alert alert-warning mb-0">
                     No suppliers found.
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">
+                <i class="bi bi-plus-circle me-2"></i>
+                Create Purchase Order
+            </h5>
+        </div>
+        <div class="card-body">
+            @if (Model.Suppliers != null && Model.Suppliers.Count > 0)
+            {
+                <form asp-controller="PurchaseOrderPage"
+                      asp-action="ConfirmPO"
+                      method="post">
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" name="reqId" value="@Model.RequestId" />
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="supplierId" class="form-label">Select Supplier</label>
+                            <select id="supplierId" name="supplierId" class="form-select" required>
+                                <option value="">-- Select Supplier --</option>
+                                @foreach (var supplier in Model.Suppliers)
+                                {
+                                    <option value="@supplier.SupplierId">
+                                        @supplier.SupplierName
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="expectedDeliveryDate" class="form-label">Expected Delivery Date</label>
+                            <input type="date"
+                                   id="expectedDeliveryDate"
+                                   name="expectedDeliveryDate"
+                                   class="form-control" />
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-check mt-2">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="confirmDetails"
+                                       name="confirmDetails"
+                                       value="true" />
+                                <input type="hidden" name="confirmDetails" value="false" />
+                                <label class="form-check-label" for="confirmDetails">
+                                    I confirm that the purchase order details are correct
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-12 d-flex justify-content-end">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check-circle me-1"></i>
+                                Create PO
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            }
+            else
+            {
+                <div class="alert alert-warning mb-0">
+                    Cannot create purchase order because no suppliers are available.
                 </div>
             }
         </div>
