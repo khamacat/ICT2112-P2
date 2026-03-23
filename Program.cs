@@ -138,11 +138,20 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 //Team P2-2
 // Data source
-
+builder.Services.AddScoped<ProRental.Data.Module2.Interfaces.ITransactionLogGateway, ProRental.Data.Module2.Gateways.TransactionLogGateway>();
+builder.Services.AddScoped<ProRental.Data.Module2.Interfaces.IRentalOrderLogGateway, ProRental.Data.Module2.Gateways.RentalOrderLogGateway>();
+builder.Services.AddScoped<ProRental.Data.Module2.Interfaces.ILoanLogGateway, ProRental.Data.Module2.Gateways.LoanLogGateway>();
+builder.Services.AddScoped<ProRental.Data.Module2.Interfaces.IReturnLogGateway, ProRental.Data.Module2.Gateways.ReturnLogGateway>();
+builder.Services.AddScoped<ProRental.Data.Module2.Interfaces.IClearanceLogGateway, ProRental.Data.Module2.Gateways.ClearanceLogGateway>();
+builder.Services.AddScoped<ProRental.Data.Module2.Interfaces.IPurchaseOrderLogGateway, ProRental.Data.Module2.Gateways.PurchaseOrderLogGateway>();
 // Domain
-
+builder.Services.AddScoped<ProRental.Domain.Module2.P2_2.Controls.TransactionLogControl>();
+builder.Services.AddScoped<ProRental.Domain.Module2.P2_2.Controls.TransactionFilterControl>();
+builder.Services.AddScoped<ProRental.Interfaces.IPurchaseOrderService, ProRental.Domain.Module2.P2_2.Controls.StubPurchaseOrderService>();
 // Presentation/Controllers
-
+builder.Services.AddScoped<ProRental.Interfaces.IRentalOrderLogger>(sp => sp.GetRequiredService<ProRental.Domain.Module2.P2_2.Controls.TransactionLogControl>());
+builder.Services.AddScoped<ProRental.Interfaces.IInventoryTransactionLogger>(sp => sp.GetRequiredService<ProRental.Domain.Module2.P2_2.Controls.TransactionLogControl>());
+builder.Services.AddScoped<ProRental.Interfaces.ITransactionLoggingUI>(sp => sp.GetRequiredService<ProRental.Domain.Module2.P2_2.Controls.TransactionFilterControl>());
 //Team P2-3
 // Data source
 
