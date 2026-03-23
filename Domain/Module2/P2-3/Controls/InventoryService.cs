@@ -4,7 +4,7 @@ using ProRental.Interfaces.Domain;
 
 namespace ProRental.Domain.Controls;
 
-public class InventoryService : IInventoryService
+public class InventoryService : IInventoryService, IResupplyService
 {
     // The Facade injects all the specific subsystem experts it needs to coordinate.
     private readonly IProductQuery _productQuery;

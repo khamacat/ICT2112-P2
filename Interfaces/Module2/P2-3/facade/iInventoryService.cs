@@ -22,34 +22,37 @@ namespace ProRental.Interfaces.Domain;
 // Pre-flight checks to be done here as well, checking for available quantity of inventoryitems per product line before compiling them into a list for loan subsystem to start loaning and updating inventoryitem status to on loan upon succcessful creation.
 // triggering of return process will he be here, where it will close the loanlist, and once the returnrequest creation is successful, will update the inventoryitem status to maintenance
 
-public interface IInventoryService
+// 1. The Base Query Interface (Shared across modules)
+public interface IInventoryQueryFacade
 {
-	// Querying services
-	public List<Product>? GetAllProducts();
+    List<Product>? GetAllProducts();
+    Product? GetProduct(int productId);
+    List<Product>? GetProductByCategory(int categoryId);
+    int CheckProductQuantity(int productId, InventoryStatus status);
+    ProductStatus CheckProductStatus(int productId);
+    List<Inventoryitem>? GetInventoryItemByStatus(InventoryStatus status);
+    List<Product>? GetProductsByStatus(ProductStatus status);
+}
 
-	public Product? GetProduct(int productId);
+// Business Coordination logic
 
-	public List<Product>? GetProductByCategory(int categoryId);
-
-	public int CheckProductQuantity(int productId, InventoryStatus status);
-
-	public ProductStatus CheckProductStatus(int productId);
-
-	public List<Inventoryitem>? GetInventoryItemByStatus(InventoryStatus status);
-
-	public List<Product>? GetProductsByStatus(ProductStatus status);
-
-	// Business Coordination logic
-	
-	// User: Team P2-2 Purpose: When resupply is received, and staff clicks received resupply, the product quantity will automatically be updated and inventoryitems with productid but no serial numbers and expirdate will be created (with reserved status)
-	// Coordinates: IProductCRUD (AddToProduct method), IInventoryCRUD (BulkCreateInventoryItems method)
-	public bool AddToProduct(int productId, int quantity);
+// 2. The Module 1 Interface (Loans/Returns + Queries)
+public interface IInventoryService : IInventoryQueryFacade
+{
 
 	// User: Module 1. Purpose: Once Module 1 checksout and creates an order, they will call this method and pass in the necessary details, while waiting for a return successful (true) or not, must handle pre flight checking etc
 	// Coordinates: IInventoryQueryControl, ILoanActions and IInventoryStatusControl
-	public bool ProcessLoan(int orderId, int customerId, DateTime startDate, DateTime dueDate, Dictionary<int, int> productQuantities);
+    bool ProcessLoan(int orderId, int customerId, DateTime startDate, DateTime dueDate, Dictionary<int, int> productQuantities);
 
 	// User: Module 1. Purpose: Once staff receives the rental order return, will trigger our process to open a returnrequest, reutnring true or false.
 	// Coordinates: IInvenotryStatusControl, ILoanQuery(to get the inventoryitems and customerid attached to an orderid), ILoanActions(closing) and IReturnProcess(trigger)
-	public bool TriggerReturnProcess(int orderId, DateTime requestDate);
+    bool TriggerReturnProcess(int orderId, DateTime requestDate);
+}
+
+// 3. The Module 2 Interface (Warehouse/Resupply + Queries)
+public interface IResupplyService : IInventoryQueryFacade
+{
+	// User: Team P2-2 Purpose: When resupply is received, and staff clicks received resupply, the product quantity will automatically be updated and inventoryitems with productid but no serial numbers and expirdate will be created (with reserved status)
+	// Coordinates: IProductCRUD (AddToProduct method), IInventoryCRUD (BulkCreateInventoryItems method)
+    bool AddToProduct(int productId, int quantity);
 }
