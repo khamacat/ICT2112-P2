@@ -20,9 +20,68 @@
     }
 
     <div class="d-flex flex-wrap gap-2 mb-3">
-        <a asp-action="DisplayAllAlerts" class="btn btn-primary btn-sm">Display All Alerts</a>
-        <a asp-action="DisplayAllThresholds" class="btn btn-outline-primary btn-sm">Display All Thresholds</a>
+        <a asp-action="DisplayAlerts" class="btn btn-primary btn-sm">View All Alerts</a>
+        <div class="btn-group btn-group-sm" role="group">
+            <a href="#" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#filterModal">Filter by Product</a>
+            <a href="#" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#staffModal">View by Staff</a>
+        </div>
     </div>
+
+    <!-- Filter Modal for Product -->
+    <div class="modal fade" id="filterModal" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Filter by Product</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="productFilterForm">
+                        <div class="mb-3">
+                            <label for="productId" class="form-label">Product ID:</label>
+                            <input type="number" class="form-control" id="productId" name="productId" min="1" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100">Filter</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Modal for Staff -->
+    <div class="modal fade" id="staffModal" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">View Alerts by Staff</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="staffFilterForm">
+                        <div class="mb-3">
+                            <label for="staffId" class="form-label">Staff ID:</label>
+                            <input type="number" class="form-control" id="staffId" name="staffId" min="1" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100">View</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.getElementById('productFilterForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const productId = document.getElementById('productId').value;
+        window.location.href = '@Url.Action("DisplayAlertsByProduct")/' + productId;
+    });
+    
+    document.getElementById('staffFilterForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const staffId = document.getElementById('staffId').value;
+        window.location.href = '@Url.Action("DisplayAlertsByStaff")/' + staffId;
+    });
+    </script>
 
     <div class="table-responsive">
         <table class="table table-striped table-bordered align-middle">
@@ -61,8 +120,6 @@
                             <td>@(alert.GetResolvedAt()?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
                             <td>
                                 <div class="d-flex flex-wrap gap-1">
-                                    <a asp-action="DisplayAlert" asp-route-alertId="@alert.GetAlertId()" class="btn btn-sm btn-outline-secondary">Display</a>
-
                                     <form asp-action="AcknowledgeAlert" asp-route-alertId="@alert.GetAlertId()" method="post" class="d-inline">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="btn btn-sm btn-outline-warning">Acknowledge</button>
@@ -71,12 +128,6 @@
                                     <form asp-action="ResolveAlert" asp-route-alertId="@alert.GetAlertId()" method="post" class="d-inline">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="btn btn-sm btn-outline-success">Resolve</button>
-                                    </form>
-
-                                    <form asp-action="EditThreshold" asp-route-alertId="@alert.GetAlertId()" method="post" class="d-flex gap-1">
-                                        @Html.AntiForgeryToken()
-                                        <input type="number" name="threshold" class="form-control form-control-sm" style="width: 90px;" min="0" value="@alert.GetMinThreshold()" />
-                                        <button type="submit" class="btn btn-sm btn-outline-primary">Edit Threshold</button>
                                     </form>
                                 </div>
                             </td>

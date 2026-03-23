@@ -110,18 +110,58 @@ public class StaffInventoryController : Controller
     }
 
     [HttpGet("HandleSearch")]
-    public IActionResult HandleSearch(string? query)
+    public IActionResult HandleSearch(string? searchType, string? searchValue)
     {
         try
         {
-            var items = _queryControl.SearchInventoryItems(query ?? "");
-            ViewData["Query"] = query;
+            List<Inventoryitem> items = new();
+
+            if (!string.IsNullOrWhiteSpace(searchType) && !string.IsNullOrWhiteSpace(searchValue))
+            {
+                if (string.Equals(searchType, "serialNumber", StringComparison.OrdinalIgnoreCase))
+                {
+                    items = _queryControl.SearchInventoryItems(searchValue.ToUpper());
+                }
+                else if (string.Equals(searchType, "productId", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (int.TryParse(searchValue, out var productId) && productId > 0)
+                    {
+                        items = _queryControl.GetInventoryByProduct(productId);
+                    }
+                }
+                else if (string.Equals(searchType, "inventoryId", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (int.TryParse(searchValue, out var inventoryId) && inventoryId > 0)
+                    {
+                        var item = _crudControl.GetInventoryItemById(inventoryId);
+                        items = item != null ? new List<Inventoryitem> { item } : new();
+                    }
+                }
+                else if (string.Equals(searchType, "status", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (Enum.TryParse<InventoryStatus>(searchValue.ToUpper(), ignoreCase: true, out var status))
+                    {
+                        items = _queryControl.GetInventoryByStatus(status);
+                    }
+                }
+                else
+                {
+                    items = _queryControl.GetAllInventoryItems();
+                }
+            }
+            else
+            {
+                items = _queryControl.GetAllInventoryItems();
+            }
+
+            ViewData["SearchType"] = searchType;
+            ViewData["SearchValue"] = searchValue;
             return View("~/Views/Module2/Inventory/StaffInventory.cshtml", items);
         }
         catch
         {
             TempData["Message"] = "Unable to search inventory items. Please verify database access permissions for the application user.";
-            ViewData["Query"] = query;
+            ViewData["SearchType"] = searchType;
             return View("~/Views/Module2/Inventory/StaffInventory.cshtml", new List<Inventoryitem>());
         }
     }
@@ -214,8 +254,13 @@ public class StaffInventoryController : Controller
                 return RedirectToAction(nameof(ShowProductDetails), new { inventoryItemId });
             }
 
-            if (_crudControl.UpdateInventoryItem(inventoryItemId, productId, serialNumber, status ?? InventoryStatus.AVAILABLE, expiryDate))
+            var finalStatus = status ?? InventoryStatus.AVAILABLE;
+
+            if (_crudControl.UpdateInventoryItem(inventoryItemId, productId, serialNumber, finalStatus, expiryDate))
             {
+                // Sync product availability status based on inventory
+                _statusControl.UpdateInventoryStatus(inventoryItemId, finalStatus);
+
                 TempData["Message"] = "Inventory item updated successfully.";
                 return RedirectToAction(nameof(ShowProductDetails), new { inventoryItemId });
             }
