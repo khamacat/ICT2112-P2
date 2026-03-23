@@ -183,3 +183,14 @@ body {
     white-space: nowrap;
     line-height: 60px;
 }
+
+/* =============================================================================
+   7. STAFF PORTAL BANNER
+      Dark navy strip rendered above the footer on every page via _Layout.cshtml.
+      Cannot use Bootstrap bg-dark (#212529) — this colour (#1a252f) is a custom
+      darker navy that visually separates the banner from the footer bg-dark.
+   ============================================================================= */
+
+.staff-banner {
+    background-color: #1a252f;
+}

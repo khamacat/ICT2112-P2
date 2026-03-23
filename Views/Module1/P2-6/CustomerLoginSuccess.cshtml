@@ -1,0 +1,97 @@
+@{
+    ViewData["Title"] = "Welcome";
+    var userName = Context.Session.GetString("UserName") ?? "Customer";
+}
+
+<div class="row justify-content-center py-5">
+    <div class="col-12 col-md-9 col-lg-7">
+
+        <!-- Success banner -->
+        <div class="text-center mb-5">
+            <div class="mb-3">
+                <span class="badge bg-primary px-3 py-2 fs-6">
+                    <i class="bi bi-person-check-fill me-1"></i>
+                    Customer Session Active
+                </span>
+            </div>
+            <h1 class="h2 fw-bold">Welcome back, @userName</h1>
+            <p class="text-muted">You are signed in to your ProRental account.</p>
+        </div>
+
+        <!-- Quick-access cards -->
+        <div class="row g-3 mb-4">
+
+            <div class="col-12 col-sm-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body d-flex align-items-start gap-3 p-4">
+                        <span class="fs-2 text-primary"><i class="bi bi-grid-fill"></i></span>
+                        <div>
+                            <h6 class="fw-semibold mb-1">Browse Equipment</h6>
+                            <p class="text-muted small mb-2">Explore our full rental catalogue.</p>
+                            <a asp-controller="Home" asp-action="Index" class="btn btn-sm btn-outline-primary">Browse</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body d-flex align-items-start gap-3 p-4">
+                        <span class="fs-2 text-success"><i class="bi bi-cart-fill"></i></span>
+                        <div>
+                            <h6 class="fw-semibold mb-1">My Cart</h6>
+                            <p class="text-muted small mb-2">Review items and proceed to checkout.</p>
+                            <a asp-controller="Cart" asp-action="Index" class="btn btn-sm btn-outline-success">View Cart</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body d-flex align-items-start gap-3 p-4">
+                        <span class="fs-2 text-warning"><i class="bi bi-clock-history"></i></span>
+                        <div>
+                            <h6 class="fw-semibold mb-1">Rental History</h6>
+                            <p class="text-muted small mb-2">View your past and active rentals.</p>
+                            <a asp-controller="Home" asp-action="Index" class="btn btn-sm btn-outline-warning">View</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-sm-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body d-flex align-items-start gap-3 p-4">
+                        <span class="fs-2 text-info"><i class="bi bi-arrow-return-left"></i></span>
+                        <div>
+                            <h6 class="fw-semibold mb-1">Returns</h6>
+                            <p class="text-muted small mb-2">Submit or track a return request.</p>
+                            <a asp-controller="Home" asp-action="Index" class="btn btn-sm btn-outline-info">Manage</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Session info -->
+        <div class="card border-0 bg-light">
+            <div class="card-body px-4 py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div class="small text-muted">
+                    <i class="bi bi-person-circle me-1"></i>
+                    Logged in as <strong>@userName</strong>
+                    &nbsp;·&nbsp;
+                    <span class="badge bg-primary">CUSTOMER</span>
+                </div>
+                <form asp-controller="Module1" asp-action="Logout" method="post" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-box-arrow-right me-1"></i>Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
