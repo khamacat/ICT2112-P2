@@ -26,8 +26,32 @@
     }
 
     <form asp-action="HandleSearch" method="get" class="row g-2 mb-3">
-        <div class="col-md-6">
-            <input name="query" value="@query" class="form-control" placeholder="Search by inventory ID, product ID, or serial number" />
+        <div class="col-md-3">
+            <select name="searchType" class="form-select">
+                <option value="">-- Search By --</option>
+                @{
+                    var currentSearchType = ViewData["SearchType"]?.ToString() ?? "";
+                }
+                @if (currentSearchType == "serialNumber")
+                {<option value="serialNumber" selected>Serial Number</option>}
+                else
+                {<option value="serialNumber">Serial Number</option>}
+                @if (currentSearchType == "productId")
+                {<option value="productId" selected>Product ID</option>}
+                else
+                {<option value="productId">Product ID</option>}
+                @if (currentSearchType == "inventoryId")
+                {<option value="inventoryId" selected>Inventory ID</option>}
+                else
+                {<option value="inventoryId">Inventory ID</option>}
+                @if (currentSearchType == "status")
+                {<option value="status" selected>Status</option>}
+                else
+                {<option value="status">Status</option>}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <input name="searchValue" value="@(ViewData["SearchValue"]?.ToString() ?? "")" class="form-control" placeholder="Enter search value" />
         </div>
         <div class="col-auto">
             <button type="submit" class="btn btn-primary">Search</button>

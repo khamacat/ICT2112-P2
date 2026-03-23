@@ -182,13 +182,17 @@ builder.Services.AddScoped<iInventoryCRUDControl>(sp => sp.GetRequiredService<In
 builder.Services.AddScoped<iInventoryQueryControl>(sp => sp.GetRequiredService<InventoryManagementControl>());
 builder.Services.AddScoped<iInventoryStatusControl>(sp => sp.GetRequiredService<InventoryManagementControl>());
 builder.Services.AddScoped<iStockSubject>(sp => sp.GetRequiredService<InventoryManagementControl>());
-builder.Services.AddScoped<iAlertControl, LowStockAlertControl>();
+
+builder.Services.AddScoped<LowStockAlertControl>();
+builder.Services.AddScoped<iAlertControl>(sp => sp.GetRequiredService<LowStockAlertControl>());
+builder.Services.AddScoped<iStockObserver>(sp => sp.GetRequiredService<LowStockAlertControl>());
 
 //product
 builder.Services.AddScoped<ProductCatalogControl>();
 builder.Services.AddScoped<IProductQuery>(sp => sp.GetRequiredService<ProductCatalogControl>());
 builder.Services.AddScoped<IProductCRUD>(sp => sp.GetRequiredService<ProductCatalogControl>());
 builder.Services.AddScoped<IProductBulkCommand>(sp => sp.GetRequiredService<ProductCatalogControl>());
+builder.Services.AddScoped<IProductStatusControl>(sp => sp.GetRequiredService<ProductCatalogControl>());
 
 //clearance
 builder.Services.AddScoped<ClearanceBatchControl>();
@@ -269,7 +273,6 @@ builder.Services.AddSession(options =>
 builder.Services.AddScoped<Module1Controller>();
 
 var app = builder.Build();
-
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

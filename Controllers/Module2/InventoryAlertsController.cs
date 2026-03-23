@@ -18,54 +18,86 @@ public class InventoryAlertsController : Controller
     [HttpGet("DisplayAllThresholds")]
     public IActionResult DisplayAllThresholds()
     {
-        var alerts = _alertControl.GetAllAlerts();
-        ViewData["Filter"] = "All Thresholds";
-        return View("~/Views/Module2/Alerts.cshtml", alerts);
+        // Redirect to product-based view since thresholds are now managed at the product level
+        return RedirectToAction(nameof(DisplayAlertsByProduct));
     }
 
     [HttpGet("DisplayThreshold/{threshold:int}")]
     public IActionResult DisplayThreshold(int threshold)
     {
-        var alerts = _alertControl.GetAlertsByThreshold(threshold);
-        ViewData["Filter"] = $"Threshold = {threshold}";
-        return View("~/Views/Module2/Alerts.cshtml", alerts);
+        // This functionality is replaced by product-based and staff-based filtering
+        TempData["Message"] = "Use DisplayAlertsByProduct or DisplayAlertsByStaff filters instead.";
+        return RedirectToAction(nameof(DisplayAlerts));
     }
 
     [HttpPost("EditThreshold/{alertId:int}")]
     [ValidateAntiForgeryToken]
     public IActionResult EditThreshold(int alertId, int threshold)
     {
-        if (_alertControl.UpdateAlertThreshold(alertId, threshold))
-        {
-            TempData["Message"] = $"Threshold updated for alert #{alertId}.";
-        }
-        else
-        {
-            TempData["Message"] = "Alert not found or could not be updated.";
-        }
-        return RedirectToAction(nameof(DisplayAllAlerts));
+        // Thresholds are now managed through product configuration via IProductStatusControl
+        TempData["Message"] = "Threshold management has been moved to product configuration.";
+        return RedirectToAction(nameof(DisplayAlerts));
     }
 
     [HttpGet("DisplayAllAlerts")]
     public IActionResult DisplayAllAlerts()
     {
+        return RedirectToAction(nameof(DisplayAlerts));
+    }
+
+    [HttpGet("DisplayAlerts")]
+    public IActionResult DisplayAlerts()
+    {
         var alerts = _alertControl.GetAllAlerts();
-        ViewData["Filter"] = "All Alerts";
+        ViewData["Filter"] = "Select a filter below:";
+        ViewData["Message"] = "Use DisplayAlertsByProduct or DisplayAlertsByStaff with appropriate IDs";
+        return View("~/Views/Module2/Alerts.cshtml", alerts);
+    }
+
+    [HttpGet("DisplayAlertsByProduct/{productId:int}")]
+    public IActionResult DisplayAlertsByProduct(int productId)
+    {
+        var alerts = _alertControl.GetAlertsByProduct(productId);
+        ViewData["Filter"] = $"Alerts for Product #{productId}";
+        return View("~/Views/Module2/Alerts.cshtml", alerts);
+    }
+
+    [HttpGet("DisplayAlertsByStaff/{staffId:int}")]
+    public IActionResult DisplayAlertsByStaff(int staffId)
+    {
+        var alerts = _alertControl.GetAlertsByStaff(staffId);
+        ViewData["Filter"] = $"Alerts for Staff #{staffId}";
         return View("~/Views/Module2/Alerts.cshtml", alerts);
     }
 
     [HttpGet("DisplayAlert/{alertId:int}")]
     public IActionResult DisplayAlert(int alertId)
     {
-        var alert = _alertControl.GetAlertById(alertId);
-        if (alert is null)
+        // GetAlertById has been removed from the interface
+        // Use GetAlertsByProduct or GetAlertsByStaff instead
+        TempData["Message"] = "Use DisplayAlertsByProduct or DisplayAlertsByStaff to view alerts.";
+        return RedirectToAction(nameof(DisplayAlerts));
+    }
+
+    [HttpPost("SendAlertToStaff/{alertId:int}")]
+    [ValidateAntiForgeryToken]
+    public IActionResult SendAlertToStaff(int alertId, int staffId)
+    {
+        if (staffId <= 0)
         {
-            return NotFound();
+            TempData["Message"] = "Invalid staff ID.";
+            return RedirectToAction(nameof(DisplayAlerts));
         }
 
-        var alerts = new List<Alert> { alert };
-        ViewData["Filter"] = $"Alert #{alertId}";
-        return View("~/Views/Module2/Alerts.cshtml", alerts);
+        if (_alertControl.SendAlertToStaff(alertId, staffId))
+        {
+            TempData["Message"] = $"Alert #{alertId} assigned to Staff #{staffId}.";
+        }
+        else
+        {
+            TempData["Message"] = "Alert not found or could not be assigned.";
+        }
+        return RedirectToAction(nameof(DisplayAlerts));
     }
 
     [HttpPost("AcknowledgeAlert/{alertId:int}")]

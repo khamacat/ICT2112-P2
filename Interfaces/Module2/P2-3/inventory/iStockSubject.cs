@@ -4,5 +4,5 @@ public interface iStockSubject
 {
     void AttachObserver(iStockObserver observer);
     void RemoveObserver(iStockObserver observer);
-    void NotifyObservers(int productId);
+    void NotifyObservers(int productId, int availableCount);
 }
