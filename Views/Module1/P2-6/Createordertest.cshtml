@@ -1,0 +1,173 @@
+@{
+    ViewData["Title"] = "Test CreateOrder";
+}
+
+<style>
+    .test-page { background: #f5f5f5; min-height: 100vh; padding: 32px 0; }
+    .test-container { max-width: 600px; margin: 0 auto; padding: 0 16px; }
+
+    .test-card {
+        background: white; border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden;
+    }
+    .test-header {
+        padding: 18px 24px; border-bottom: 1px solid #f0f0f0;
+        background: #f9fffe;
+    }
+    .test-header h4 { margin: 0; font-size: 16px; font-weight: 700; color: #2d7a4f; }
+    .test-header p { margin: 4px 0 0; font-size: 12px; color: #888; }
+    .test-body { padding: 24px; }
+
+    .form-section { margin-bottom: 20px; }
+    .form-section-title {
+        font-size: 11px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 1px; color: #aaa; margin-bottom: 12px;
+        padding-bottom: 6px; border-bottom: 1px solid #f0f0f0;
+    }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { font-size: 12px; font-weight: 600; color: #555; display: block; margin-bottom: 5px; }
+    .form-control {
+        width: 100%; padding: 8px 12px;
+        border: 1px solid #e0e0e0; border-radius: 5px;
+        font-size: 13px; color: #333;
+        transition: border-color 0.2s;
+    }
+    .form-control:focus { outline: none; border-color: #2d7a4f; box-shadow: 0 0 0 3px rgba(45,122,79,0.1); }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .row-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; }
+
+    .item-block {
+        background: #f9fffe; border: 1px solid #e8f5ee;
+        border-radius: 6px; padding: 14px; margin-bottom: 10px;
+    }
+    .item-block-title { font-size: 12px; font-weight: 700; color: #2d7a4f; margin-bottom: 10px; }
+
+    .btn-submit {
+        width: 100%; background: #2d7a4f; color: white;
+        padding: 12px; border: none; border-radius: 6px;
+        font-size: 14px; font-weight: 700; cursor: pointer;
+        transition: background 0.2s;
+    }
+    .btn-submit:hover { background: #245f3e; }
+
+    .notice {
+        background: #fff8e6; border-left: 3px solid #e6a817;
+        padding: 10px 14px; border-radius: 4px; margin-bottom: 20px;
+        font-size: 12px; color: #7a5a00;
+    }
+
+    @if (TempData["CreatedOrderId"] != null)
+    {
+        <text>
+        .success-banner {
+            background: #e8f5e9; border-left: 3px solid #2e7d32;
+            padding: 12px 16px; border-radius: 4px; margin-bottom: 16px;
+            font-size: 13px; color: #1b5e20; font-weight: 600;
+        }
+        </text>
+    }
+</style>
+
+<div class="test-page">
+    <div class="test-container">
+
+        @if (TempData["CreatedOrderId"] != null)
+        {
+            <div style="background:#e8f5e9;border-left:3px solid #2e7d32;padding:12px 16px;border-radius:4px;margin-bottom:16px;font-size:13px;color:#1b5e20;font-weight:600;">
+                ✓ Order #@TempData["CreatedOrderId"] created — Status: @TempData["CreatedOrderStatus"]
+            </div>
+        }
+
+        <div class="test-card">
+            <div class="test-header">
+                <h4>🧪 Simulate CreateOrder()</h4>
+                <p>This bypasses checkout — directly calls IOrderService.CreateOrder() for testing.</p>
+            </div>
+            <div class="test-body">
+
+                <div class="notice">
+                    FakeInventoryService is active — ProcessLoan() always returns true, so status will be CONFIRMED.
+                </div>
+
+                <form method="post" action="/Module1/CreateOrderTest">
+                    @Html.AntiForgeryToken()
+
+                    <!-- Order Info -->
+                    <div class="form-section">
+                        <div class="form-section-title">Order Details</div>
+                        <div class="row-2">
+                            <div class="form-group">
+                                <label>Customer ID</label>
+                                <input type="number" name="customerId" class="form-control" value="1" required />
+                            </div>
+                            <div class="form-group">
+                                <label>Checkout ID</label>
+                                <input type="number" name="checkoutId" class="form-control" value="1" required />
+                            </div>
+                        </div>
+                        <div class="row-2">
+                            <div class="form-group">
+                                <label>Delivery Type</label>
+                                <select name="deliveryType" class="form-control">
+                                    <option value="NextDay">Next Day</option>
+                                    <option value="ThreeDays">Three Days</option>
+                                    <option value="OneWeek" selected>One Week</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Total Amount ($)</label>
+                                <input type="number" name="totalAmount" class="form-control" value="195.00" step="0.01" required />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item 1 -->
+                    <div class="form-section">
+                        <div class="form-section-title">Item 1</div>
+                        <div class="item-block">
+                            <div class="row-3">
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label>Product ID</label>
+                                    <input type="number" name="productId1" class="form-control" value="1" required />
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label>Qty</label>
+                                    <input type="number" name="quantity1" class="form-control" value="1" required />
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label>Unit Price</label>
+                                    <input type="number" name="unitPrice1" class="form-control" value="150.00" step="0.01" required />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Item 2 -->
+                    <div class="form-section">
+                        <div class="form-section-title">Item 2</div>
+                        <div class="item-block">
+                            <div class="row-3">
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label>Product ID</label>
+                                    <input type="number" name="productId2" class="form-control" value="5" required />
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label>Qty</label>
+                                    <input type="number" name="quantity2" class="form-control" value="1" required />
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label>Unit Price</label>
+                                    <input type="number" name="unitPrice2" class="form-control" value="45.00" step="0.01" required />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit">Call CreateOrder() →</button>
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+</div>

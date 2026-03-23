@@ -2805,7 +2805,7 @@ public partial class AppDbContext : DbContext
         {
             entity.HasKey("Userid").HasName("User_pkey");
 
-            entity.ToTable("User");
+            entity.ToTable("User", "public");
 
             // entity.HasIndex("Email", "User_email_key").IsUnique();
             entity.HasIndex("Email").HasDatabaseName("User_email_key").IsUnique();

@@ -2,96 +2,227 @@
     =========================================================================
     ProRental — Shared Layout  (_Layout.cshtml)
     =========================================================================
-
-    STRUCTURE OVERVIEW
-    ------------------
-    <head>          CSS (Bootstrap → Bootstrap Icons → site.css), viewport meta
-    <header>        Top navbar — add new nav-item links here for new sections
-    <div.container> Main content area — @RenderBody() injects each view here
-    <footer>        Sticky footer — markup stays simple, styled via site.css
-    Scripts block   jQuery → Bootstrap JS → site.js → @section Scripts{}
-
-    DESIGN RULES FOR DEVELOPERS
-    ---------------------------
-    1. Bootstrap 5.3 utility classes ONLY inside views — no inline styles.
-    2. Brand colour and CSS variable overrides live in wwwroot/css/site.css.
-       Do NOT hardcode colour values (#hex / rgb) in views or here.
-    3. Icons: use Bootstrap Icons — class="bi bi-<name>".
-       Full icon reference: https://icons.getbootstrap.com/
-    4. The .container wrapper here provides the page's outer padding/max-width.
-       Do NOT add another .container inside individual view files.
-    5. If a view needs page-specific CSS or JS, use the "Scripts" section:
-           @section Scripts { <script src="..."></script> }
-    =========================================================================
 *@
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - ProRental</title>
-
-    <!-- CSS load order: Bootstrap base → Bootstrap Icons → project overrides -->
-    <!-- 1. Bootstrap 5.3.3 — grid, components, utilities (local via libman) -->
+    <title>@ViewData["Title"] - Pro Rentals</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <!-- 2. Bootstrap Icons 1.11.3 — use class="bi bi-<name>" in any view -->
     <link rel="stylesheet" href="~/lib/bootstrap-icons/font/bootstrap-icons.min.css" asp-append-version="true" />
-    <!-- 3. site.css — brand theme (eco-green) + project-specific overrides -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
+
 <body>
 
-    <!-- ================================================================
-         NAVBAR — Top navigation bar
-         Add new <li class="nav-item"> entries here to extend the nav menu.
-         See Bootstrap Navbar docs: https://getbootstrap.com/docs/5.3/components/navbar/
-         ================================================================ -->
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">ProRental</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
+    @* ================================================================
+       NAVBAR
+       ================================================================ *@
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
+        <div class="container">
+
+            <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">
+                <i class="bi bi-box-seam-fill me-2" style="color: #2d7a4f;"></i>Pro Rentals
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#mainNav"
+                    aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="mainNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                    @* Module 1 — Order Processing *@
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-cart3 me-1"></i>Order Processing
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><h6 class="dropdown-header text-uppercase" style="color: #2d7a4f; font-size: 0.7rem;">Module 1</h6></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-plus-circle me-2" style="color: #2d7a4f;"></i>Place Order</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-search me-2" style="color: #2d7a4f;"></i>Track Order</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-truck me-2" style="color: #2d7a4f;"></i>Manage Dispatch</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-arrow-return-left me-2" style="color: #2d7a4f;"></i>Handle Returns</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-cash-coin me-2" style="color: #2d7a4f;"></i>Deposit Refunds</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-bell me-2" style="color: #2d7a4f;"></i>Order Notifications</a></li>
+                        </ul>
+                    </li>
+
+                    @* Module 2 — Inventory Management *@
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-boxes me-1"></i>Inventory Management
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><h6 class="dropdown-header text-uppercase" style="color: #0d6efd; font-size: 0.7rem;">Module 2</h6></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-grid me-2" style="color: #0d6efd;"></i>Product Catalogue</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-box-seam me-2" style="color: #0d6efd;"></i>Stock Management</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-arrow-repeat me-2" style="color: #0d6efd;"></i>Return Processing Pipeline</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-building-check me-2" style="color: #0d6efd;"></i>Trusted Supplier Registry</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-bar-chart-line me-2" style="color: #0d6efd;"></i>Analytics &amp; Reports</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-tag me-2" style="color: #0d6efd;"></i>Product Clearance</a></li>
+                        </ul>
+                    </li>
+
+                    @* Module 3 — Carbon Footprint *@
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-leaf me-1"></i>Carbon Footprint
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><h6 class="dropdown-header text-uppercase" style="color: #0a9396; font-size: 0.7rem;">Module 3</h6></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-calculator me-2" style="color: #0a9396;"></i>Product Carbon Calculator</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-truck-flatbed me-2" style="color: #0a9396;"></i>Shipment Carbon Tracker</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-signpost-2 me-2" style="color: #0a9396;"></i>Route Distance Determination</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-building me-2" style="color: #0a9396;"></i>Warehouse Storage Emissions</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-recycle me-2" style="color: #0a9396;"></i>Return Process Carbon Lifecycle</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-collection me-2" style="color: #0a9396;"></i>Batch Delivery Consolidation</a></li>
+                        </ul>
+                    </li>
+
+                </ul>
+
+                @* Auth buttons *@
+                <div class="d-flex gap-2">
+                    @if (HttpContextAccessor.HttpContext!.Session.GetInt32("SessionId") != null)
+                    {
+                        <span class="navbar-text text-white-50 small me-1">
+                            <i class="bi bi-person-circle me-1"></i>@HttpContextAccessor.HttpContext!.Session.GetString("UserName")
+                            <span class="badge bg-secondary ms-1">@HttpContextAccessor.HttpContext!.Session.GetString("UserRole")</span>
+                            </span>
+                        <form asp-controller="Module1" asp-action="Logout" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-box-arrow-right me-1"></i>Logout
+                                </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <a href="/Module1/Login" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Login
+                        </a>
+                        <a href="/Module1/Signup" class="btn btn-primary btn-sm">
+                        <i class="bi bi-person-plus me-1"></i>Register
+                        </a>
+                    }
                 </div>
             </div>
-        </nav>
-    </header>
+        </div>
+    </nav>
 
-    <!-- ================================================================
-         MAIN CONTENT — Individual view output is injected here via @RenderBody().
-         Do NOT add additional containers or wrappers inside view files.
-         ================================================================ -->
-    <div class="container">
+    @* ================================================================
+       MAIN CONTENT
+       ================================================================ *@
+    <div class="container py-4">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <!-- ================================================================
-         FOOTER — Sticky footer (pinned to bottom via site.css .footer rules)
-         ================================================================ -->
-    <footer class="border-top footer text-muted">
+    @* ================================================================
+       STAFF PORTAL BANNER
+       Dark strip — clearly separated from customer-facing sections.
+       The warning colour and lock icon signal restricted access.
+       ================================================================ *@
+    <section class="staff-banner py-4">
         <div class="container">
-            &copy; @DateTime.Now.Year - ProRental
+            <div class="row align-items-center justify-content-between gy-3">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center flex-wrap gap-3">
+                        <i class="bi bi-shield-lock-fill fs-2 text-warning"></i>
+                        <div>
+                            <h5 class="mb-0 fw-bold text-white">Staff &amp; Admin Portal</h5>
+                            <small class="text-secondary">
+                                Restricted access — authorised personnel only. All sessions are logged and audited.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-auto">
+                    <a href="/Module1/StaffLogin" class="btn btn-warning btn-lg fw-semibold">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Staff Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* ================================================================
+       FOOTER
+       ================================================================ *@
+    <footer class="bg-dark text-light pt-5 pb-3">
+        <div class="container">
+            <div class="row g-4">
+
+                @* Brand blurb + copyright *@
+                <div class="col-lg-3 col-md-6">
+                    <h5 class="fw-bold mb-3">
+                        <i class="bi bi-box-seam-fill me-2" style="color: #2d7a4f;"></i>Pro Rentals
+                    </h5>
+                    <p class="text-secondary small">
+                        A unified order processing and inventory management platform for modern rental
+                        operations — fast, efficient, and sustainable.
+                    </p>
+                    <p class="text-secondary small mb-0">
+                        &copy; @DateTime.Now.Year Pro Rentals. All rights reserved.
+                    </p>
+                </div>
+
+                @* Quick Links *@
+                <div class="col-lg-3 col-md-6">
+                    <h6 class="text-uppercase text-secondary fw-semibold small mb-3" style="letter-spacing: 0.05em;">Quick Links</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-1"><a asp-controller="Home" asp-action="Index" class="text-secondary text-decoration-none small">Home</a></li>
+                        <li class="mb-1"><a href="#" class="text-secondary text-decoration-none small">Browse Equipment</a></li>
+                        <li class="mb-1"><a href="#" class="text-secondary text-decoration-none small">Track My Order</a></li>
+                        <li class="mb-1"><a href="#" class="text-secondary text-decoration-none small">Contact Us</a></li>
+                        <li class="mb-1"><a asp-controller="Home" asp-action="Privacy" class="text-secondary text-decoration-none small">Privacy Policy</a></li>
+                    </ul>
+                </div>
+
+                @* Modules *@
+                <div class="col-lg-3 col-md-6">
+                    <h6 class="text-uppercase text-secondary fw-semibold small mb-3" style="letter-spacing: 0.05em;">Modules</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-1"><a href="#" class="text-secondary text-decoration-none small"><i class="bi bi-cart3 me-1"></i>Order Processing</a></li>
+                        <li class="mb-1"><a href="#" class="text-secondary text-decoration-none small"><i class="bi bi-boxes me-1"></i>Inventory Management</a></li>
+                        <li class="mb-1"><a href="#" class="text-secondary text-decoration-none small"><i class="bi bi-leaf me-1"></i>Carbon Footprint</a></li>
+                        <li class="mb-1"><a href="#" class="text-secondary text-decoration-none small"><i class="bi bi-bar-chart me-1"></i>Analytics &amp; Reports</a></li>
+                        <li class="mb-1"><a href="#" class="text-secondary text-decoration-none small"><i class="bi bi-shield-lock me-1"></i>Staff Portal</a></li>
+                    </ul>
+                </div>
+
+                @* Contact *@
+                <div class="col-lg-3 col-md-6">
+                    <h6 class="text-uppercase text-secondary fw-semibold small mb-3" style="letter-spacing: 0.05em;">Contact</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2 text-secondary small"><i class="bi bi-geo-alt me-2"></i>123 Rental Avenue, Singapore 123456</li>
+                        <li class="mb-2 text-secondary small"><i class="bi bi-telephone me-2"></i>+65 6123 4567</li>
+                        <li class="mb-2 text-secondary small"><i class="bi bi-envelope me-2"></i>support@@prorentals.sg</li>
+                        <li class="mb-2 text-secondary small"><i class="bi bi-clock me-2"></i>Mon – Fri, 9 AM – 6 PM SGT</li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <hr class="border-secondary mt-3 mb-3" />
+            <p class="text-center text-secondary small mb-0">
+                Built with Bootstrap 5.3.3 &middot; Pro Rentals Order Processing System v1.0 &middot; 2026
+            </p>
         </div>
     </footer>
 
-    <!-- ================================================================
-         SCRIPTS — Load order matters; do not rearrange these.
-         jQuery must come before Bootstrap JS.
-         Add view-specific scripts via @@section Scripts { } in the view file.
-         ================================================================ -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

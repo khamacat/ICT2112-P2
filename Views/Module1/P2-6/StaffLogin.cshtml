@@ -1,0 +1,81 @@
+@{
+    ViewData["Title"] = "Staff Login";
+}
+
+<div class="row justify-content-center py-5">
+    <div class="col-12 col-sm-10 col-md-7 col-lg-5">
+
+        <!-- Staff portal badge -->
+        <div class="text-center mb-4">
+            <span class="badge bg-warning text-dark px-3 py-2 mb-3">
+                <i class="bi bi-shield-lock-fill me-1"></i>Restricted Access
+            </span>
+            <h1 class="h3 fw-semibold">Staff &amp; Admin Portal</h1>
+            <p class="text-muted small">Authorised personnel only. All sessions are logged and audited.</p>
+        </div>
+
+        <!-- Staff login card -->
+        <div class="card shadow-sm border-warning border-opacity-50">
+            <div class="card-body p-4">
+
+                <form asp-action="StaffLogin" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <!-- Staff ID / Email -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="StaffEmail">
+                            <i class="bi bi-person-badge me-1 text-warning"></i>Staff ID / Email
+                        </label>
+                        <input type="email"
+                               id="StaffEmail"
+                               name="StaffEmail"
+                               class="form-control"
+                               placeholder="staff@prorentals.sg"
+                               autocomplete="email"
+                               required />
+                    </div>
+
+                    <!-- Password -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold" for="StaffPassword">
+                            <i class="bi bi-lock me-1 text-warning"></i>Password
+                        </label>
+                        <input type="password"
+                               id="StaffPassword"
+                               name="StaffPassword"
+                               class="form-control"
+                               placeholder="••••••••"
+                               autocomplete="current-password"
+                               required />
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-warning btn-lg text-dark fw-semibold">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Staff Login
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+
+        <!-- Security notice -->
+        <div class="alert alert-dark d-flex align-items-start gap-2 mt-4 py-3" role="alert">
+            <i class="bi bi-info-circle-fill flex-shrink-0 mt-1 text-warning"></i>
+            <div class="small">
+                Unauthorised access attempts are monitored and may result in legal action.
+                If you are not staff, please use the
+                <a href="/Module1/Login" class="alert-link">customer login</a> instead.
+            </div>
+        </div>
+
+        <hr class="my-4" />
+
+        <p class="text-center text-muted small">
+            Not a staff member?
+            <a asp-action="Login" class="fw-semibold">Customer login</a>
+        </p>
+
+    </div>
+</div>

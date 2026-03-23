@@ -2,6 +2,10 @@
     ViewData["Title"] = "Home — Pro Rentals";
     Layout = null; @* Full-page homepage — renders its own navbar, footer, and styles *@
 }
+
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -139,12 +143,28 @@
 
                 @* Auth buttons *@
                 <div class="d-flex gap-2">
-                    <a href="#" class="btn btn-outline-light btn-sm">
+                    @if (HttpContextAccessor.HttpContext!.Session.GetInt32("SessionId") != null)
+                    {
+                        <span class="navbar-text text-white-50 small me-1">
+                            <i class="bi bi-person-circle me-1"></i>@HttpContextAccessor.HttpContext!.Session.GetString("UserName")
+                            <span class="badge bg-secondary ms-1">@HttpContextAccessor.HttpContext!.Session.GetString("UserRole")</span>
+                            </span>
+                        <form asp-controller="Module1" asp-action="Logout" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-box-arrow-right me-1"></i>Logout
+                                </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <a href="/Module1/Login" class="btn btn-outline-light btn-sm">
                         <i class="bi bi-box-arrow-in-right me-1"></i>Login
-                    </a>
-                    <a href="#" class="btn btn-primary btn-sm">
+                        </a>
+                        <a href="/Module1/Signup" class="btn btn-primary btn-sm">
                         <i class="bi bi-person-plus me-1"></i>Register
-                    </a>
+                        </a>
+                    }
                 </div>
             </div>
         </div>
@@ -432,7 +452,7 @@
                     </div>
                 </div>
                 <div class="col-md-auto">
-                    <a href="#" class="btn btn-warning btn-lg fw-semibold">
+                    <a href="/Module1/StaffLogin" class="btn btn-warning btn-lg fw-semibold">
                         <i class="bi bi-box-arrow-in-right me-2"></i>Staff Login
                     </a>
                 </div>
