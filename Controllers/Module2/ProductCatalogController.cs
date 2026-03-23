@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using ProRental.Domain.Entities;
 using ProRental.Domain.Enums;
-using ProRental.Interfaces.Data;
 using ProRental.Interfaces.Domain;
 
 namespace ProRental.Controllers;
@@ -11,16 +10,16 @@ public class ProductCatalogController : Controller
 {
     private readonly IProductCRUD _productCRUD;
     private readonly IProductQuery _productQuery;
-    private readonly ICategoryMapper _categoryMapper;
+    private readonly ICategoryQuery _categoryQuery;
 
     public ProductCatalogController(
         IProductCRUD productCRUD,
         IProductQuery productQuery,
-        ICategoryMapper categoryMapper)
+        ICategoryQuery categoryQuery)
     {
         _productCRUD = productCRUD;
         _productQuery = productQuery;
-        _categoryMapper = categoryMapper;
+        _categoryQuery = categoryQuery;
     }
 
     public IActionResult Index(string? search, string? searchField, string? sortField, string? sortDir, int page = 1)
@@ -160,34 +159,16 @@ public class ProductCatalogController : Controller
 // need to edit this once category is implemented
     private void PopulateCategoryDropdown(int? selectedId = null)
 {
-    var categories = _categoryMapper.FindAll() ?? new List<Category>();
+    var categories = _categoryQuery.GetAllCategories() ?? new List<Category>();
 
     var items = categories.Select(c => new SelectListItem
     {
-        Value = GetNonPublicPropertyValue<int>(c, "Categoryid").ToString(),
-        Text = GetNonPublicPropertyValue<string>(c, "Name") ?? string.Empty,
-        Selected = selectedId.HasValue && selectedId.Value == GetNonPublicPropertyValue<int>(c, "Categoryid")
+        Value = c.GetCategoryId().ToString(),
+        Text = c.GetName(),
+        Selected = selectedId.HasValue && selectedId.Value == c.GetCategoryId()
     }).ToList();
 
     ViewBag.Categories = items;
-}
-
-private static T GetNonPublicPropertyValue<T>(object target, string propertyName)
-{
-    var property = target.GetType().GetProperty(
-        propertyName,
-        System.Reflection.BindingFlags.Instance |
-        System.Reflection.BindingFlags.Public |
-        System.Reflection.BindingFlags.NonPublic);
-
-    if (property == null)
-        throw new InvalidOperationException(
-            $"Property '{propertyName}' was not found on type '{target.GetType().Name}'.");
-
-    var value = property.GetValue(target);
-    if (value == null) return default!;
-
-    return (T)value;
 }
 }
 

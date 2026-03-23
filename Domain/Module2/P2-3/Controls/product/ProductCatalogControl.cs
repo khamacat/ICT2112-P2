@@ -8,14 +8,14 @@ namespace ProRental.Domain.Controls;
 public class ProductCatalogControl : IProductCRUD, IProductQuery, IProductBulkCommand
 {
     private readonly IProductMapper _productMapper;
-    private readonly ICategoryMapper _categoryMapper;
+    private readonly ICategoryQuery _categoryQuery;
 
     public ProductCatalogControl(
         IProductMapper productMapper,
-        ICategoryMapper categoryMapper)
+        ICategoryQuery categoryQuery)
     {
         _productMapper = productMapper;
-        _categoryMapper = categoryMapper;
+        _categoryQuery = categoryQuery;
     }
 
     public bool CreateProduct(Product product, Productdetail detail)
@@ -23,7 +23,7 @@ public class ProductCatalogControl : IProductCRUD, IProductQuery, IProductBulkCo
         if (!ValidateProduct(product, detail)) return false;
         if (CheckProductConflicts(product)) return false;
 
-        var category = _categoryMapper.FindById(product.GetCategoryId());
+        var category = _categoryQuery.GetCategoryById(product.GetCategoryId());
         if (category == null) return false;
 
         product.AttachProductdetail(detail);
@@ -38,7 +38,7 @@ public class ProductCatalogControl : IProductCRUD, IProductQuery, IProductBulkCo
         var existing = _productMapper.FindById(product.GetProductId());
         if (existing == null) return false;
 
-        var category = _categoryMapper.FindById(product.GetCategoryId());
+        var category = _categoryQuery.GetCategoryById(product.GetCategoryId());
         if (category == null) return false;
 
         if (CheckProductConflicts(product)) return false;
