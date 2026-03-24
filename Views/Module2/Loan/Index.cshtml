@@ -1,0 +1,112 @@
+@using ProRental.Domain.Enums
+@model IReadOnlyList<ProRental.Domain.Entities.Loanlist>
+
+@{
+    ViewData["Title"] = "Loan Management";
+    var currentFilter = ViewData["CurrentFilter"]?.ToString() ?? "ALL";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">Loan Management Dashboard</h2>
+            <small class="text-muted">Staff restricted access</small>
+        </div>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger shadow-sm">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body bg-light rounded">
+            <form method="get" asp-action="Index" class="row g-3 align-items-center">
+                <div class="col-auto">
+                    <label for="statusFilter" class="col-form-label fw-bold">Filter by Status:</label>
+                </div>
+                <div class="col-auto">
+                    <select name="statusFilter" id="statusFilter" class="form-select">
+                        @if (currentFilter == "ALL")
+                        { <option value="" selected>All Loans</option> }
+                        else
+                        { <option value="">All Loans</option> }
+
+                        @foreach (LoanStatus status in Enum.GetValues(typeof(LoanStatus)))
+                        {
+                            if (currentFilter == status.ToString())
+                            { <option value="@status" selected>@status</option> }
+                            else
+                            { <option value="@status">@status</option> }
+                        }
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-secondary">Apply Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Loan ID</th>
+                        <th>Order ID</th>
+                        <th>Customer ID</th>
+                        <th>Loan Date</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">No loan records found.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var loan in Model)
+                        {
+                            <tr>
+                                <td><span class="badge bg-secondary">#@loan.GetLoanListId()</span></td>
+                                <td>@loan.GetOrderId()</td>
+                                <td>@loan.GetCustomerId()</td>
+                                <td>@loan.GetLoanDate().ToString("MMM dd, yyyy")</td>
+                                <td>
+                                    @loan.GetDueDate().ToString("MMM dd, yyyy")
+                                    @if(loan.GetDueDate() < DateTime.UtcNow && loan.GetStatus() != LoanStatus.RETURNED)
+                                    {
+                                        <span class="badge bg-danger ms-1">OVERDUE</span>
+                                    }
+                                </td>
+                                <td>
+                                    @{
+                                        var badgeColor = loan.GetStatus() switch
+                                        {
+                                            LoanStatus.OPEN => "bg-warning text-dark",
+                                            LoanStatus.ON_LOAN => "bg-primary",
+                                            LoanStatus.RETURNED => "bg-success",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @badgeColor">@loan.GetStatus()</span>
+                                </td>
+                                <td class="text-end">
+                                    <a asp-action="Details" asp-route-id="@loan.GetLoanListId()" class="btn btn-sm btn-outline-dark">
+                                        <i class="bi bi-eye"></i> View Details
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

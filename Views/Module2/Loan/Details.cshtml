@@ -1,0 +1,119 @@
+@using ProRental.Domain.Enums
+@model ProRental.Domain.Entities.Loanlist
+
+@{
+    ViewData["Title"] = $"Loan Details #{Model.GetLoanListId()}";
+    var childItems = ViewBag.ChildItems as List<ProRental.Domain.Entities.Loanitem> ?? new List<ProRental.Domain.Entities.Loanitem>();
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Loan Details <span class="text-muted">#@Model.GetLoanListId()</span></h2>
+        <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success shadow-sm">@TempData["SuccessMessage"]</div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Order Information</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Status</span>
+                            <span class="fw-bold">@Model.GetStatus()</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Order ID</span>
+                            <span>@Model.GetOrderId()</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Customer ID</span>
+                            <span>@Model.GetCustomerId()</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Start Date</span>
+                            <span>@Model.GetLoanDate().ToString("MMM dd, yyyy")</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between px-0">
+                            <span class="text-muted">Due Date</span>
+                            <span class="@(Model.GetDueDate() < DateTime.UtcNow && Model.GetStatus() != LoanStatus.RETURNED ? "text-danger fw-bold" : "")">
+                                @Model.GetDueDate().ToString("MMM dd, yyyy")
+                            </span>
+                        </li>
+                        @if(Model.GetReturnDate().HasValue)
+                        {
+                            <li class="list-group-item d-flex justify-content-between px-0">
+                                <span class="text-muted">Returned On</span>
+                                <span>@Model.GetReturnDate()?.ToString("MMM dd, yyyy")</span>
+                            </li>
+                        }
+                    </ul>
+
+                    <hr />
+                    <form asp-action="UpdateListRemarks" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="loanListId" value="@Model.GetLoanListId()" />
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Internal Remarks</label>
+                            <textarea name="remarks" class="form-control" rows="3" placeholder="Add staff notes here...">@Model.GetRemarks()</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary w-100">Save Remarks</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Physical Inventory Items</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Bridge ID</th>
+                                <th>Inventory Item ID</th>
+                                <th>Item Remarks</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!childItems.Any())
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">No inventory items attached to this loan.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                foreach (var item in childItems)
+                                {
+                                    <tr>
+                                        <td><span class="badge bg-light text-dark border">@item.GetLoanItemId()</span></td>
+                                        <td class="fw-bold">#@item.GetInventoryItemId()</td>
+                                        <td class="text-truncate" style="max-width: 200px;">
+                                            @(string.IsNullOrEmpty(item.GetRemarks()) ? "--" : item.GetRemarks())
+                                        </td>
+                                        <td class="text-end">
+                                            <a asp-action="ItemDetails" asp-route-id="@item.GetLoanItemId()" class="btn btn-sm btn-outline-primary">
+                                                Inspect Item
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
