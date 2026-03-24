@@ -72,6 +72,14 @@ public partial class AppDbContext
       //             .HasColumnName("type").HasColumnType("analytics_type_enum");
       //   });
 
+        modelBuilder.Entity<Analytic>(entity =>
+        {
+            entity.Property<AnalyticsType>("_analyticsType")
+                  .UsePropertyAccessMode(PropertyAccessMode.Field)
+                  .HasColumnName("analyticstype")
+                  .HasColumnType("analytics_type_enum");
+        });
+
         modelBuilder.Entity<Cart>(entity =>
         {
             entity.Property("Status").HasField("_status").UsePropertyAccessMode(PropertyAccessMode.Field)
@@ -206,6 +214,19 @@ public partial class AppDbContext
       //       entity.Property("format").HasField("_format").UsePropertyAccessMode(PropertyAccessMode.Field)
       //             .HasColumnName("format").HasColumnType("file_format_enum");
       //   });
+
+        modelBuilder.Entity<Reportexport>(entity =>
+        {
+            entity.Property<VisualType>("_visualType")
+                  .UsePropertyAccessMode(PropertyAccessMode.Field)
+                  .HasColumnName("visualtype")
+                  .HasColumnType("visual_type_enum");
+
+            entity.Property<FileFormat>("_fileFormat")
+                  .UsePropertyAccessMode(PropertyAccessMode.Field)
+                  .HasColumnName("fileformat")
+                  .HasColumnType("file_format_enum");
+        });
 
         modelBuilder.Entity<Returnitem>(entity =>
         {

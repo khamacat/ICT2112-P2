@@ -11,37 +11,46 @@
         <a asp-action="Index" class="btn btn-outline-secondary">← Back</a>
     </div>
 
-    <div class="card shadow-sm">
+    <div class="card shadow-sm mb-4">
         <div class="card-body">
             <form method="post" asp-action="Create">
                 <div class="row g-3">
 
                     <div class="col-md-4">
                         <label class="form-label fw-semibold">Analytics Type</label>
-                        <select name="analyticsType" id="analyticsType" class="form-select" onchange="updateTitle()">
+                        <select name="analyticsType" id="analyticsType" class="form-select" onchange="onTypeChange()">
                             <option value="DAILY">Daily</option>
                             <option value="SUPTREND">Supplier Trend</option>
                             <option value="PRODTREND">Product Trend</option>
                         </select>
                     </div>
 
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">Start Date</label>
-                        <input type="date" name="startDate" id="startDate" class="form-control"
-                               value="@today" onchange="updateTitle()" required />
+                    <!-- Daily: single date only -->
+                    <div class="col-md-4" id="singleDateBlock">
+                        <label class="form-label fw-semibold">Date</label>
+                        <input type="date" id="singleDate" class="form-control" value="@today"
+                               onchange="syncDates()" />
+                        <!-- Hidden fields always submitted -->
+                        <input type="hidden" name="startDate" id="startDate" value="@today" />
+                        <input type="hidden" name="endDate"   id="endDate"   value="@today" />
                     </div>
 
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold">End Date</label>
-                        <input type="date" name="endDate" id="endDate" class="form-control"
-                               value="@today" onchange="updateTitle()" required />
+                    <!-- Trend: date range -->
+                    <div class="col-md-4 d-none" id="dateRangeBlock">
+                        <label class="form-label fw-semibold">Date Range</label>
+                        <div class="d-flex gap-2">
+                            <input type="date" id="rangeStart" class="form-control" value="@today"
+                                   onchange="syncDates()" />
+                            <input type="date" id="rangeEnd"   class="form-control" value="@today"
+                                   onchange="syncDates()" />
+                        </div>
                     </div>
 
-                    <div class="col-md-8">
-                        <label class="form-label fw-semibold">Reference Name / Label</label>
-                        <input type="text" name="refPrimaryName" id="refPrimaryName" class="form-control"
-                               placeholder="e.g. Daily, Supplier ABC, Canon R5..." required />
-                        <div class="form-text">For Daily: use "Daily". For trends: use supplier or product name.</div>
+                    <!-- Reference label — dynamic -->
+                    <div class="col-md-4" id="refBlock">
+                        <label class="form-label fw-semibold" id="refLabel">Reference Name</label>
+                        <input type="text" name="refPrimaryName" id="refPrimaryName"
+                               class="form-control" placeholder="e.g. Supplier ABC" />
                     </div>
 
                     <div class="col-12">
@@ -54,11 +63,10 @@
         </div>
     </div>
 
-    <!-- Available Transaction Logs -->
-    <div class="card mt-4 shadow-sm">
+    <!-- Available logs -->
+    <div class="card shadow-sm">
         <div class="card-header fw-semibold">
             <i class="bi bi-list-ul me-2"></i>Available Transaction Logs (@logs.Count total)
-            <small class="text-muted ms-2">— logs within your selected date range will be included automatically</small>
         </div>
         <div class="card-body p-0">
             <table class="table table-sm table-hover mb-0">
@@ -79,7 +87,7 @@
                         <tr>
                             <td>#@log.LogID</td>
                             <td><span class="badge @badge">@log.LogType</span></td>
-                            <td>@log.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@log.CreatedAt.AddHours(8).ToString("yyyy-MM-dd HH:mm")</td>
                             <td class="text-muted small">@log.Summary</td>
                         </tr>
                     }
@@ -94,23 +102,60 @@
 </div>
 
 <script>
-function updateTitle() {
-    var type  = document.getElementById('analyticsType').value;
-    var start = document.getElementById('startDate').value;
-    var end   = document.getElementById('endDate').value;
-    var ref   = document.getElementById('refPrimaryName');
-
-    var dateLabel = start === end ? start : start + ' to ' + end;
-    var typeLabel = type === 'DAILY' ? 'Daily' : '';
+function onTypeChange() {
+    var type = document.getElementById('analyticsType').value;
+    var single    = document.getElementById('singleDateBlock');
+    var range     = document.getElementById('dateRangeBlock');
+    var refLabel  = document.getElementById('refLabel');
+    var refInput  = document.getElementById('refPrimaryName');
 
     if (type === 'DAILY') {
-        ref.placeholder = 'Daily — ' + dateLabel;
-        if (ref.value === '' || ref.value.startsWith('Daily')) {
-            ref.value = 'Daily — ' + dateLabel;
-        }
+        single.classList.remove('d-none');
+        range.classList.add('d-none');
+        refLabel.textContent = 'Reference Name';
+        refInput.disabled = true;
+        refInput.placeholder = 'Daily (auto)';
+        refInput.value = '';
+    } else if (type === 'SUPTREND') {
+        single.classList.add('d-none');
+        range.classList.remove('d-none');
+        refLabel.textContent = 'Supplier Name';
+        refInput.disabled = false;
+        refInput.placeholder = 'e.g. Apple Inc.';
+        refInput.value = '';
     } else {
-        ref.placeholder = type === 'SUPTREND' ? 'Supplier name...' : 'Product name...';
+        single.classList.add('d-none');
+        range.classList.remove('d-none');
+        refLabel.textContent = 'Product Name';
+        refInput.disabled = false;
+        refInput.placeholder = 'e.g. Canon R5';
+        refInput.value = '';
+    }
+    syncDates();
+}
+
+function syncDates() {
+    var type = document.getElementById('analyticsType').value;
+    if (type === 'DAILY') {
+        var d = document.getElementById('singleDate').value;
+        document.getElementById('startDate').value = d;
+        document.getElementById('endDate').value   = d;
+    } else {
+        document.getElementById('startDate').value = document.getElementById('rangeStart').value;
+        document.getElementById('endDate').value   = document.getElementById('rangeEnd').value;
     }
 }
-updateTitle();
+
+// Set Daily ref name before submit
+document.querySelector('form').addEventListener('submit', function() {
+    var type = document.getElementById('analyticsType').value;
+    var ref  = document.getElementById('refPrimaryName');
+    if (type === 'DAILY') {
+        ref.disabled = false;
+        var d = document.getElementById('singleDate').value;
+        ref.value = 'Daily — ' + d;
+    }
+});
+
+onTypeChange();
 </script>

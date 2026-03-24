@@ -8,12 +8,32 @@
         "PRODTREND" => "bg-success",
         _           => "bg-secondary"
     };
-    // Pre-fill report title
-    var dateLabel = a.GetStartDate()?.ToString("yyyy-MM-dd") == a.GetEndDate()?.ToString("yyyy-MM-dd")
-        ? a.GetStartDate()?.ToString("yyyy-MM-dd")
-        : $"{a.GetStartDate()?.ToString("yyyy-MM-dd")} to {a.GetEndDate()?.ToString("yyyy-MM-dd")}";
-    var refLabel  = a.GetAnalyticsType() == "DAILY" ? "Daily" : (a.GetRefPrimaryName() ?? "");
-    var prefilledTitle = $"{refLabel} — {dateLabel}";
+    var isDaily     = a.GetAnalyticsType() == "DAILY";
+    var refLabel    = isDaily ? "" : (a.GetAnalyticsType() == "SUPTREND" ? "Supplier" : "Product");
+    var valueLabel  = a.GetAnalyticsType() == "SUPTREND" ? "Supplier Reliability" : "Turnover Rate";
+
+    // Adjust for SGT display
+    var dispStart = a.GetStartDate()?.AddHours(8);
+    var dispEnd   = a.GetEndDate()?.AddHours(8);
+    var dateLabel = dispStart?.ToString("yyyy-MM-dd") == dispEnd?.ToString("yyyy-MM-dd")
+        ? dispStart?.ToString("yyyy-MM-dd")
+        : $"{dispStart?.ToString("yyyy-MM-dd")} to {dispEnd?.ToString("yyyy-MM-dd")}";
+    var prefilledTitle = isDaily
+        ? $"Daily — {dateLabel}"
+        : $"{a.GetRefPrimaryName()} — {dateLabel}";
+
+    // Pre-compute selected states for update form
+    var r = Model.ExistingReport;
+    var vtOpts = r != null
+        ? Enum.GetValues<ProRental.Domain.Enums.VisualType>()
+              .Select(vt => (val: vt.ToString(), sel: r.GetVisualType() == vt ? "selected" : ""))
+              .ToList()
+        : new List<(string val, string sel)>();
+    var ffOpts = r != null
+        ? Enum.GetValues<ProRental.Domain.Enums.FileFormat>()
+              .Select(ff => (val: ff.ToString(), sel: r.GetFileFormat() == ff ? "selected" : ""))
+              .ToList()
+        : new List<(string val, string sel)>();
 }
 
 <div class="container mt-4">
@@ -22,20 +42,28 @@
         <a asp-action="Index" class="btn btn-outline-secondary">← Back</a>
     </div>
 
-    <!-- Summary card -->
+    <!-- Summary -->
     <div class="card mb-4 shadow-sm">
         <div class="card-body">
             <dl class="row mb-0">
                 <dt class="col-sm-3">Date Range</dt>
-                <dd class="col-sm-9">@a.GetStartDate()?.ToString("yyyy-MM-dd") — @a.GetEndDate()?.ToString("yyyy-MM-dd")</dd>
-                <dt class="col-sm-3">Loan Amount</dt>
+                <dd class="col-sm-9">@dispStart?.ToString("yyyy-MM-dd") — @dispEnd?.ToString("yyyy-MM-dd")</dd>
+                <dt class="col-sm-3">Loans</dt>
                 <dd class="col-sm-9">@a.GetLoanAmt()</dd>
-                <dt class="col-sm-3">Return Amount</dt>
+                <dt class="col-sm-3">Returns</dt>
                 <dd class="col-sm-9">@a.GetReturnAmt()</dd>
-                <dt class="col-sm-3">Reference</dt>
-                <dd class="col-sm-9">@a.GetRefPrimaryName() @(a.GetRefPrimaryID().HasValue ? $"(ID: {a.GetRefPrimaryID()})" : "")</dd>
-                <dt class="col-sm-3">Reference Value</dt>
-                <dd class="col-sm-9">@a.GetRefValue()?.ToString("C")</dd>
+                @if (!isDaily)
+                {
+                    <dt class="col-sm-3">@refLabel Name</dt>
+                    <dd class="col-sm-9">@a.GetRefPrimaryName() @(a.GetRefPrimaryID().HasValue ? $"(ID: {a.GetRefPrimaryID()})" : "")</dd>
+                    <dt class="col-sm-3">@valueLabel</dt>
+                    <dd class="col-sm-9">@a.GetRefValue()?.ToString("0.00")</dd>
+                }
+                else
+                {
+                    <dt class="col-sm-3">Name</dt>
+                    <dd class="col-sm-9">@a.GetRefPrimaryName()</dd>
+                }
             </dl>
         </div>
     </div>
@@ -49,12 +77,8 @@
             <table class="table table-sm table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Log ID</th>
-                        <th>Type</th>
-                        <th>Created At</th>
-                        <th>Supplier</th>
-                        <th>Product</th>
-                        <th>Summary</th>
+                        <th>Log ID</th><th>Type</th><th>Date</th>
+                        <th>Supplier</th><th>Product</th><th>Summary</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -71,15 +95,15 @@
                         <tr>
                             <td>#@log.LogID</td>
                             <td><span class="badge @logBadge">@log.LogType</span></td>
-                            <td>@log.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                            <td>@(log.SupplierName ?? (log.SupplierID.HasValue ? $"ID {log.SupplierID}" : "—"))</td>
-                            <td>@(log.ProductName  ?? (log.ProductID.HasValue  ? $"ID {log.ProductID}"  : "—"))</td>
+                            <td>@log.CreatedAt.AddHours(8).ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@(log.SupplierName ?? "—")</td>
+                            <td>@(log.ProductName  ?? "—")</td>
                             <td class="text-muted small">@log.Summary</td>
                         </tr>
                     }
                     @if (!Model.TransactionLogs.Any())
                     {
-                        <tr><td colspan="6" class="text-center text-muted py-3">No transaction logs found for this period.</td></tr>
+                        <tr><td colspan="6" class="text-center text-muted py-3">No logs found for this period.</td></tr>
                     }
                 </tbody>
             </table>
@@ -89,10 +113,9 @@
     <!-- Report section -->
     @if (Model.ExistingReport is not null)
     {
-        var r = Model.ExistingReport;
         <div class="card mb-4 shadow-sm">
             <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-file-earmark-text me-2"></i>Report — @r.GetTitle()</span>
+                <span><i class="bi bi-file-earmark-text me-2"></i>Report — @r!.GetTitle()</span>
                 <div class="d-flex gap-2">
                     <a asp-action="ExportReport" asp-route-id="@r.GetReportID()"
                        class="btn btn-sm btn-success">
@@ -103,8 +126,6 @@
                 </div>
             </div>
             <div class="card-body">
-
-                @* Preview: iframe for PDF, table mockup for CSV/XLSX *@
                 @if (r.GetFileFormat() == ProRental.Domain.Enums.FileFormat.PDF)
                 {
                     <iframe src="@Url.Action("ExportReport", new { id = r.GetReportID() })"
@@ -112,24 +133,33 @@
                 }
                 else
                 {
+                    <!-- Table preview showing transaction log data -->
                     <div class="table-responsive">
                         <table class="table table-bordered table-sm">
                             <thead class="table-light">
-                                <tr><th>Analytics ID</th><th>Title</th><th>Visual Type</th><th>Format</th></tr>
+                                <tr><th>Log ID</th><th>Type</th><th>Date</th><th>Supplier</th><th>Product</th><th>Summary</th></tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>@r.GetRefAnalyticsID()</td>
-                                    <td>@r.GetTitle()</td>
-                                    <td>@r.GetVisualType()</td>
-                                    <td>@r.GetFileFormat()</td>
-                                </tr>
+                                @foreach (var log in Model.TransactionLogs)
+                                {
+                                    <tr>
+                                        <td>#@log.LogID</td>
+                                        <td>@log.LogType</td>
+                                        <td>@log.CreatedAt.AddHours(8).ToString("yyyy-MM-dd")</td>
+                                        <td>@(log.SupplierName ?? "—")</td>
+                                        <td>@(log.ProductName  ?? "—")</td>
+                                        <td>@log.Summary</td>
+                                    </tr>
+                                }
+                                @if (!Model.TransactionLogs.Any())
+                                {
+                                    <tr><td colspan="6" class="text-center text-muted">No logs</td></tr>
+                                }
                             </tbody>
                         </table>
                     </div>
                 }
 
-                <!-- Update Report form -->
                 <hr />
                 <h6 class="fw-semibold">Update Report</h6>
                 <form method="post" asp-action="UpdateReport" class="row g-2">
@@ -139,28 +169,22 @@
                         <input type="text" name="title" class="form-control"
                                value="@r.GetTitle()" placeholder="Report title" required />
                     </div>
-                    @{
-                        var vtNames = Enum.GetValues<ProRental.Domain.Enums.VisualType>()
-                                        .Select(vt => (value: vt.ToString(), selected: r.GetVisualType() == vt ? "selected" : ""))
-                                        .ToList();
-                    }
-                    <select name="visualType" class="form-select">
-                        @foreach (var opt in vtNames)
-                        {
-                            <option value="@opt.value" selected="@opt.selected">@opt.value</option>
-                        }
-                    </select>
-                    @{
-                        var ffNames = Enum.GetValues<ProRental.Domain.Enums.FileFormat>()
-                                        .Select(ff => (value: ff.ToString(), selected: r.GetFileFormat() == ff ? "selected" : ""))
-                                        .ToList();
-                    }
-                    <select name="fileFormat" class="form-select">
-                        @foreach (var opt in ffNames)
-                        {
-                            <option value="@opt.value" selected="@opt.selected">@opt.value</option>
-                        }
-                    </select>
+                    <div class="col-md-3">
+                        <select name="visualType" class="form-select">
+                            @foreach (var opt in vtOpts)
+                            {
+                                <option value="@opt.val" selected="@opt.sel">@opt.val</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select name="fileFormat" class="form-select">
+                            @foreach (var opt in ffOpts)
+                            {
+                                <option value="@opt.val" selected="@opt.sel">@opt.val</option>
+                            }
+                        </select>
+                    </div>
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-primary w-100">Update</button>
                     </div>
@@ -168,15 +192,13 @@
             </div>
         </div>
 
-        <form id="deleteReportForm" method="post"
-              asp-action="DeleteReport"
-              asp-route-id="@r.GetReportID()"
-              asp-route-refAnalyticsID="@a.GetID()">
+        <form id="deleteReportForm" method="post" asp-action="DeleteReport">
+            <input type="hidden" name="id"             value="@r.GetReportID()" />
+            <input type="hidden" name="refAnalyticsID" value="@a.GetID()" />
         </form>
     }
     else
     {
-        <!-- Generate Report form — only shown when no report exists yet -->
         <div class="card shadow-sm">
             <div class="card-header fw-semibold">
                 <i class="bi bi-plus-circle me-2"></i>Generate Report

@@ -1,17 +1,26 @@
 @model ProRental.Controllers.AnalyticsIndexViewModel
 @{
     ViewData["Title"] = "Analytics";
-    var today = DateTime.Now.ToString("yyyy-MM-dd");
+    var today    = DateTime.Now.ToString("yyyy-MM-dd");
     var startVal = Model.FilterStart?.ToString("yyyy-MM-dd") ?? today;
-    var endVal   = Model.FilterEnd?.ToString("yyyy-MM-dd") ?? today;
+    var endVal   = Model.FilterEnd?.ToString("yyyy-MM-dd")   ?? today;
+    var selAll   = (Model.FilterType == null || Model.FilterType == "ALL") ? "selected" : "";
+    var selD     = Model.FilterType == "DAILY"     ? "selected" : "";
+    var selS     = Model.FilterType == "SUPTREND"  ? "selected" : "";
+    var selP     = Model.FilterType == "PRODTREND" ? "selected" : "";
 }
 
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="bi bi-bar-chart-line me-2" style="color:#0d6efd;"></i>Analytics</h2>
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-plus-circle me-1"></i> New Analytics
-        </a>
+        <div class="d-flex gap-2">
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+            </a>
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i>New Analytics
+            </a>
+        </div>
     </div>
 
     <!-- Filters -->
@@ -19,24 +28,21 @@
         <div class="card-body">
             <div class="row g-3">
 
-                <!-- Type dropdown -->
-                @{
-                    var selAll  = (Model.FilterType == null || Model.FilterType == "ALL") ? "selected" : "";
-                    var selD    = Model.FilterType == "DAILY"     ? "selected" : "";
-                    var selS    = Model.FilterType == "SUPTREND"  ? "selected" : "";
-                    var selP    = Model.FilterType == "PRODTREND" ? "selected" : "";
-                }
-                <select id="typeFilter" class="form-select">
-                    <option value="ALL"       selected="@selAll">All Types</option>
-                    <option value="DAILY"     selected="@selD">Daily</option>
-                    <option value="SUPTREND"  selected="@selS">Supplier Trend</option>
-                    <option value="PRODTREND" selected="@selP">Product Trend</option>
-                </select>
+                <!-- Type -->
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold">Type</label>
+                    <select id="typeFilter" class="form-select">
+                        <option value="ALL"       selected="@selAll">All Types</option>
+                        <option value="DAILY"     selected="@selD">Daily</option>
+                        <option value="SUPTREND"  selected="@selS">Supplier Trend</option>
+                        <option value="PRODTREND" selected="@selP">Product Trend</option>
+                    </select>
+                </div>
 
                 <!-- Date range -->
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">Date Range</label>
-                    <form method="get" asp-action="Index" class="d-flex gap-2">
+                    <form method="get" asp-action="Index" class="d-flex gap-2" id="dateForm">
                         <input type="hidden" name="type" id="hiddenType" value="@Model.FilterType" />
                         <input type="date" name="start" class="form-control" value="@startVal" />
                         <input type="date" name="end"   class="form-control" value="@endVal" />
@@ -44,7 +50,7 @@
                     </form>
                 </div>
 
-                <!-- Supplier search -->
+                <!-- Supplier -->
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Supplier</label>
                     <form method="get" asp-action="Index" class="d-flex gap-2">
@@ -55,7 +61,7 @@
                     </form>
                 </div>
 
-                <!-- Product search -->
+                <!-- Product -->
                 <div class="col-md-3">
                     <label class="form-label fw-semibold">Product</label>
                     <form method="get" asp-action="Index" class="d-flex gap-2">
@@ -82,7 +88,7 @@
                         <th>End</th>
                         <th>Loans</th>
                         <th>Returns</th>
-                        <th>Reference</th>
+                        <th>Name</th>
                         <th>Value</th>
                         <th></th>
                     </tr>
@@ -96,17 +102,29 @@
                             "PRODTREND" => "bg-success",
                             _           => "bg-secondary"
                         };
+                        // Adjust dates back to SGT (+8) for display
+                        var dispStart = item.GetStartDate()?.AddHours(8);
+                        var dispEnd   = item.GetEndDate()?.AddHours(8);
                         <tr>
                             <td class="align-middle">@item.GetID()</td>
                             <td class="align-middle">
                                 <span class="badge @typeBadge">@item.GetAnalyticsType()</span>
                             </td>
-                            <td class="align-middle">@item.GetStartDate()?.ToString("yyyy-MM-dd")</td>
-                            <td class="align-middle">@item.GetEndDate()?.ToString("yyyy-MM-dd")</td>
+                            <td class="align-middle">@dispStart?.ToString("yyyy-MM-dd")</td>
+                            <td class="align-middle">@dispEnd?.ToString("yyyy-MM-dd")</td>
                             <td class="align-middle">@item.GetLoanAmt()</td>
                             <td class="align-middle">@item.GetReturnAmt()</td>
                             <td class="align-middle">@item.GetRefPrimaryName()</td>
-                            <td class="align-middle">@item.GetRefValue()?.ToString("C")</td>
+                            <td class="align-middle">
+                                @if (item.GetAnalyticsType() == "DAILY")
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                                else
+                                {
+                                    @item.GetRefValue()?.ToString("0.00")
+                                }
+                            </td>
                             <td class="align-middle">
                                 <a asp-action="Details" asp-route-id="@item.GetID()"
                                    class="btn btn-sm btn-outline-primary">View</a>
@@ -124,7 +142,6 @@
 </div>
 
 <script>
-    // Sync type dropdown into hidden fields on date filter form
     document.getElementById('typeFilter').addEventListener('change', function () {
         document.getElementById('hiddenType').value = this.value;
     });

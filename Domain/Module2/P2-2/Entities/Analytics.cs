@@ -3,9 +3,9 @@ using ProRental.Domain.Enums;
 
 public partial class Analytic
 {
-    // ── Backing field only — NO private property wrapper ─────────────────────
-    // EF Core scans private properties and tries to map them as DB columns.
-    // Using the backing field directly avoids EF picking up 'type' as a shadow property.
+    // ── EF-mapped backing field — name must match AppDbContext.Custom.cs HasField() ──
+    // AppDbContext.Custom.cs maps: HasField("_analyticsType") → column "analyticstype"
+    // EF reads/writes this field directly via PropertyAccessMode.Field
     private AnalyticsType _analyticsType;
 
     public void UpdateType(AnalyticsType newValue) => _analyticsType = newValue;
