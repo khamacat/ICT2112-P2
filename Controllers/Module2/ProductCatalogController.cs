@@ -188,9 +188,9 @@ public class ProductFormViewModel
     [System.ComponentModel.DataAnnotations.Display(Name = "Status")]
     public ProductStatus Status { get; set; } = ProductStatus.AVAILABLE;
 
-    [System.ComponentModel.DataAnnotations.Range(0, 1, ErrorMessage = "Threshold must be between 0 and 1.")]
-    [System.ComponentModel.DataAnnotations.Display(Name = "Low Stock Threshold")]
-    public decimal Threshold { get; set; } = 0.10m;
+    [System.ComponentModel.DataAnnotations.Range(0, 100, ErrorMessage = "Threshold must be between 0 and 1.")]
+    [System.ComponentModel.DataAnnotations.Display(Name = "Low Stock Threshold (%)")]
+    public decimal Threshold { get; set; } = 10m;
 
     [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Product name is required.")]
     [System.ComponentModel.DataAnnotations.StringLength(255)]
@@ -221,7 +221,7 @@ public class ProductFormViewModel
 
 public (Product product, Productdetail detail) ToDomain()
 {
-    var product = Product.Create(CategoryId, Sku, Threshold, Status);
+    var product = Product.Create(CategoryId, Sku, Threshold / 100m, Status);
 
     if (ProductId > 0)
         product.AssignProductId(ProductId);
@@ -252,7 +252,7 @@ public (Product product, Productdetail detail) ToDomain()
             CategoryId = product.GetCategoryId(),
             Sku = product.GetSku(),
             Status = product.GetStatus(),
-            Threshold = product.GetThreshold(),
+            Threshold = product.GetThreshold() * 100m, // convert back to percentage for the form
             Name = detail?.GetName() ?? string.Empty,
             Description = detail?.GetDescription(),
             TotalQuantity = detail?.GetTotalQuantity() ?? 0,

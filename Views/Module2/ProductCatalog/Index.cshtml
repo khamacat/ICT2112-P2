@@ -83,7 +83,7 @@
                 <td>@product.GetCategoryId()</td>
                 <td>@(detail?.GetName() ?? "-")</td>
                 <td>@product.GetStatus()</td>
-                <td>@product.GetThreshold()</td>
+                <td>@((product.GetThreshold() * 100m).ToString("0.##"))%</td>
                 <td>@((detail?.GetPrice() ?? 0m).ToString("0.00"))</td>
                 <td>
                     <a asp-action="Details" asp-route-id="@product.GetProductId()" class="btn btn-sm btn-outline-info">Details</a>
