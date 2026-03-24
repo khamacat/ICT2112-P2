@@ -25,35 +25,43 @@ public class AnalyticsController : Controller
     // ── Index ─────────────────────────────────────────────────────────────────
 
     public async Task<IActionResult> Index(
-        string? type, string? supplier, string? product,
-        DateTime? start, DateTime? end)
+        string? type, string? search, DateTime? start, DateTime? end)
     {
-        var now       = DateTime.UtcNow.AddHours(8);
-        var startDate = start.HasValue ? start.Value.Date.ToUniversalTime() : DateTime.MinValue;
-        var endDate   = end.HasValue   ? end.Value.Date.AddDays(1).AddTicks(-1).ToUniversalTime() : DateTime.MaxValue;
-
         IEnumerable<ProRental.Domain.Entities.Analytic> analytics;
 
-        if (!string.IsNullOrWhiteSpace(supplier))
-            analytics = await _analyticsControl.GetAnalyticsBySupplierAsync(supplier);
-        else if (!string.IsNullOrWhiteSpace(product))
-            analytics = await _analyticsControl.GetAnalyticsByProductAsync(product);
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            // Name search across all records
+            analytics = await _analyticsControl.GetAnalyticsByNameAsync(search);
+        }
         else if (start.HasValue || end.HasValue)
-            analytics = await _analyticsControl.GetAnalyticsByDateRangeAsync(startDate, endDate);
+        {
+            // Date overlap filter — convert SGT input to UTC
+            var startUtc = start.HasValue
+                ? start.Value.Date.ToUniversalTime()
+                : DateTime.MinValue;
+            var endUtc = end.HasValue
+                ? end.Value.Date.AddDays(1).AddTicks(-1).ToUniversalTime()
+                : DateTime.MaxValue;
+            analytics = await _analyticsControl.GetAnalyticsByDateRangeAsync(startUtc, endUtc);
+        }
         else
+        {
             analytics = await _analyticsControl.GetAllAnalyticsAsync();
+        }
 
+        // Type filter applied after fetch (since type is stored in unmapped _analyticsType)
         if (!string.IsNullOrWhiteSpace(type) && type != "ALL")
             analytics = analytics.Where(a => a.GetAnalyticsType() == type);
 
+        var now = DateTime.UtcNow.AddHours(8);
         var vm = new AnalyticsIndexViewModel
         {
-            Analytics      = analytics,
-            FilterType     = type,
-            FilterSupplier = supplier,
-            FilterProduct  = product,
-            FilterStart    = start ?? now,
-            FilterEnd      = end   ?? now,
+            Analytics   = analytics,
+            FilterType  = type,
+            FilterSearch = search,
+            FilterStart = start ?? now,
+            FilterEnd   = end   ?? now,
         };
 
         return View(IndexView, vm);
@@ -66,8 +74,8 @@ public class AnalyticsController : Controller
         var analytic = await _analyticsControl.GetAnalyticsAsync(id);
         if (analytic is null) return NotFound();
 
-        var logs         = await _analyticsControl.GetLogsForAnalyticsAsync(analytic);
-        var allReports   = await _reportControl.GetAllReportsAsync();
+        var logs           = await _analyticsControl.GetLogsForAnalyticsAsync(analytic);
+        var allReports     = await _reportControl.GetAllReportsAsync();
         var existingReport = allReports.FirstOrDefault(r => r.GetRefAnalyticsID() == id);
 
         var vm = new AnalyticsDetailsViewModel
@@ -92,7 +100,6 @@ public class AnalyticsController : Controller
     public async Task<IActionResult> Create(
         string analyticsType, DateTime startDate, DateTime endDate, string refPrimaryName)
     {
-        // Convert SGT input dates to UTC for storage
         var start = startDate.ToUniversalTime();
         var end   = endDate.Date.AddDays(1).AddTicks(-1).ToUniversalTime();
 
@@ -128,9 +135,11 @@ public class AnalyticsController : Controller
         return RedirectToAction(nameof(Details), new { id = refAnalyticsID });
     }
 
-    // ── Export — transaction log data as CSV ──────────────────────────────────
+    // ── Export ────────────────────────────────────────────────────────────────
+    // Only CSV is supported for demo. XLSX/PNG require external libraries.
+    // PDF uses inline display via iframe, not download.
 
-    public async Task<IActionResult> ExportReport(int id)
+    public async Task<IActionResult> ExportReport(int id, bool download = false)
     {
         var report = await _reportControl.GetReportAsync(id);
         if (report is null) return NotFound();
@@ -141,46 +150,44 @@ public class AnalyticsController : Controller
         var analytic = await _analyticsControl.GetAnalyticsAsync(analyticsID.Value);
         if (analytic is null) return NotFound();
 
-        var logs = (await _analyticsControl.GetLogsForAnalyticsAsync(analytic)).ToList();
-
+        var logs   = (await _analyticsControl.GetLogsForAnalyticsAsync(analytic)).ToList();
         var format = report.GetFileFormat();
+        var title  = report.GetTitle() ?? "report";
+
+        // Build CSV content (used for both CSV and as fallback for unsupported formats)
+        var sb = new StringBuilder();
+        sb.AppendLine("Log ID,Type,Date,Supplier,Product,Summary");
+        foreach (var log in logs)
+            sb.AppendLine(
+                $"{log.LogID}," +
+                $"{log.LogType}," +
+                $"{log.CreatedAt.AddHours(8):yyyy-MM-dd HH:mm}," +
+                $"\"{log.SupplierName ?? "-"}\"," +
+                $"\"{log.ProductName  ?? "-"}\"," +
+                $"\"{log.Summary}\"");
+
+        var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
 
         if (format == FileFormat.PDF)
         {
-            // Placeholder PDF text — replace with real PDF library when needed
-            var content = $"Report: {report.GetTitle()}\n" +
-                          $"Analytics ID: {analyticsID}\n" +
-                          $"Generated: {DateTime.Now:yyyy-MM-dd HH:mm}\n\n" +
-                          "Log ID,Type,Date,Supplier,Product,Summary\n" +
-                          string.Join("\n", logs.Select(l =>
-                              $"{l.LogID},{l.LogType},{l.CreatedAt.AddHours(8):yyyy-MM-dd HH:mm}," +
-                              $"{l.SupplierName ?? "-"},{l.ProductName ?? "-"},{l.Summary}"));
-            return File(Encoding.UTF8.GetBytes(content), "application/pdf",
-                $"{report.GetTitle()}.pdf");
+            // Return CSV content with text/plain so it renders inline in iframe
+            // instead of triggering a download dialog
+            if (download)
+                return File(csvBytes, "application/pdf", $"{title}.pdf");
+
+            // Inline view for iframe — return as plain text so browser shows it
+            return Content(sb.ToString(), "text/plain");
+        }
+        else if (format == FileFormat.CSV)
+        {
+            return File(csvBytes, "text/csv", $"{title}.csv");
         }
         else
         {
-            // CSV export with transaction log data
-            var sb = new StringBuilder();
-            sb.AppendLine("Log ID,Type,Date,Supplier,Product,Summary");
-            foreach (var log in logs)
-            {
-                sb.AppendLine(
-                    $"{log.LogID}," +
-                    $"{log.LogType}," +
-                    $"{log.CreatedAt.AddHours(8):yyyy-MM-dd HH:mm}," +
-                    $"\"{log.SupplierName ?? "-"}\"," +
-                    $"\"{log.ProductName ?? "-"}\"," +
-                    $"\"{log.Summary}\"");
-            }
-
-            var contentType = format == FileFormat.XLSX
-                ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                : "text/csv";
-            var ext = format == FileFormat.XLSX ? "xlsx" : "csv";
-
-            return File(Encoding.UTF8.GetBytes(sb.ToString()),
-                contentType, $"{report.GetTitle()}.{ext}");
+            // XLSX and PNG not supported without external libraries
+            // Return CSV with a note for demo purposes
+            TempData["ExportNote"] = $"{format} export is not supported in demo mode. Downloaded as CSV instead.";
+            return File(csvBytes, "text/csv", $"{title}.csv");
         }
     }
 

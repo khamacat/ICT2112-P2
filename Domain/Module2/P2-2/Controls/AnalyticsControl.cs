@@ -55,24 +55,27 @@ public class AnalyticsControl : IAnalyticsData
     public async Task<Analytic?> GetAnalyticsAsync(int targetID)
         => await _analyticsMapper.FindByIDAsync(targetID);
 
+    public async Task<IEnumerable<Analytic>> GetAllAnalyticsAsync()
+        => await _analyticsMapper.FindAllAsync();
+
     public async Task<IEnumerable<Analytic>> GetAnalyticsByDateAsync(DateTime day)
         => await _analyticsMapper.FindByDateAsync(day.Date, day.Date.AddDays(1).AddTicks(-1));
 
     public async Task<IEnumerable<Analytic>> GetAnalyticsByDateRangeAsync(DateTime start, DateTime end)
         => await _analyticsMapper.FindByDateAsync(start, end);
 
+    // Unified name search — searches refprimaryname regardless of type
+    public async Task<IEnumerable<Analytic>> GetAnalyticsByNameAsync(string name)
+        => await _analyticsMapper.FindByNameAsync(name);
+
+    // Keep old methods for interface compatibility
     public async Task<IEnumerable<Analytic>> GetAnalyticsBySupplierAsync(string supplier)
-        => (await _analyticsMapper.FindBySupplierAsync(0))
-            .Where(a => a.GetRefPrimaryName()?.Contains(supplier, StringComparison.OrdinalIgnoreCase) == true);
+        => await _analyticsMapper.FindByNameAsync(supplier);
 
     public async Task<IEnumerable<Analytic>> GetAnalyticsByProductAsync(string product)
-        => (await _analyticsMapper.FindByProductAsync(0))
-            .Where(a => a.GetRefPrimaryName()?.Contains(product, StringComparison.OrdinalIgnoreCase) == true);
+        => await _analyticsMapper.FindByNameAsync(product);
 
-    public async Task<IEnumerable<Analytic>> GetAllAnalyticsAsync()
-        => await _analyticsMapper.FindByDateAsync(DateTime.MinValue, DateTime.MaxValue);
-
-    // ── Transaction Logs for Details ─────────────────────────────────────────
+    // ── Transaction Logs ─────────────────────────────────────────────────────
 
     public async Task<IEnumerable<TransactionLogDto>> GetLogsForAnalyticsAsync(Analytic analytic)
     {

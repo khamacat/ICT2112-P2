@@ -4,10 +4,10 @@
     var today    = DateTime.Now.ToString("yyyy-MM-dd");
     var startVal = Model.FilterStart?.ToString("yyyy-MM-dd") ?? today;
     var endVal   = Model.FilterEnd?.ToString("yyyy-MM-dd")   ?? today;
-    var selAll   = (Model.FilterType == null || Model.FilterType == "ALL") ? "selected" : "";
-    var selD     = Model.FilterType == "DAILY"     ? "selected" : "";
-    var selS     = Model.FilterType == "SUPTREND"  ? "selected" : "";
-    var selP     = Model.FilterType == "PRODTREND" ? "selected" : "";
+    var selAll = (Model.FilterType == null || Model.FilterType == "ALL") ? "selected" : "";
+    var selD   = Model.FilterType == "DAILY"     ? "selected" : "";
+    var selS   = Model.FilterType == "SUPTREND"  ? "selected" : "";
+    var selP   = Model.FilterType == "PRODTREND" ? "selected" : "";
 }
 
 <div class="container mt-4">
@@ -23,15 +23,23 @@
         </div>
     </div>
 
+    @if (TempData["ExportNote"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show">
+            @TempData["ExportNote"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
     <!-- Filters -->
     <div class="card mb-4 shadow-sm">
         <div class="card-body">
-            <div class="row g-3">
+            <form method="get" asp-action="Index" class="row g-3" id="filterForm">
 
                 <!-- Type -->
                 <div class="col-md-2">
                     <label class="form-label fw-semibold">Type</label>
-                    <select id="typeFilter" class="form-select">
+                    <select name="type" class="form-select">
                         <option value="ALL"       selected="@selAll">All Types</option>
                         <option value="DAILY"     selected="@selD">Daily</option>
                         <option value="SUPTREND"  selected="@selS">Supplier Trend</option>
@@ -42,37 +50,26 @@
                 <!-- Date range -->
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">Date Range</label>
-                    <form method="get" asp-action="Index" class="d-flex gap-2" id="dateForm">
-                        <input type="hidden" name="type" id="hiddenType" value="@Model.FilterType" />
+                    <div class="d-flex gap-2">
                         <input type="date" name="start" class="form-control" value="@startVal" />
                         <input type="date" name="end"   class="form-control" value="@endVal" />
-                        <button type="submit" class="btn btn-outline-secondary text-nowrap">Filter</button>
-                    </form>
+                    </div>
                 </div>
 
-                <!-- Supplier -->
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold">Supplier</label>
-                    <form method="get" asp-action="Index" class="d-flex gap-2">
-                        <input type="hidden" name="type" value="SUPTREND" />
-                        <input type="text" name="supplier" class="form-control"
-                               placeholder="Supplier name..." value="@Model.FilterSupplier" />
-                        <button type="submit" class="btn btn-outline-warning text-nowrap">Search</button>
-                    </form>
+                <!-- Name search -->
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Search by Name</label>
+                    <input type="text" name="search" class="form-control"
+                           placeholder="Supplier, product, or any name..."
+                           value="@Model.FilterSearch" />
                 </div>
 
-                <!-- Product -->
-                <div class="col-md-3">
-                    <label class="form-label fw-semibold">Product</label>
-                    <form method="get" asp-action="Index" class="d-flex gap-2">
-                        <input type="hidden" name="type" value="PRODTREND" />
-                        <input type="text" name="product" class="form-control"
-                               placeholder="Product name..." value="@Model.FilterProduct" />
-                        <button type="submit" class="btn btn-outline-success text-nowrap">Search</button>
-                    </form>
+                <div class="col-md-2 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1">Filter</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
                 </div>
 
-            </div>
+            </form>
         </div>
     </div>
 
@@ -82,15 +79,8 @@
             <table class="table table-hover mb-0">
                 <thead class="table-dark">
                     <tr>
-                        <th>ID</th>
-                        <th>Type</th>
-                        <th>Start</th>
-                        <th>End</th>
-                        <th>Loans</th>
-                        <th>Returns</th>
-                        <th>Name</th>
-                        <th>Value</th>
-                        <th></th>
+                        <th>ID</th><th>Type</th><th>Start</th><th>End</th>
+                        <th>Loans</th><th>Returns</th><th>Name</th><th>Value</th><th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -102,7 +92,6 @@
                             "PRODTREND" => "bg-success",
                             _           => "bg-secondary"
                         };
-                        // Adjust dates back to SGT (+8) for display
                         var dispStart = item.GetStartDate()?.AddHours(8);
                         var dispEnd   = item.GetEndDate()?.AddHours(8);
                         <tr>
@@ -117,13 +106,9 @@
                             <td class="align-middle">@item.GetRefPrimaryName()</td>
                             <td class="align-middle">
                                 @if (item.GetAnalyticsType() == "DAILY")
-                                {
-                                    <span class="text-muted">—</span>
-                                }
+                                { <span class="text-muted">—</span> }
                                 else
-                                {
-                                    @item.GetRefValue()?.ToString("0.00")
-                                }
+                                { @item.GetRefValue()?.ToString("0.00") }
                             </td>
                             <td class="align-middle">
                                 <a asp-action="Details" asp-route-id="@item.GetID()"
@@ -140,9 +125,3 @@
         </div>
     </div>
 </div>
-
-<script>
-    document.getElementById('typeFilter').addEventListener('change', function () {
-        document.getElementById('hiddenType').value = this.value;
-    });
-</script>

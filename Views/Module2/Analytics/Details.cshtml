@@ -117,7 +117,7 @@
             <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-file-earmark-text me-2"></i>Report — @r!.GetTitle()</span>
                 <div class="d-flex gap-2">
-                    <a asp-action="ExportReport" asp-route-id="@r.GetReportID()"
+                    <a asp-action="ExportReport" asp-route-id="@r.GetReportID()" asp-route-download="true"
                        class="btn btn-sm btn-success">
                         <i class="bi bi-download me-1"></i>Export @r.GetFileFormat()
                     </a>
@@ -128,7 +128,7 @@
             <div class="card-body">
                 @if (r.GetFileFormat() == ProRental.Domain.Enums.FileFormat.PDF)
                 {
-                    <iframe src="@Url.Action("ExportReport", new { id = r.GetReportID() })"
+                    <iframe src="@Url.Action("ExportReport", new { id = r.GetReportID(), download = false })"
                             width="100%" height="400px" class="border rounded"></iframe>
                 }
                 else
