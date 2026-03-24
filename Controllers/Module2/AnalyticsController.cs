@@ -168,14 +168,12 @@ public class AnalyticsController : Controller
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
 
-        if (format == FileFormat.PDF)
+        if (format == FileFormat.PDF || format == FileFormat.PNG)
         {
-            // Return CSV content with text/plain so it renders inline in iframe
-            // instead of triggering a download dialog
             if (download)
-                return File(csvBytes, "application/pdf", $"{title}.pdf");
-
-            // Inline view for iframe — return as plain text so browser shows it
+                return File(csvBytes, format == FileFormat.PNG ? "image/png" : "application/pdf",
+                    $"{title}.{format.ToString().ToLower()}");
+            // Inline for iframe
             return Content(sb.ToString(), "text/plain");
         }
         else if (format == FileFormat.CSV)

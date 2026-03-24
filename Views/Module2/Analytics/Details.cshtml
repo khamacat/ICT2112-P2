@@ -126,7 +126,8 @@
                 </div>
             </div>
             <div class="card-body">
-                @if (r.GetFileFormat() == ProRental.Domain.Enums.FileFormat.PDF)
+                @if (r.GetFileFormat() == ProRental.Domain.Enums.FileFormat.PDF
+                  || r.GetFileFormat() == ProRental.Domain.Enums.FileFormat.PNG)
                 {
                     <iframe src="@Url.Action("ExportReport", new { id = r.GetReportID(), download = false })"
                             width="100%" height="400px" class="border rounded"></iframe>
