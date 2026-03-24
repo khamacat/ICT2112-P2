@@ -10,43 +10,56 @@ public class CategoryCatalogController : Controller
     private readonly ICategoryCRUD _categoryCRUD;
     private readonly ICategoryQuery _categoryQuery;
 
-    // Use Constructor Injection for the Domain Interfaces
     public CategoryCatalogController(ICategoryCRUD categoryCRUD, ICategoryQuery categoryQuery)
     {
         _categoryCRUD = categoryCRUD;
         _categoryQuery = categoryQuery;
     }
 
-    // GET: /CategoryCatalog
     [HttpGet]
     [Route("")] 
     public IActionResult Index()
     {
-        // Use the Query interface to fetch data
         var list = _categoryQuery.GetAllCategories() ?? new List<Category>();
-        
         return View("~/Views/Module2/CategoryCatalog/CategoryCatalog.cshtml", list);
     }
 
-    // POST: /CategoryCatalog/HandleCategoryCRUD
+    // POST: /CategoryCatalog/Create
     [HttpPost]
-    [Route("HandleCategoryCRUD")]
+    [Route("Create")]
     [ValidateAntiForgeryToken]
-    public IActionResult HandleCategoryCRUD(string categoryName, string categoryDescription)
+    public IActionResult Create(string categoryName, string categoryDescription)
     {
         if (!string.IsNullOrEmpty(categoryName))
         {
-            // 1. Instantiate the Entity
             var newCat = new Category();
-
-            // 2. Use DDD methods from your partial class to set data
             newCat.SetName(categoryName);
-            
-            // Set description from form
             newCat.SetDescription(categoryDescription);
 
-            // 3. Use the CRUD interface for business logic and persistence
             _categoryCRUD.CreateCategory(newCat);
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    // POST: /CategoryCatalog/Update
+    [HttpPost]
+    [Route("Update")]
+    [ValidateAntiForgeryToken]
+    public IActionResult Update(int id, string categoryName, string categoryDescription)
+    {
+        if (!string.IsNullOrEmpty(categoryName))
+        {
+            var categoryToUpdate = new Category();
+            
+            // Using Reflection to set the private _categoryid field
+            typeof(Category).GetField("_categoryid", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(categoryToUpdate, id); 
+
+            categoryToUpdate.SetName(categoryName);
+            categoryToUpdate.SetDescription(categoryDescription);
+
+            _categoryCRUD.UpdateCategory(categoryToUpdate);
         }
 
         return RedirectToAction(nameof(Index));
@@ -58,9 +71,7 @@ public class CategoryCatalogController : Controller
     [ValidateAntiForgeryToken]
     public IActionResult Delete(int id)
     {
-        // Call the Domain Interface (ICategoryCRUD) to handle the deletion logic
-        bool success = _categoryCRUD.DeleteCategory(id);
-        
+        _categoryCRUD.DeleteCategory(id);
         return RedirectToAction(nameof(Index));
     }
 }
