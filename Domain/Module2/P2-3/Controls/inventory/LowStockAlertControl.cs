@@ -39,35 +39,9 @@ public class LowStockAlertControl : iAlertControl, iStockObserver
         return _alertMapper.FindAll()?.ToList() ?? new List<Alert>();
     }
 
-    public List<Alert> GetAlertsByStaff(int staffId)
-    {
-        return _alertMapper.FindAll()?
-            .Where(a => a.GetStaffId() == staffId)
-            .ToList() ?? new List<Alert>();
-    }
-
     public List<Alert> GetAlertsByProduct(int productId)
     {
         return _alertMapper.FindByProductId(productId)?.ToList() ?? new List<Alert>();
-    }
-
-    public bool SendAlertToStaff(int alertId, int staffId)
-    {
-        var alert = _alertMapper.FindById(alertId);
-        if (alert is null)
-        {
-            return false;
-        }
-        alert.SetStaffId(staffId);
-        try
-        {
-            _alertMapper.Update(alert);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
     }
 
     public bool UpdateAlertStatus(int alertId, AlertStatus status)
@@ -146,7 +120,6 @@ public class LowStockAlertControl : iAlertControl, iStockObserver
         // Build and create the alert
         var alert = new Alert();
         alert.SetProductId(productId);
-        alert.SetStaffId(0); // No assigned staff
         alert.SetMinThreshold(minThreshold);
         alert.SetAlertStatus(AlertStatus.OPEN);
         alert.SetCreatedAt(DateTime.UtcNow);
