@@ -44,6 +44,7 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
             _inventoryItemMapper.Insert(inventoryItem);
             int availableCount = CheckProductQuantityByStatus(productId, InventoryStatus.AVAILABLE);
             NotifyObservers(productId, availableCount);
+            SyncProductActiveQuantity(productId);
             return true;
         }
         catch
@@ -99,6 +100,7 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
             {
                 int availableCount = CheckProductQuantityByStatus(productId, InventoryStatus.AVAILABLE);
                 NotifyObservers(productId, availableCount);
+                SyncProductActiveQuantity(productId);
             }
 
             return createdCount;
@@ -143,6 +145,7 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
             _inventoryItemMapper.Update(existingItem);
             int availableCount = CheckProductQuantityByStatus(productId, InventoryStatus.AVAILABLE);
             NotifyObservers(productId, availableCount);
+            SyncProductActiveQuantity(productId);
             return true;
         }
         catch
@@ -169,6 +172,7 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
             _inventoryItemMapper.Delete(existingItem);
             int availableCount = CheckProductQuantityByStatus(productId, InventoryStatus.AVAILABLE);
             NotifyObservers(productId, availableCount);
+            SyncProductActiveQuantity(productId);
             Console.WriteLine($"DeleteInventoryItem: Item {inventoryItemId} deleted successfully");
             return true;
         }
@@ -277,6 +281,7 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
             }
 
             NotifyObservers(productId, availableCount);
+            SyncProductActiveQuantity(productId);
             return true;
         }
         catch
@@ -408,6 +413,36 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
         foreach (var observer in _observers)
         {
             observer.Update(productId, availableCount);
+        }
+    }
+
+    /// <summary>
+    /// Syncs the product's totalQuantity in Productdetail based on the count of active inventory items.
+    /// Active statuses include: AVAILABLE, ON_LOAN, RESERVED, MAINTENANCE
+    /// </summary>
+    private void SyncProductActiveQuantity(int productId)
+    {
+        try
+        {
+            var items = _inventoryItemMapper.FindByProductId(productId);
+            if (items is null)
+            {
+                return;
+            }
+
+            // Count items with active statuses: AVAILABLE, ON_LOAN, RESERVED, MAINTENANCE
+            int activeInventoryCount = items.Count(item =>
+                item.GetStatus() == InventoryStatus.AVAILABLE ||
+                item.GetStatus() == InventoryStatus.ON_LOAN ||
+                item.GetStatus() == InventoryStatus.RESERVED ||
+                item.GetStatus() == InventoryStatus.MAINTENANCE);
+
+            // Update the product's totalQuantity in Productdetail
+            _productCRUD.SetActiveQuantity(productId, activeInventoryCount);
+        }
+        catch
+        {
+            // Log failure silently to avoid disrupting inventory operations
         }
     }
 }
