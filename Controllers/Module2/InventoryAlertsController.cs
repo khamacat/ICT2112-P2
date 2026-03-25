@@ -48,26 +48,52 @@ public class InventoryAlertsController : Controller
     [HttpGet("DisplayAlerts")]
     public IActionResult DisplayAlerts()
     {
-        var alerts = _alertControl.GetAllAlerts();
-        ViewData["Filter"] = "Select a filter below:";
-        ViewData["Message"] = "Use DisplayAlertsByProduct or DisplayAlertsByStaff with appropriate IDs";
-        return View("~/Views/Module2/Alerts.cshtml", alerts);
+        // Only show OPEN and ACKNOWLEDGED alerts (exclude RESOLVED)
+        var allAlerts = _alertControl.GetAllAlerts();
+        var activeAlerts = allAlerts?
+            .Where(a => a.GetAlertStatus() == AlertStatus.OPEN || a.GetAlertStatus() == AlertStatus.ACKNOWLEDGED)
+            .ToList() ?? new List<Alert>();
+        
+        ViewData["Filter"] = "Active Alerts";
+        ViewData["Message"] = "Use DisplayAlertsByProduct or DisplayAlertsByStaff filters with appropriate IDs";
+        return View("~/Views/Module2/Inventory/Alerts.cshtml", activeAlerts);
     }
 
     [HttpGet("DisplayAlertsByProduct/{productId:int}")]
     public IActionResult DisplayAlertsByProduct(int productId)
     {
-        var alerts = _alertControl.GetAlertsByProduct(productId);
-        ViewData["Filter"] = $"Alerts for Product #{productId}";
-        return View("~/Views/Module2/Alerts.cshtml", alerts);
+        var alerts = _alertControl.GetAlertsByProduct(productId)?
+            .Where(a => a.GetAlertStatus() == AlertStatus.OPEN || a.GetAlertStatus() == AlertStatus.ACKNOWLEDGED)
+            .ToList() ?? new List<Alert>();
+        
+        ViewData["Filter"] = $"Active Alerts for Product #{productId}";
+        return View("~/Views/Module2/Inventory/Alerts.cshtml", alerts);
     }
 
     [HttpGet("DisplayAlertsByStaff/{staffId:int}")]
     public IActionResult DisplayAlertsByStaff(int staffId)
     {
-        var alerts = _alertControl.GetAlertsByStaff(staffId);
-        ViewData["Filter"] = $"Alerts for Staff #{staffId}";
-        return View("~/Views/Module2/Alerts.cshtml", alerts);
+        var allAlerts = _alertControl.GetAlertsByStaff(staffId);
+        var activeAlerts = allAlerts?
+            .Where(a => a.GetAlertStatus() == AlertStatus.OPEN || a.GetAlertStatus() == AlertStatus.ACKNOWLEDGED)
+            .ToList() ?? new List<Alert>();
+        
+        ViewData["Filter"] = $"Active Alerts for Staff #{staffId}";
+        return View("~/Views/Module2/Inventory/Alerts.cshtml", activeAlerts);
+    }
+
+    [HttpGet("DisplayAlertHistory")]
+    public IActionResult DisplayAlertHistory()
+    {
+        // Show all RESOLVED alerts
+        var allAlerts = _alertControl.GetAllAlerts();
+        var resolvedAlerts = allAlerts?
+            .Where(a => a.GetAlertStatus() == AlertStatus.RESOLVED)
+            .OrderByDescending(a => a.GetResolvedAt())
+            .ToList() ?? new List<Alert>();
+        
+        ViewData["Filter"] = "Alert History (Resolved)";
+        return View("~/Views/Module2/Inventory/Alerts.cshtml", resolvedAlerts);
     }
 
     [HttpGet("DisplayAlert/{alertId:int}")]
@@ -99,6 +125,7 @@ public class InventoryAlertsController : Controller
         }
         return RedirectToAction(nameof(DisplayAlerts));
     }
+    
 
     [HttpPost("AcknowledgeAlert/{alertId:int}")]
     [ValidateAntiForgeryToken]
@@ -112,7 +139,7 @@ public class InventoryAlertsController : Controller
         {
             TempData["Message"] = "Alert not found or could not be updated.";
         }
-        return RedirectToAction(nameof(DisplayAllAlerts));
+        return RedirectToAction(nameof(DisplayAlerts));
     }
 
     [HttpPost("ResolveAlert/{alertId:int}")]
@@ -127,6 +154,6 @@ public class InventoryAlertsController : Controller
         {
             TempData["Message"] = "Alert not found or could not be resolved.";
         }
-        return RedirectToAction(nameof(DisplayAllAlerts));
+        return RedirectToAction(nameof(DisplayAlerts));
     }
 }

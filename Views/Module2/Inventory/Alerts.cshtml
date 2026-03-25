@@ -1,8 +1,11 @@
 @model IReadOnlyList<ProRental.Domain.Entities.Alert>
+@inject ProRental.Interfaces.Domain.IProductQuery ProductQuery
 
 @{
     ViewData["Title"] = "Inventory Alerts";
     var filter = ViewData["Filter"]?.ToString() ?? "All Alerts";
+    var isHistory = filter.Contains("History");
+    var columnCount = isHistory ? 7 : 8;
 }
 
 <div class="container py-4">
@@ -21,6 +24,7 @@
 
     <div class="d-flex flex-wrap gap-2 mb-3">
         <a asp-action="DisplayAlerts" class="btn btn-primary btn-sm">View All Alerts</a>
+        <a asp-action="DisplayAlertHistory" class="btn btn-outline-secondary btn-sm">Display Alert History</a>
         <div class="btn-group btn-group-sm" role="group">
             <a href="#" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#filterModal">Filter by Product</a>
             <a href="#" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#staffModal">View by Staff</a>
@@ -89,48 +93,50 @@
                 <tr>
                     <th>Alert ID</th>
                     <th>Product ID</th>
+                    <th>Product Name</th>
                     <th>Threshold</th>
-                    <th>Current Stock</th>
                     <th>Status</th>
                     <th>Message</th>
                     <th>Created</th>
-                    <th>Resolved</th>
-                    <th>Actions</th>
+                    @if (!isHistory)
+                    {
+                        <th>Actions</th>
+                    }
                 </tr>
             </thead>
             <tbody>
                 @if (!Model.Any())
                 {
                     <tr>
-                        <td colspan="9" class="text-center text-muted">No alerts found.</td>
+                        <td colspan="@columnCount" class="text-center text-muted">No alerts found.</td>
                     </tr>
                 }
                 else
                 {
                     foreach (var alert in Model)
                     {
+                        var product = ProductQuery.GetProductById(alert.GetProductId());
+                        var productName = product?.Productdetail?.GetName() ?? $"Product #{alert.GetProductId()}";
+                        
                         <tr>
                             <td>@alert.GetAlertId()</td>
                             <td>@alert.GetProductId()</td>
+                            <td>@productName</td>
                             <td>@alert.GetMinThreshold()</td>
-                            <td>@alert.GetCurrentStock()</td>
                             <td>@alert.GetAlertStatus()</td>
                             <td>@alert.GetMessage()</td>
                             <td>@alert.GetCreatedAt().ToString("yyyy-MM-dd HH:mm")</td>
-                            <td>@(alert.GetResolvedAt()?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
-                            <td>
-                                <div class="d-flex flex-wrap gap-1">
-                                    <form asp-action="AcknowledgeAlert" asp-route-alertId="@alert.GetAlertId()" method="post" class="d-inline">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-sm btn-outline-warning">Acknowledge</button>
-                                    </form>
-
-                                    <form asp-action="ResolveAlert" asp-route-alertId="@alert.GetAlertId()" method="post" class="d-inline">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-sm btn-outline-success">Resolve</button>
-                                    </form>
-                                </div>
-                            </td>
+                            @if (!isHistory)
+                            {
+                                <td>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <form asp-action="AcknowledgeAlert" asp-route-alertId="@alert.GetAlertId()" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-warning">Acknowledge</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            }
                         </tr>
                     }
                 }

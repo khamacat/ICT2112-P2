@@ -16,7 +16,11 @@
             <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#bulkCreateModal">
                 <i class="bi bi-files"></i> Bulk Create
             </button>
-            <a asp-controller="InventoryAlerts" asp-action="DisplayAllAlerts" class="btn btn-outline-secondary btn-sm">View Alerts</a>
+            @{
+                var hasOpenAlerts = (bool?)ViewData["HasOpenAlerts"] ?? false;
+                var alertButtonClass = hasOpenAlerts ? "btn-danger" : "btn-outline-secondary";
+            }
+            <a asp-controller="InventoryAlerts" asp-action="DisplayAllAlerts" class="btn @alertButtonClass btn-sm">View Alerts</a>
         </div>
     </div>
 

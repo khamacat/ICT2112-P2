@@ -11,12 +11,14 @@ public class StaffInventoryController : Controller
     private readonly iInventoryCRUDControl _crudControl;
     private readonly iInventoryStatusControl _statusControl;
     private readonly iInventoryQueryControl _queryControl;
+    private readonly iAlertControl _alertControl;
 
-    public StaffInventoryController(iInventoryCRUDControl crudControl, iInventoryStatusControl statusControl, iInventoryQueryControl queryControl)
+    public StaffInventoryController(iInventoryCRUDControl crudControl, iInventoryStatusControl statusControl, iInventoryQueryControl queryControl, iAlertControl alertControl)
     {
         _crudControl = crudControl;
         _statusControl = statusControl;
         _queryControl = queryControl;
+        _alertControl = alertControl;
     }
 
     [HttpGet("")]
@@ -27,6 +29,11 @@ public class StaffInventoryController : Controller
         try
         {
             var items = _queryControl.GetAllInventoryItems();
+            
+            // Check if there are any OPEN alerts
+            var openAlerts = _alertControl.GetOpenAlerts();
+            ViewData["HasOpenAlerts"] = openAlerts?.Count > 0;
+            
             return View("~/Views/Module2/Inventory/StaffInventory.cshtml", items);
         }
         catch
