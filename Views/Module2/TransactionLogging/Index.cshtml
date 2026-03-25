@@ -1,0 +1,537 @@
+@model List<ProRental.Domain.Entities.Transactionlog>
+
+@{
+    ViewData["Title"] = "Transaction Logging";
+
+    var rentalLogs = Model.Where(l => l.log_type.ToString() == "RENTAL_ORDER").ToList();
+    var clearanceLogs = Model.Where(l => l.log_type.ToString() == "CLEARANCE").ToList();
+    var purchaseOrderLogs = Model.Where(l => l.log_type.ToString() == "PURCHASE_ORDER").ToList();
+}
+
+<div class="d-flex align-items-center mb-4 mt-2">
+    <i class="bi bi-journal-text fs-3 me-3" style="color: var(--bs-primary);"></i>
+    <div>
+        <h4 class="mb-0 fw-bold">Transaction Logging</h4>
+        <small class="text-muted">View and filter all transaction logs across rental orders, clearance, and purchase orders.</small>
+    </div>
+</div>
+
+<ul class="nav nav-tabs mb-3" id="logTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="rental-tab" data-bs-toggle="tab" data-bs-target="#rental" type="button" role="tab">
+            <i class="bi bi-cart me-1"></i>Rental Orders
+            <span class="badge bg-success ms-1">@rentalLogs.Count</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="clearance-tab" data-bs-toggle="tab" data-bs-target="#clearance" type="button" role="tab">
+            <i class="bi bi-archive me-1"></i>Clearance
+            <span class="badge bg-info text-dark ms-1">@clearanceLogs.Count</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="po-tab" data-bs-toggle="tab" data-bs-target="#purchaseorders" type="button" role="tab">
+            <i class="bi bi-truck me-1"></i>Purchase Orders
+            <span class="badge bg-secondary ms-1">@purchaseOrderLogs.Count</span>
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="all-tab" data-bs-toggle="tab" data-bs-target="#alllogs" type="button" role="tab">
+            <i class="bi bi-list-ul me-1"></i>All Logs
+            <span class="badge bg-dark ms-1">@Model.Count</span>
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="logTabContent">
+
+    <!-- ============================================================
+         TAB 1 — RENTAL ORDERS
+         ============================================================ -->
+    <div class="tab-pane fade show active" id="rental" role="tabpanel">
+
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body py-2">
+                <div class="row g-2 align-items-end" id="rentalFilterRow">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small mb-1">Filter By</label>
+                        <select id="rentalFilterType" class="form-select form-select-sm">
+                            <option value="">— No Filter —</option>
+                            <option value="customer">Customer ID</option>
+                            <option value="order">Order ID</option>
+                            <option value="daterange">Date Range</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3" id="rentalValueGroup">
+                        <label class="form-label fw-semibold small mb-1">Value</label>
+                        <input type="text" id="rentalFilterValue" class="form-control form-control-sm" placeholder="Enter ID..." />
+                    </div>
+                    <div class="col-md-2 d-none" id="rentalStartGroup">
+                        <label class="form-label fw-semibold small mb-1">Start</label>
+                        <input type="date" id="rentalStartDate" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-md-2 d-none" id="rentalEndGroup">
+                        <label class="form-label fw-semibold small mb-1">End</label>
+                        <input type="date" id="rentalEndDate" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-md-auto">
+                        <button class="btn btn-primary btn-sm" onclick="applyFilter('rental')"><i class="bi bi-funnel me-1"></i>Filter</button>
+                        <button class="btn btn-outline-secondary btn-sm ms-1" onclick="clearFilter('rental')"><i class="bi bi-x-circle me-1"></i>Clear</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                @if (rentalLogs.Count == 0)
+                {
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>No rental order logs found.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="rentalTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Log ID</th>
+                                    <th>Order ID</th>
+                                    <th>Customer ID</th>
+                                    <th>Order Date</th>
+                                    <th>Total Amount</th>
+                                    <th>Created At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var log in rentalLogs)
+                                {
+                                    var r = log.Rentalorderlog;
+                                    <tr data-customer="@r?.customer_id" data-order="@r?.order_id" data-date="@log.created_at?.ToString("yyyy-MM-dd")">
+                                        <td class="fw-semibold">@log.transaction_logid</td>
+                                        <td>@(r?.order_id?.ToString() ?? "—")</td>
+                                        <td>@(r?.customer_id?.ToString() ?? "—")</td>
+                                        <td>@(r?.order_date?.ToString("yyyy-MM-dd") ?? "—")</td>
+                                        <td>@(r?.total_amount != null ? "$" + r.total_amount : "—")</td>
+                                        <td><small class="text-muted">@(log.created_at?.ToString("yyyy-MM-dd HH:mm") ?? "—")</small></td>
+                                        <td>
+                                            <a asp-controller="TransactionLogging" asp-action="Details" asp-route-id="@log.transaction_logid"
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-eye me-1"></i>View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         TAB 2 — CLEARANCE
+         ============================================================ -->
+    <div class="tab-pane fade" id="clearance" role="tabpanel">
+
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body py-2">
+                <div class="row g-2 align-items-end" id="clearanceFilterRow">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small mb-1">Filter By</label>
+                        <select id="clearanceFilterType" class="form-select form-select-sm">
+                            <option value="">— No Filter —</option>
+                            <option value="batch">Batch ID</option>
+                            <option value="daterange">Date Range</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3" id="clearanceValueGroup">
+                        <label class="form-label fw-semibold small mb-1">Value</label>
+                        <input type="text" id="clearanceFilterValue" class="form-control form-control-sm" placeholder="Enter Batch ID..." />
+                    </div>
+                    <div class="col-md-2 d-none" id="clearanceStartGroup">
+                        <label class="form-label fw-semibold small mb-1">Start</label>
+                        <input type="date" id="clearanceStartDate" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-md-2 d-none" id="clearanceEndGroup">
+                        <label class="form-label fw-semibold small mb-1">End</label>
+                        <input type="date" id="clearanceEndDate" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-md-auto">
+                        <button class="btn btn-primary btn-sm" onclick="applyFilter('clearance')"><i class="bi bi-funnel me-1"></i>Filter</button>
+                        <button class="btn btn-outline-secondary btn-sm ms-1" onclick="clearFilter('clearance')"><i class="bi bi-x-circle me-1"></i>Clear</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                @if (clearanceLogs.Count == 0)
+                {
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>No clearance logs found.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="clearanceTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Log ID</th>
+                                    <th>Batch ID</th>
+                                    <th>Batch Name</th>
+                                    <th>Clearance Date</th>
+                                    <th>Created At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var log in clearanceLogs)
+                                {
+                                    var c = log.Clearancelog;
+                                    <tr data-batch="@c?.clearance_batchid" data-date="@log.created_at?.ToString("yyyy-MM-dd")">
+                                        <td class="fw-semibold">@log.transaction_logid</td>
+                                        <td>@(c?.clearance_batchid.ToString() ?? "—")</td>
+                                        <td>@(c?.batch_name ?? "—")</td>
+                                        <td>@(c?.clearance_date?.ToString("yyyy-MM-dd") ?? "—")</td>
+                                        <td><small class="text-muted">@(log.created_at?.ToString("yyyy-MM-dd HH:mm") ?? "—")</small></td>
+                                        <td>
+                                            <a asp-controller="TransactionLogging" asp-action="Details" asp-route-id="@log.transaction_logid"
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-eye me-1"></i>View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         TAB 3 — PURCHASE ORDERS
+         ============================================================ -->
+    <div class="tab-pane fade" id="purchaseorders" role="tabpanel">
+
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body py-2">
+                <div class="row g-2 align-items-end" id="poFilterRow">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small mb-1">Filter By</label>
+                        <select id="poFilterType" class="form-select form-select-sm">
+                            <option value="">— No Filter —</option>
+                            <option value="supplier">Supplier ID</option>
+                            <option value="poid">PO ID</option>
+                            <option value="daterange">Date Range</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3" id="poValueGroup">
+                        <label class="form-label fw-semibold small mb-1">Value</label>
+                        <input type="text" id="poFilterValue" class="form-control form-control-sm" placeholder="Enter ID..." />
+                    </div>
+                    <div class="col-md-2 d-none" id="poStartGroup">
+                        <label class="form-label fw-semibold small mb-1">Start</label>
+                        <input type="date" id="poStartDate" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-md-2 d-none" id="poEndGroup">
+                        <label class="form-label fw-semibold small mb-1">End</label>
+                        <input type="date" id="poEndDate" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-md-auto">
+                        <button class="btn btn-primary btn-sm" onclick="applyFilter('po')"><i class="bi bi-funnel me-1"></i>Filter</button>
+                        <button class="btn btn-outline-secondary btn-sm ms-1" onclick="clearFilter('po')"><i class="bi bi-x-circle me-1"></i>Clear</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                @if (purchaseOrderLogs.Count == 0)
+                {
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>No purchase order logs found.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="poTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Log ID</th>
+                                    <th>PO ID</th>
+                                    <th>Supplier ID</th>
+                                    <th>PO Date</th>
+                                    <th>Total Amount</th>
+                                    <th>Created At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var log in purchaseOrderLogs)
+                                {
+                                    var po = log.Purchaseorderlog;
+                                    <tr data-supplier="@po?.supplier_id" data-poid="@po?.po_id" data-date="@log.created_at?.ToString("yyyy-MM-dd")">
+                                        <td class="fw-semibold">@log.transaction_logid</td>
+                                        <td>@(po?.po_id.ToString() ?? "—")</td>
+                                        <td>@(po?.supplier_id?.ToString() ?? "—")</td>
+                                        <td>@(po?.po_date?.ToString("yyyy-MM-dd") ?? "—")</td>
+                                        <td>@(po?.total_amount != null ? "$" + po.total_amount : "—")</td>
+                                        <td><small class="text-muted">@(log.created_at?.ToString("yyyy-MM-dd HH:mm") ?? "—")</small></td>
+                                        <td>
+                                            <a asp-controller="TransactionLogging" asp-action="Details" asp-route-id="@log.transaction_logid"
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-eye me-1"></i>View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         TAB 4 — ALL LOGS
+         ============================================================ -->
+    <div class="tab-pane fade" id="alllogs" role="tabpanel">
+
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body py-2">
+                <div class="row g-2 align-items-end" id="allFilterRow">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold small mb-1">Filter By</label>
+                        <select id="allFilterType" class="form-select form-select-sm">
+                            <option value="">— No Filter —</option>
+                            <option value="customer">Customer ID</option>
+                            <option value="supplier">Supplier ID</option>
+                            <option value="order">Order ID</option>
+                            <option value="daterange">Date Range</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3" id="allValueGroup">
+                        <label class="form-label fw-semibold small mb-1">Value</label>
+                        <input type="text" id="allFilterValue" class="form-control form-control-sm" placeholder="Enter ID..." />
+                    </div>
+                    <div class="col-md-2 d-none" id="allStartGroup">
+                        <label class="form-label fw-semibold small mb-1">Start</label>
+                        <input type="date" id="allStartDate" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-md-2 d-none" id="allEndGroup">
+                        <label class="form-label fw-semibold small mb-1">End</label>
+                        <input type="date" id="allEndDate" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-md-auto">
+                        <button class="btn btn-primary btn-sm" onclick="applyFilter('all')"><i class="bi bi-funnel me-1"></i>Filter</button>
+                        <button class="btn btn-outline-secondary btn-sm ms-1" onclick="clearFilter('all')"><i class="bi bi-x-circle me-1"></i>Clear</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                @if (Model.Count == 0)
+                {
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>No transaction logs found.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="allTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Log ID</th>
+                                    <th>Type</th>
+                                    <th>Date</th>
+                                    <th>Summary</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var log in Model)
+                                {
+                                    var logType = log.log_type.ToString();
+                                    var badgeClass = logType switch
+                                    {
+                                        "RENTAL_ORDER" => "bg-success",
+                                        "LOAN" => "bg-primary",
+                                        "RETURN" => "bg-warning text-dark",
+                                        "CLEARANCE" => "bg-info text-dark",
+                                        "PURCHASE_ORDER" => "bg-secondary",
+                                        _ => "bg-light text-dark"
+                                    };
+                                    var logTypeDisplay = logType switch
+                                    {
+                                        "RENTAL_ORDER" => "Rental Order",
+                                        "LOAN" => "Loan",
+                                        "RETURN" => "Return",
+                                        "CLEARANCE" => "Clearance",
+                                        "PURCHASE_ORDER" => "Purchase Order",
+                                        _ => logType
+                                    };
+
+                                    var custId = log.Rentalorderlog?.customer_id?.ToString() ?? log.Returnlog?.customer_id ?? "";
+                                    var suppId = log.Purchaseorderlog?.supplier_id?.ToString() ?? "";
+                                    var ordId = log.Rentalorderlog?.order_id?.ToString() ?? "";
+
+                                    <tr data-customer="@custId" data-supplier="@suppId" data-order="@ordId" data-date="@log.created_at?.ToString("yyyy-MM-dd")">
+                                        <td class="fw-semibold">@log.transaction_logid</td>
+                                        <td><span class="badge @badgeClass">@logTypeDisplay</span></td>
+                                        <td><small class="text-muted">@(log.created_at?.ToString("yyyy-MM-dd HH:mm") ?? "—")</small></td>
+                                        <td>
+                                            @if (log.Rentalorderlog != null)
+                                            {
+                                                <small>Order @log.Rentalorderlog.order_id — Customer @log.Rentalorderlog.customer_id — $@log.Rentalorderlog.total_amount</small>
+                                            }
+                                            else if (log.Loanlog != null)
+                                            {
+                                                <small>Loan List @log.Loanlog.loan_listid — Due: @(log.Loanlog.due_date?.ToString("yyyy-MM-dd") ?? "—")</small>
+                                            }
+                                            else if (log.Returnlog != null)
+                                            {
+                                                <small>Return @log.Returnlog.return_requestid — Customer @(log.Returnlog.customer_id ?? "—")</small>
+                                            }
+                                            else if (log.Clearancelog != null)
+                                            {
+                                                <small>Batch @log.Clearancelog.clearance_batchid — @(log.Clearancelog.batch_name ?? "—")</small>
+                                            }
+                                            else if (log.Purchaseorderlog != null)
+                                            {
+                                                <small>PO @log.Purchaseorderlog.po_id — Supplier @log.Purchaseorderlog.supplier_id — $@log.Purchaseorderlog.total_amount</small>
+                                            }
+                                            else
+                                            {
+                                                <small class="text-muted">—</small>
+                                            }
+                                        </td>
+                                        <td>
+                                            <a asp-controller="TransactionLogging" asp-action="Details" asp-route-id="@log.transaction_logid"
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-eye me-1"></i>View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        // Toggle date range vs value input for each tab's filter
+        function setupFilterToggle(prefix) {
+            var sel = document.getElementById(prefix + 'FilterType');
+            if (!sel) return;
+            sel.addEventListener('change', function () {
+                var isDate = this.value === 'daterange';
+                var valGroup = document.getElementById(prefix + 'ValueGroup');
+                var startGroup = document.getElementById(prefix + 'StartGroup');
+                var endGroup = document.getElementById(prefix + 'EndGroup');
+                if (valGroup) valGroup.classList.toggle('d-none', isDate);
+                if (startGroup) startGroup.classList.toggle('d-none', !isDate);
+                if (endGroup) endGroup.classList.toggle('d-none', !isDate);
+            });
+        }
+        setupFilterToggle('rental');
+        setupFilterToggle('clearance');
+        setupFilterToggle('po');
+        setupFilterToggle('all');
+
+        // Client-side filtering using data attributes on rows
+        function applyFilter(prefix) {
+            var filterType = document.getElementById(prefix + 'FilterType').value;
+            var filterValue = '';
+
+            if (filterType === 'daterange') {
+                var start = document.getElementById(prefix + 'StartDate').value;
+                var end = document.getElementById(prefix + 'EndDate').value;
+                if (!start || !end) { alert('Please select both start and end dates.'); return; }
+            } else {
+                filterValue = (document.getElementById(prefix + 'FilterValue')?.value || '').trim();
+                if (!filterType || !filterValue) { alert('Please select a filter and enter a value.'); return; }
+            }
+
+            var tableId = prefix === 'po' ? 'poTable' : prefix + 'Table';
+            var table = document.getElementById(tableId);
+            if (!table) return;
+
+            var rows = table.querySelectorAll('tbody tr');
+            var visibleCount = 0;
+
+            rows.forEach(function (row) {
+                var show = true;
+
+                if (filterType === 'customer') {
+                    show = row.getAttribute('data-customer') === filterValue;
+                } else if (filterType === 'supplier') {
+                    show = row.getAttribute('data-supplier') === filterValue;
+                } else if (filterType === 'order') {
+                    show = row.getAttribute('data-order') === filterValue;
+                } else if (filterType === 'batch') {
+                    show = row.getAttribute('data-batch') === filterValue;
+                } else if (filterType === 'poid') {
+                    show = row.getAttribute('data-poid') === filterValue;
+                } else if (filterType === 'daterange') {
+                    var rowDate = row.getAttribute('data-date');
+                    var start = document.getElementById(prefix + 'StartDate').value;
+                    var end = document.getElementById(prefix + 'EndDate').value;
+                    show = rowDate >= start && rowDate <= end;
+                }
+
+                row.style.display = show ? '' : 'none';
+                if (show) visibleCount++;
+            });
+        }
+
+        function clearFilter(prefix) {
+            var sel = document.getElementById(prefix + 'FilterType');
+            if (sel) sel.value = '';
+
+            var val = document.getElementById(prefix + 'FilterValue');
+            if (val) val.value = '';
+
+            var start = document.getElementById(prefix + 'StartDate');
+            if (start) start.value = '';
+
+            var end = document.getElementById(prefix + 'EndDate');
+            if (end) end.value = '';
+
+            // Show date/value groups correctly
+            var valGroup = document.getElementById(prefix + 'ValueGroup');
+            var startGroup = document.getElementById(prefix + 'StartGroup');
+            var endGroup = document.getElementById(prefix + 'EndGroup');
+            if (valGroup) valGroup.classList.remove('d-none');
+            if (startGroup) startGroup.classList.add('d-none');
+            if (endGroup) endGroup.classList.add('d-none');
+
+            // Show all rows
+            var tableId = prefix === 'po' ? 'poTable' : prefix + 'Table';
+            var table = document.getElementById(tableId);
+            if (!table) return;
+            table.querySelectorAll('tbody tr').forEach(function (row) {
+                row.style.display = '';
+            });
+        }
+    </script>
+}

@@ -1,13 +1,31 @@
 namespace ProRental.Domain.Entities;
 
+using System.ComponentModel.DataAnnotations.Schema;
+using ProRental.Domain.Enums;
+
 public partial class Transactionlog
 {
-    // Logtype is not in the scaffold — stored as string from DB via shadow property
-    // We store it here as a business logic field populated after EF load
-    private string? _logtype;
-    public void SetLogtype(string? value) => _logtype = value;
-    public string? GetLogtype()           => _logtype;
+    [NotMapped]
+    public int transaction_logid
+    {
+        get => Transactionlogid;
+        set => Transactionlogid = value;
+    }
 
-    public int GetTransactionlogid()      => _transactionlogid;
-    public DateTime? GetCreatedat()       => _createdat;
+    [NotMapped]
+    public DateTime? created_at
+    {
+        get => Createdat;
+        set => Createdat = value;
+    }
+
+    private LogType _logtype;
+    private LogType Logtype { get => _logtype; set => _logtype = value; }
+
+    [NotMapped]
+    public LogType log_type
+    {
+        get => Logtype;
+        set => Logtype = value;
+    }
 }

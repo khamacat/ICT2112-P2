@@ -1,0 +1,576 @@
+@model ProRental.Domain.Entities.Transactionlog
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Log Details";
+
+    var logType = Model.log_type.ToString();
+    var badgeClass = logType switch
+    {
+        "RENTAL_ORDER" => "bg-success",
+        "LOAN" => "bg-primary",
+        "RETURN" => "bg-warning text-dark",
+        "CLEARANCE" => "bg-info text-dark",
+        "PURCHASE_ORDER" => "bg-secondary",
+        _ => "bg-light text-dark"
+    };
+    var logTypeDisplay = logType switch
+    {
+        "RENTAL_ORDER" => "Rental Order",
+        "LOAN" => "Loan",
+        "RETURN" => "Return",
+        "CLEARANCE" => "Clearance",
+        "PURCHASE_ORDER" => "Purchase Order",
+        _ => logType
+    };
+
+    string? detailsJson = null;
+    if (Model.Rentalorderlog != null) detailsJson = Model.Rentalorderlog.details_json;
+    else if (Model.Loanlog != null) detailsJson = Model.Loanlog.details_json;
+    else if (Model.Returnlog != null) detailsJson = Model.Returnlog.details_json;
+    else if (Model.Clearancelog != null) detailsJson = Model.Clearancelog.details_json;
+    else if (Model.Purchaseorderlog != null) detailsJson = Model.Purchaseorderlog.details_json;
+
+    JsonDocument? jsonDoc = null;
+    JsonElement root = default;
+    bool hasJson = false;
+    if (!string.IsNullOrWhiteSpace(detailsJson))
+    {
+        try
+        {
+            jsonDoc = JsonDocument.Parse(detailsJson);
+            root = jsonDoc.RootElement;
+            hasJson = true;
+        }
+        catch { }
+    }
+
+    // Linked loans and returns (only populated for Rental Orders)
+    var linkedLoans = ViewBag.LinkedLoans as List<ProRental.Domain.Entities.Loanlog> ?? new List<ProRental.Domain.Entities.Loanlog>();
+    var linkedReturns = ViewBag.LinkedReturns as List<ProRental.Domain.Entities.Returnlog> ?? new List<ProRental.Domain.Entities.Returnlog>();
+}
+
+<div class="d-flex align-items-center mb-4 mt-2">
+    <a asp-controller="TransactionLogging" asp-action="Index" class="btn btn-outline-secondary btn-sm me-3">
+        <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+    <div>
+        <h4 class="mb-0 fw-bold">Transaction Log @Model.transaction_logid</h4>
+        <small class="text-muted">Detailed view of this @logTypeDisplay log entry.</small>
+    </div>
+</div>
+
+<!-- ============================================================
+     LOG INFO CARD
+     ============================================================ -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3 border-0">
+        <h6 class="fw-bold mb-0"><i class="bi bi-info-circle me-2" style="color: var(--bs-primary);"></i>Log Information</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <table class="table table-sm table-borderless mb-0">
+                    <tr>
+                        <td class="text-muted fw-semibold" style="width: 160px;">Log ID</td>
+                        <td>@Model.transaction_logid</td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-semibold">Type</td>
+                        <td><span class="badge @badgeClass">@logTypeDisplay</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted fw-semibold">Created At</td>
+                        <td>@(Model.created_at?.ToString("yyyy-MM-dd HH:mm:ss") ?? "—")</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <table class="table table-sm table-borderless mb-0">
+                    @if (Model.Rentalorderlog != null)
+                    {
+                        var r = Model.Rentalorderlog;
+                        <tr><td class="text-muted fw-semibold" style="width: 160px;">Order ID</td><td>@r.order_id</td></tr>
+                        <tr><td class="text-muted fw-semibold">Customer ID</td><td>@r.customer_id</td></tr>
+                        <tr><td class="text-muted fw-semibold">Order Date</td><td>@(r.order_date?.ToString("yyyy-MM-dd") ?? "—")</td></tr>
+                        <tr><td class="text-muted fw-semibold">Total Amount</td><td>$@r.total_amount</td></tr>
+                    }
+                    else if (Model.Loanlog != null)
+                    {
+                        var l = Model.Loanlog;
+                        <tr><td class="text-muted fw-semibold" style="width: 160px;">Loan List ID</td><td>@l.loan_listid</td></tr>
+                        <tr><td class="text-muted fw-semibold">Rental Log ID</td><td>@l.rental_orderlogid</td></tr>
+                        <tr><td class="text-muted fw-semibold">Loan Date</td><td>@(l.loan_date?.ToString("yyyy-MM-dd") ?? "—")</td></tr>
+                        <tr><td class="text-muted fw-semibold">Due Date</td><td>@(l.due_date?.ToString("yyyy-MM-dd") ?? "—")</td></tr>
+                        <tr><td class="text-muted fw-semibold">Return Date</td><td>@(l.return_date?.ToString("yyyy-MM-dd") ?? "Not returned")</td></tr>
+                    }
+                    else if (Model.Returnlog != null)
+                    {
+                        var ret = Model.Returnlog;
+                        <tr><td class="text-muted fw-semibold" style="width: 160px;">Return Request ID</td><td>@ret.return_requestid</td></tr>
+                        <tr><td class="text-muted fw-semibold">Rental Log ID</td><td>@ret.rental_orderlogid</td></tr>
+                        <tr><td class="text-muted fw-semibold">Customer ID</td><td>@(ret.customer_id ?? "—")</td></tr>
+                        <tr><td class="text-muted fw-semibold">Request Date</td><td>@(ret.request_date?.ToString("yyyy-MM-dd") ?? "—")</td></tr>
+                        <tr><td class="text-muted fw-semibold">Completion Date</td><td>@(ret.completion_date?.ToString("yyyy-MM-dd") ?? "Pending")</td></tr>
+                    }
+                    else if (Model.Clearancelog != null)
+                    {
+                        var c = Model.Clearancelog;
+                        <tr><td class="text-muted fw-semibold" style="width: 160px;">Batch ID</td><td>@c.clearance_batchid</td></tr>
+                        <tr><td class="text-muted fw-semibold">Batch Name</td><td>@(c.batch_name ?? "—")</td></tr>
+                        <tr><td class="text-muted fw-semibold">Clearance Date</td><td>@(c.clearance_date?.ToString("yyyy-MM-dd") ?? "—")</td></tr>
+                    }
+                    else if (Model.Purchaseorderlog != null)
+                    {
+                        var po = Model.Purchaseorderlog;
+                        <tr><td class="text-muted fw-semibold" style="width: 160px;">PO ID</td><td>@po.po_id</td></tr>
+                        <tr><td class="text-muted fw-semibold">Supplier ID</td><td>@po.supplier_id</td></tr>
+                        <tr><td class="text-muted fw-semibold">PO Date</td><td>@(po.po_date?.ToString("yyyy-MM-dd") ?? "—")</td></tr>
+                        <tr><td class="text-muted fw-semibold">Expected Delivery</td><td>@(po.expected_deliverydate?.ToString("yyyy-MM-dd") ?? "—")</td></tr>
+                        <tr><td class="text-muted fw-semibold">Total Amount</td><td>$@po.total_amount</td></tr>
+                    }
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     ADDITIONAL DETAILS (JSON)
+     ============================================================ -->
+@if (hasJson)
+{
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 border-0">
+            <h6 class="fw-bold mb-0"><i class="bi bi-box-seam me-2" style="color: var(--bs-primary);"></i>Additional Details</h6>
+        </div>
+        <div class="card-body">
+
+            @{
+                var topLevelFields = root.EnumerateObject()
+                    .Where(p => p.Value.ValueKind != JsonValueKind.Array && p.Value.ValueKind != JsonValueKind.Object)
+                    .ToList();
+            }
+            @if (topLevelFields.Any())
+            {
+                <div class="row mb-3">
+                    @foreach (var field in topLevelFields)
+                    {
+                        var label = System.Text.RegularExpressions.Regex.Replace(field.Name, "([a-z])([A-Z])", "$1 $2");
+                        label = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(label);
+                        <div class="col-md-3 mb-2">
+                            <div class="border rounded p-2 h-100">
+                                <small class="text-muted d-block">@label</small>
+                                <span class="fw-semibold">
+                                    @if (field.Value.ValueKind == JsonValueKind.Null)
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                    else
+                                    {
+                                        @field.Value.ToString()
+                                    }
+                                </span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            @{
+                var arrayFields = root.EnumerateObject()
+                    .Where(p => p.Value.ValueKind == JsonValueKind.Array)
+                    .ToList();
+            }
+
+            @foreach (var arrayField in arrayFields)
+            {
+                if (arrayField.Value.GetArrayLength() == 0) continue;
+
+                var items = arrayField.Value.EnumerateArray().ToList();
+                var firstItem = items.First();
+                var isObjectArray = firstItem.ValueKind == JsonValueKind.Object;
+
+                var arrayLabel = System.Text.RegularExpressions.Regex.Replace(arrayField.Name, "([a-z])([A-Z])", "$1 $2");
+                arrayLabel = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(arrayLabel);
+
+                <h6 class="fw-semibold mb-2 mt-2">
+                    @arrayLabel
+                    <span class="badge bg-primary ms-1">@items.Count</span>
+                </h6>
+
+                if (isObjectArray)
+                {
+                    var columns = firstItem.EnumerateObject().Select(p => p.Name).ToList();
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    @foreach (var col in columns)
+                                    {
+                                        var colLabel = System.Text.RegularExpressions.Regex.Replace(col, "([a-z])([A-Z])", "$1 $2");
+                                        colLabel = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(colLabel);
+                                        <th class="small">@colLabel</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in items)
+                                {
+                                    <tr>
+                                        @foreach (var col in columns)
+                                        {
+                                            <td class="small">
+                                                @if (item.TryGetProperty(col, out var val))
+                                                {
+                                                    if (val.ValueKind == JsonValueKind.Null)
+                                                    {
+                                                        <span class="text-muted">—</span>
+                                                    }
+                                                    else if (val.ValueKind == JsonValueKind.Number)
+                                                    {
+                                                        if (col.ToLower().Contains("price") || col.ToLower().Contains("total") || col.ToLower().Contains("amount"))
+                                                        {
+                                                            @:$@val.GetDecimal().ToString("F2")
+                                                        }
+                                                        else
+                                                        {
+                                                            @val.ToString()
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        @val.ToString()
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">—</span>
+                                                }
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var item in items)
+                        {
+                            <li class="list-group-item small">@item.ToString()</li>
+                        }
+                    </ul>
+                }
+            }
+
+            @{
+                var objectFields = root.EnumerateObject()
+                    .Where(p => p.Value.ValueKind == JsonValueKind.Object)
+                    .ToList();
+            }
+            @foreach (var objField in objectFields)
+            {
+                var objLabel = System.Text.RegularExpressions.Regex.Replace(objField.Name, "([a-z])([A-Z])", "$1 $2");
+                objLabel = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(objLabel);
+
+                <h6 class="fw-semibold mb-2 mt-3">@objLabel</h6>
+                <div class="row mb-3">
+                    @foreach (var prop in objField.Value.EnumerateObject())
+                    {
+                        var propLabel = System.Text.RegularExpressions.Regex.Replace(prop.Name, "([a-z])([A-Z])", "$1 $2");
+                        propLabel = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(propLabel);
+                        <div class="col-md-3 mb-2">
+                            <div class="border rounded p-2 h-100">
+                                <small class="text-muted d-block">@propLabel</small>
+                                <span class="fw-semibold">
+                                    @if (prop.Value.ValueKind == JsonValueKind.Null)
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                    else
+                                    {
+                                        @prop.Value.ToString()
+                                    }
+                                </span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+        </div>
+    </div>
+}
+else
+{
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <div class="text-muted small fst-italic py-3">
+                <i class="bi bi-info-circle me-1"></i>No additional details available for this log entry.
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ============================================================
+     LINKED LOAN DETAILS (only for Rental Orders)
+     ============================================================ -->
+@if (Model.Rentalorderlog != null)
+{
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 border-0">
+            <h6 class="fw-bold mb-0">
+                <i class="bi bi-box-arrow-right me-2 text-primary"></i>Loan Details
+                @if (linkedLoans.Any())
+                {
+                    <span class="badge bg-primary ms-1">@linkedLoans.Count</span>
+                }
+            </h6>
+        </div>
+        <div class="card-body">
+            @if (!linkedLoans.Any())
+            {
+                <div class="text-muted small fst-italic py-2">
+                    <i class="bi bi-info-circle me-1"></i>No loan record found for this rental order.
+                </div>
+            }
+            else
+            {
+                @foreach (var loan in linkedLoans)
+                {
+                    var loanStatusBadge = loan.LoanlogNavigation?.log_type.ToString() switch { _ => "bg-primary" };
+                    var loanStatus = "—";
+                    // Parse loan DetailsJSON for status info
+                    JsonDocument? loanJsonDoc = null;
+                    JsonElement loanRoot = default;
+                    bool hasLoanJson = false;
+                    var loanDetailsJson = loan.details_json;
+                    if (!string.IsNullOrWhiteSpace(loanDetailsJson))
+                    {
+                        try { loanJsonDoc = JsonDocument.Parse(loanDetailsJson); loanRoot = loanJsonDoc.RootElement; hasLoanJson = true; } catch { }
+                    }
+
+                    <div class="border rounded p-3 mb-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-sm table-borderless mb-0">
+                                    <tr><td class="text-muted fw-semibold" style="width: 160px;">Loan Log ID</td><td>@loan.loan_logid</td></tr>
+                                    <tr><td class="text-muted fw-semibold">Loan List ID</td><td>@loan.loan_listid</td></tr>
+                                    <tr><td class="text-muted fw-semibold">Loan Date</td><td>@(loan.loan_date?.ToString("yyyy-MM-dd") ?? "—")</td></tr>
+                                    <tr><td class="text-muted fw-semibold">Due Date</td><td>@(loan.due_date?.ToString("yyyy-MM-dd") ?? "—")</td></tr>
+                                    <tr>
+                                        <td class="text-muted fw-semibold">Return Date</td>
+                                        <td>
+                                            @if (loan.return_date != null)
+                                            {
+                                                @loan.return_date?.ToString("yyyy-MM-dd")
+                                            }
+                                            else
+                                            {
+                                                <span class="text-warning fw-semibold">Not yet returned</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                    <tr><td class="text-muted fw-semibold">Created At</td><td><small class="text-muted">@(loan.LoanlogNavigation?.created_at?.ToString("yyyy-MM-dd HH:mm") ?? "—")</small></td></tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                @if (hasLoanJson)
+                                {
+                                    // Show remarks if present
+                                    if (loanRoot.TryGetProperty("remarks", out var remarksEl) && remarksEl.ValueKind != JsonValueKind.Null)
+                                    {
+                                        <div class="border rounded p-2 mb-2">
+                                            <small class="text-muted d-block">Remarks</small>
+                                            <span class="fw-semibold">@remarksEl.ToString()</span>
+                                        </div>
+                                    }
+
+                                    // Show items table if present
+                                    if (loanRoot.TryGetProperty("items", out var loanItemsEl) && loanItemsEl.ValueKind == JsonValueKind.Array && loanItemsEl.GetArrayLength() > 0)
+                                    {
+                                        var loanItems = loanItemsEl.EnumerateArray().ToList();
+                                        var firstLoanItem = loanItems.First();
+                                        if (firstLoanItem.ValueKind == JsonValueKind.Object)
+                                        {
+                                            var loanCols = firstLoanItem.EnumerateObject().Select(p => p.Name).ToList();
+                                            <h6 class="small fw-semibold mt-2">Loaned Items <span class="badge bg-primary">@loanItems.Count</span></h6>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-bordered align-middle mb-0">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            @foreach (var col in loanCols)
+                                                            {
+                                                                var colLabel = System.Text.RegularExpressions.Regex.Replace(col, "([a-z])([A-Z])", "$1 $2");
+                                                                colLabel = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(colLabel);
+                                                                <th class="small">@colLabel</th>
+                                                            }
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var item in loanItems)
+                                                        {
+                                                            <tr>
+                                                                @foreach (var col in loanCols)
+                                                                {
+                                                                    <td class="small">
+                                                                        @if (item.TryGetProperty(col, out var v))
+                                                                        {
+                                                                            @(v.ValueKind == JsonValueKind.Null ? "—" : v.ToString())
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <span class="text-muted">—</span>
+                                                                        }
+                                                                    </td>
+                                                                }
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        }
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- ============================================================
+         LINKED RETURN DETAILS (only for Rental Orders)
+         ============================================================ -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 border-0">
+            <h6 class="fw-bold mb-0">
+                <i class="bi bi-box-arrow-in-left me-2 text-warning"></i>Return Details
+                @if (linkedReturns.Any())
+                {
+                    <span class="badge bg-warning text-dark ms-1">@linkedReturns.Count</span>
+                }
+            </h6>
+        </div>
+        <div class="card-body">
+            @if (!linkedReturns.Any())
+            {
+                <div class="alert alert-secondary py-2 mb-0">
+                    <i class="bi bi-exclamation-circle me-1"></i>
+                    <span class="fw-semibold">No return request made by customer.</span>
+                    <br />
+                    <small class="text-muted">The customer has not submitted a return request for this rental order.</small>
+                </div>
+            }
+            else
+            {
+                @foreach (var ret in linkedReturns)
+                {
+                    JsonDocument? retJsonDoc = null;
+                    JsonElement retRoot = default;
+                    bool hasRetJson = false;
+                    var retDetailsJson = ret.details_json;
+                    if (!string.IsNullOrWhiteSpace(retDetailsJson))
+                    {
+                        try { retJsonDoc = JsonDocument.Parse(retDetailsJson); retRoot = retJsonDoc.RootElement; hasRetJson = true; } catch { }
+                    }
+
+                    <div class="border rounded p-3 mb-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-sm table-borderless mb-0">
+                                    <tr><td class="text-muted fw-semibold" style="width: 160px;">Return Log ID</td><td>@ret.return_logid</td></tr>
+                                    <tr><td class="text-muted fw-semibold">Return Request ID</td><td>@ret.return_requestid</td></tr>
+                                    <tr><td class="text-muted fw-semibold">Customer ID</td><td>@(ret.customer_id ?? "—")</td></tr>
+                                    <tr><td class="text-muted fw-semibold">Request Date</td><td>@(ret.request_date?.ToString("yyyy-MM-dd") ?? "—")</td></tr>
+                                    <tr>
+                                        <td class="text-muted fw-semibold">Completion Date</td>
+                                        <td>
+                                            @if (ret.completion_date != null)
+                                            {
+                                                @ret.completion_date?.ToString("yyyy-MM-dd")
+                                            }
+                                            else
+                                            {
+                                                <span class="text-warning fw-semibold">Pending</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                    @if (!string.IsNullOrEmpty(ret.image_url))
+                                    {
+                                        <tr><td class="text-muted fw-semibold">Image</td><td><a href="@ret.image_url" target="_blank" class="text-primary">View Image</a></td></tr>
+                                    }
+                                    <tr><td class="text-muted fw-semibold">Created At</td><td><small class="text-muted">@(ret.ReturnlogNavigation?.created_at?.ToString("yyyy-MM-dd HH:mm") ?? "—")</small></td></tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                @if (hasRetJson)
+                                {
+                                    // Show remarks if present
+                                    if (retRoot.TryGetProperty("remarks", out var retRemarksEl) && retRemarksEl.ValueKind != JsonValueKind.Null)
+                                    {
+                                        <div class="border rounded p-2 mb-2">
+                                            <small class="text-muted d-block">Remarks</small>
+                                            <span class="fw-semibold">@retRemarksEl.ToString()</span>
+                                        </div>
+                                    }
+
+                                    // Show items table if present
+                                    if (retRoot.TryGetProperty("items", out var retItemsEl) && retItemsEl.ValueKind == JsonValueKind.Array && retItemsEl.GetArrayLength() > 0)
+                                    {
+                                        var retItems = retItemsEl.EnumerateArray().ToList();
+                                        var firstRetItem = retItems.First();
+                                        if (firstRetItem.ValueKind == JsonValueKind.Object)
+                                        {
+                                            var retCols = firstRetItem.EnumerateObject().Select(p => p.Name).ToList();
+                                            <h6 class="small fw-semibold mt-2">Returned Items <span class="badge bg-warning text-dark">@retItems.Count</span></h6>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-bordered align-middle mb-0">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            @foreach (var col in retCols)
+                                                            {
+                                                                var colLabel = System.Text.RegularExpressions.Regex.Replace(col, "([a-z])([A-Z])", "$1 $2");
+                                                                colLabel = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(colLabel);
+                                                                <th class="small">@colLabel</th>
+                                                            }
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var item in retItems)
+                                                        {
+                                                            <tr>
+                                                                @foreach (var col in retCols)
+                                                                {
+                                                                    <td class="small">
+                                                                        @if (item.TryGetProperty(col, out var v))
+                                                                        {
+                                                                            @(v.ValueKind == JsonValueKind.Null ? "—" : v.ToString())
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <span class="text-muted">—</span>
+                                                                        }
+                                                                    </td>
+                                                                }
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        }
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}

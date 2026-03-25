@@ -638,61 +638,182 @@ INSERT INTO AnalyticsList (AnalyticsID, TransactionLogID) VALUES
 (1, 3),
 (1, 4);
 
+-- PURCHASE ORDERS (IDs 14, 15, 16) are auto-inserted by
+-- StubPurchaseOrderService on first page load. Not seeded here.
+-- ============================================================
 
--- Test account for authentication/authorization testing
-BEGIN;
 
-WITH inserted_users AS (
-    INSERT INTO "User" (userrole, name, email, passwordhash, phonecountry, phonenumber)
-    VALUES
-        ('CUSTOMER', 'Alice Tan', 'alice@test.com', 'Test1234', 65, '91234567'),
-        ('CUSTOMER', 'Bob Lim',   'bob@test.com',   'Test1234', 65, '92345678'),
-        ('STAFF',    'Carol Ng',  'carol@test.com',  'Test1234', 65, '93456789'),
-        ('ADMIN',    'Dave Ong',  'dave@test.com',   'Test1234', 65, '94567890')
-    RETURNING userid, email, userrole
-),
+-- ============================================================
+-- STEP 1: Update existing DetailsJSON for IDs 1-5
+-- ============================================================
 
-inserted_customers AS (
-    INSERT INTO Customer (userid, address, customertype)
-    SELECT userid,
-           CASE email
-               WHEN 'alice@test.com' THEN '10 Bedok North Ave 1, Singapore 460010'
-               WHEN 'bob@test.com'   THEN '22 Tampines St 45, Singapore 520022'
-           END,
-           1
-    FROM inserted_users
-    WHERE email IN ('alice@test.com', 'bob@test.com')
-    RETURNING customerid, userid
-),
+-- ID 1: PurchaseOrderLog — richer JSON with line items
+UPDATE PurchaseOrderLog SET DetailsJSON = '{"status":"COMPLETED","supplierName":"Camera Supply Co","lineItems":[{"productName":"Canon EOS R5","qty":5,"unitPrice":1100.00,"lineTotal":5500.00}]}'
+WHERE PurchaseOrderLogId = 1;
 
-inserted_staff AS (
-    INSERT INTO Staff (userid, department)
-    SELECT userid, 'Operations'
-    FROM inserted_users
-    WHERE email = 'carol@test.com'
-    RETURNING staffid, userid
-)
+-- ID 2: RentalOrderLog — proper items array with product details
+UPDATE RentalOrderLog SET DetailsJSON = '{"deliveryType":"EXPRESS","status":"COMPLETED","items":[{"productName":"Canon EOS R5","quantity":2,"unitPrice":150.00,"rentalStart":"2026-03-05","rentalEnd":"2026-03-12"}]}'
+WHERE RentalOrderLogId = 2;
 
-SELECT
-    u.email,
-    u.userid,
-    u.userrole,
-    c.customerid,
-    s.staffid
-FROM inserted_users u
-LEFT JOIN inserted_customers c ON c.userid = u.userid
-LEFT JOIN inserted_staff     s ON s.userid = u.userid;
+-- Also fix the TotalAmount to match: 2 x $150 = $300 ✓ (already correct)
 
-COMMIT;
+-- ID 3: LoanLog — items array with serial numbers
+UPDATE LoanLog SET DetailsJSON = '{"remarks":"Customer self-collected at Orchard outlet","items":[{"loanItemId":1,"serialNumber":"R5-0001","productName":"Canon EOS R5","remarks":null},{"loanItemId":2,"serialNumber":"R5-0002","productName":"Canon EOS R5","remarks":null}]}'
+WHERE LoanLogId = 3;
 
--- Customer query test
-SELECT c.customerid, u.email, u.name
-FROM customer c
-JOIN "User" u ON u.userid = c.userid
-WHERE u.email = 'alice@test.com';
+-- ID 4: ReturnLog — items array with return status per item
+UPDATE ReturnLog SET DetailsJSON = '{"remarks":"Customer returned on time. All items in good condition.","items":[{"returnItemId":1,"serialNumber":"R5-0001","productName":"Canon EOS R5","status":"RETURN_TO_INVENTORY","completionDate":"2026-03-11","image":null},{"returnItemId":2,"serialNumber":"R5-0002","productName":"Canon EOS R5","status":"CLEANING","completionDate":"2026-03-11","image":null}]}'
+WHERE ReturnLogId = 4;
 
--- Staff query test
-SELECT u.userid, u.email, u.userrole, s.staffid, s.department
-FROM "User" u
-JOIN staff s ON s.userid = u.userid
-WHERE u.email = 'carol@test.com';
+-- ID 5: ClearanceLog — items array with clearance pricing
+UPDATE ClearanceLog SET DetailsJSON = '{"batchStatus":"COMPLETED","totalItemsCleared":3,"items":[{"clearanceItemId":1,"serialNumber":"R5-OLD-001","productName":"Canon EOS R5","reason":"End of life","originalPrice":150.00,"clearancePrice":60.00},{"clearanceItemId":2,"serialNumber":"A7IV-OLD-001","productName":"Sony A7 IV","reason":"Superseded model","originalPrice":130.00,"clearancePrice":50.00},{"clearanceItemId":3,"serialNumber":"TRI-OLD-001","productName":"Manfrotto Befree Tripod","reason":"Cosmetic damage","originalPrice":25.00,"clearancePrice":8.00}]}'
+WHERE ClearanceLogId = 5;
+
+
+-- ============================================================
+-- STEP 2: Insert new parent rows needed for FK references
+-- ============================================================
+
+-- NEW LoanList rows (for Orders 2 and 3 and 4)
+INSERT INTO LoanList (LoanListId, OrderId, CustomerId, LoanDate, DueDate, ReturnDate, Status, Remarks)
+OVERRIDING SYSTEM VALUE
+VALUES 
+(2, 2, 2, '2026-03-08', '2026-03-15', '2026-03-14', 'RETURNED', 'Order 2 loan — returned early'),
+(3, 3, 3, '2026-03-12', '2026-03-19', NULL, 'ON_LOAN', 'Order 3 loan — still on loan'),
+(4, 4, 4, '2026-03-01', '2026-03-08', NULL, 'ON_LOAN', 'Order 4 loan — overdue');
+
+-- NEW ReturnRequest row (only for Order 2 — Orders 3 and 4 have no return)
+INSERT INTO ReturnRequest (ReturnRequestId, OrderId, CustomerId, Status, RequestDate, CompletionDate)
+OVERRIDING SYSTEM VALUE
+VALUES 
+(2, 2, 2, 'COMPLETED', '2026-03-13', '2026-03-14');
+
+-- NEW ClearanceBatch row
+INSERT INTO ClearanceBatch (ClearanceBatchId, BatchName, CreatedDate, ClearanceDate, Status)
+OVERRIDING SYSTEM VALUE
+VALUES 
+(2, 'Water Damage Emergency', '2026-03-18', '2026-03-20', 'SCHEDULED');
+
+
+-- ============================================================
+-- STEP 3: Insert new TransactionLog entries (IDs 6-13)
+-- These will get auto-assigned IDs 6, 7, 8, 9, 10, 11, 12, 13
+-- ============================================================
+
+INSERT INTO TransactionLog (LogType, CreatedAt) VALUES
+('RENTAL_ORDER', '2026-03-07 14:00:00'),  -- ID 6: Rental Order for Order 2 (Benjamin)
+('LOAN',         '2026-03-08 09:00:00'),  -- ID 7: Loan for Order 2
+('RETURN',       '2026-03-13 10:00:00'),  -- ID 8: Return for Order 2
+
+('RENTAL_ORDER', '2026-03-11 10:00:00'),  -- ID 9: Rental Order for Order 3 (Charlotte)
+('LOAN',         '2026-03-12 08:30:00'),  -- ID 10: Loan for Order 3 (no return)
+
+('RENTAL_ORDER', '2026-02-28 16:00:00'),  -- ID 11: Rental Order for Order 4 (Daniel)
+('LOAN',         '2026-03-01 09:00:00'),  -- ID 12: Loan for Order 4 (overdue, no return)
+
+('CLEARANCE',    '2026-03-20 11:00:00');  -- ID 13: Clearance Batch 2
+
+
+-- ============================================================
+-- STEP 4: Insert child log rows
+-- ============================================================
+
+-- -------------------------------------------------------
+-- SCENARIO 2: Order 2, Customer 2 (Benjamin Lee)
+-- Rented: 1x Sony A7 IV + 1x Sony FE 24-70mm GM
+-- Full lifecycle: Rental → Loan → Return (COMPLETED)
+-- -------------------------------------------------------
+
+-- ID 6: RentalOrderLog
+INSERT INTO RentalOrderLog (RentalOrderLogId, OrderId, CustomerId, OrderDate, TotalAmount, DeliveryType, Status, DetailsJSON)
+OVERRIDING SYSTEM VALUE
+VALUES (6, 2, 2, '2026-03-07', 220.00, 'STANDARD', 'COMPLETED',
+'{"deliveryType":"STANDARD","status":"COMPLETED","items":[{"productName":"Sony A7 IV","quantity":1,"unitPrice":130.00,"rentalStart":"2026-03-08","rentalEnd":"2026-03-15"},{"productName":"Sony FE 24-70mm f2.8 GM","quantity":1,"unitPrice":90.00,"rentalStart":"2026-03-08","rentalEnd":"2026-03-15"}]}');
+
+-- ID 7: LoanLog (linked to RentalOrderLogId = 6)
+INSERT INTO LoanLog (LoanLogId, LoanListId, RentalOrderLogId, Status, LoanDate, ReturnDate, DueDate, DetailsJSON)
+OVERRIDING SYSTEM VALUE
+VALUES (7, 2, 6, 'RETURNED', '2026-03-08', '2026-03-14', '2026-03-15',
+'{"remarks":"Delivered to customer address at Marina Bay","items":[{"loanItemId":3,"serialNumber":"A7IV-0001","productName":"Sony A7 IV","remarks":null},{"loanItemId":4,"serialNumber":"2470GM-0001","productName":"Sony FE 24-70mm f2.8 GM","remarks":"Lens cap included"}]}');
+
+-- ID 8: ReturnLog (linked to RentalOrderLogId = 6)
+INSERT INTO ReturnLog (ReturnLogId, ReturnRequestId, RentalOrderLogId, CustomerId, Status, RequestDate, CompletionDate, ImageURL, DetailsJSON)
+OVERRIDING SYSTEM VALUE
+VALUES (8, 2, 6, '2', 'COMPLETED', '2026-03-13', '2026-03-14', 'https://storage.prorental.com/returns/ret_8.jpg',
+'{"remarks":"Customer returned 1 day early. Minor smudge on lens cleaned.","items":[{"returnItemId":3,"serialNumber":"A7IV-0001","productName":"Sony A7 IV","status":"RETURN_TO_INVENTORY","completionDate":"2026-03-14","image":null},{"returnItemId":4,"serialNumber":"2470GM-0001","productName":"Sony FE 24-70mm f2.8 GM","status":"CLEANING","completionDate":"2026-03-14","image":"https://storage.prorental.com/returns/lens_smudge.jpg"}]}');
+
+
+-- -------------------------------------------------------
+-- SCENARIO 3: Order 3, Customer 3 (Charlotte Ng)
+-- Rented: 1x Canon EOS R5 + 1x Manfrotto Tripod
+-- Partial lifecycle: Rental → Loan (ON_LOAN, no return yet)
+-- -------------------------------------------------------
+
+-- ID 9: RentalOrderLog
+INSERT INTO RentalOrderLog (RentalOrderLogId, OrderId, CustomerId, OrderDate, TotalAmount, DeliveryType, Status, DetailsJSON)
+OVERRIDING SYSTEM VALUE
+VALUES (9, 3, 3, '2026-03-11', 175.00, 'EXPRESS', 'CONFIRMED',
+'{"deliveryType":"EXPRESS","status":"CONFIRMED","items":[{"productName":"Canon EOS R5","quantity":1,"unitPrice":150.00,"rentalStart":"2026-03-12","rentalEnd":"2026-03-19"},{"productName":"Manfrotto Befree Tripod","quantity":1,"unitPrice":25.00,"rentalStart":"2026-03-12","rentalEnd":"2026-03-19"}]}');
+
+-- ID 10: LoanLog (linked to RentalOrderLogId = 9, still ONGOING)
+INSERT INTO LoanLog (LoanLogId, LoanListId, RentalOrderLogId, Status, LoanDate, ReturnDate, DueDate, DetailsJSON)
+OVERRIDING SYSTEM VALUE
+VALUES (10, 3, 9, 'ONGOING', '2026-03-12', NULL, '2026-03-19',
+'{"remarks":"Express delivery to Tampines address","items":[{"loanItemId":5,"serialNumber":"R5-0003","productName":"Canon EOS R5","remarks":"With battery grip"},{"loanItemId":6,"serialNumber":"TRI-0001","productName":"Manfrotto Befree Tripod","remarks":null}]}');
+
+-- NO ReturnLog for this order — customer has not returned yet
+
+
+-- -------------------------------------------------------
+-- SCENARIO 4: Order 4, Customer 4 (Daniel Wong)
+-- Rented: 1x DJI RS 3 Gimbal + 1x Rode VideoMic Pro+
+-- Partial lifecycle: Rental → Loan (OVERDUE, no return)
+-- -------------------------------------------------------
+
+-- ID 11: RentalOrderLog
+INSERT INTO RentalOrderLog (RentalOrderLogId, OrderId, CustomerId, OrderDate, TotalAmount, DeliveryType, Status, DetailsJSON)
+OVERRIDING SYSTEM VALUE
+VALUES (11, 4, 4, '2026-02-28', 80.00, 'STANDARD', 'CONFIRMED',
+'{"deliveryType":"STANDARD","status":"CONFIRMED","items":[{"productName":"DJI RS 3 Gimbal Stabilizer","quantity":1,"unitPrice":60.00,"rentalStart":"2026-03-01","rentalEnd":"2026-03-08"},{"productName":"Rode VideoMic Pro+","quantity":1,"unitPrice":20.00,"rentalStart":"2026-03-01","rentalEnd":"2026-03-08"}]}');
+
+-- ID 12: LoanLog (linked to RentalOrderLogId = 11, OVERDUE)
+INSERT INTO LoanLog (LoanLogId, LoanListId, RentalOrderLogId, Status, LoanDate, ReturnDate, DueDate, DetailsJSON)
+OVERRIDING SYSTEM VALUE
+VALUES (12, 4, 11, 'OVERDUE', '2026-03-01', NULL, '2026-03-08',
+'{"remarks":"Self-collection at Jurong outlet. Customer notified of overdue status.","items":[{"loanItemId":7,"serialNumber":"RS3-0001","productName":"DJI RS 3 Gimbal Stabilizer","remarks":"Firmware updated before handover"},{"loanItemId":8,"serialNumber":"RVP-0001","productName":"Rode VideoMic Pro+","remarks":"Includes windshield"}]}');
+
+-- NO ReturnLog for this order — overdue, customer has not returned
+
+
+-- -------------------------------------------------------
+-- SCENARIO 5: Clearance Batch 2 — Water Damage Emergency
+-- -------------------------------------------------------
+
+-- ID 13: ClearanceLog
+INSERT INTO ClearanceLog (ClearanceLogId, ClearanceBatchId, BatchName, ClearanceDate, Status, DetailsJSON)
+OVERRIDING SYSTEM VALUE
+VALUES (13, 2, 'Water Damage Emergency', '2026-03-20', 'ONGOING',
+'{"batchStatus":"ONGOING","totalItemsCleared":2,"items":[{"clearanceItemId":4,"serialNumber":"70200RF-0003","productName":"Canon RF 70-200mm f2.8 L","reason":"Water damage from warehouse leak","originalPrice":110.00,"clearancePrice":0.00},{"clearanceItemId":5,"serialNumber":"RS3-0004","productName":"DJI RS 3 Gimbal Stabilizer","reason":"Water damage — non-functional","originalPrice":60.00,"clearancePrice":0.00}]}');
+
+
+-- ============================================================
+-- VERIFICATION QUERY (uncomment to check)
+-- ============================================================
+-- SELECT 
+--     t.transactionlogid AS id,
+--     t.logtype AS type,
+--     t.createdat,
+--     r.orderid AS rental_order,
+--     l.loanlistid AS loan,
+--     l.rentalorderlogid AS loan_links_to_rental,
+--     ret.returnrequestid AS return_req,
+--     ret.rentalorderlogid AS return_links_to_rental,
+--     c.batchname AS clearance,
+--     p.poid AS po
+-- FROM transactionlog t
+-- LEFT JOIN rentalorderlog r ON r.rentalorderlogid = t.transactionlogid
+-- LEFT JOIN loanlog l ON l.loanlogid = t.transactionlogid
+-- LEFT JOIN returnlog ret ON ret.returnlogid = t.transactionlogid
+-- LEFT JOIN clearancelog c ON c.clearancelogid = t.transactionlogid
+-- LEFT JOIN purchaseorderlog p ON p.purchaseorderlogid = t.transactionlogid
+-- ORDER BY t.transactionlogid;

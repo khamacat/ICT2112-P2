@@ -300,6 +300,12 @@ public partial class AppDbContext
                   .HasColumnName("status").HasColumnType("transaction_status_enum");
         });
 
+            modelBuilder.Entity<Transactionlog>(entity =>
+            {
+            entity.Property("Logtype").HasField("_logtype").UsePropertyAccessMode(PropertyAccessMode.Field)
+                  .HasColumnName("logtype").HasColumnType("log_type_enum");
+            });
+
         modelBuilder.Entity<Transport>(entity =>
         {
             entity.Property("TransportMode").HasField("_transportMode").UsePropertyAccessMode(PropertyAccessMode.Field)
