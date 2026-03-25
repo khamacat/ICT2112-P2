@@ -97,7 +97,21 @@
                             <td><span class="badge @logBadge">@log.LogType</span></td>
                             <td>@log.CreatedAt.AddHours(8).ToString("yyyy-MM-dd HH:mm")</td>
                             <td>@(log.SupplierName ?? "—")</td>
-                            <td>@(log.ProductName  ?? "—")</td>
+                            <td>
+                                @if (log.ProductNames.Any())
+                                {
+                                    <div class="d-flex flex-column align-items-start gap-1">
+                                        @foreach (var p in log.ProductNames)
+                                        {
+                                            <span class="badge bg-light text-dark border fw-normal" style="font-size:0.75rem;">@p</span>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span>—</span>
+                                }
+                            </td>
                             <td class="text-muted small">@log.Summary</td>
                         </tr>
                     }
@@ -148,7 +162,21 @@
                                         <td>@log.LogType</td>
                                         <td>@log.CreatedAt.AddHours(8).ToString("yyyy-MM-dd")</td>
                                         <td>@(log.SupplierName ?? "—")</td>
-                                        <td>@(log.ProductName  ?? "—")</td>
+                                        <td>
+                                            @if (log.ProductNames.Any())
+                                            {
+                                                <div class="d-flex flex-column align-items-start gap-1">
+                                                    @foreach (var p in log.ProductNames)
+                                                    {
+                                                        <span class="badge bg-light text-dark border fw-normal" style="font-size:0.75rem;">@p</span>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span>—</span>
+                                            }
+                                        </td>
                                         <td>@log.Summary</td>
                                     </tr>
                                 }

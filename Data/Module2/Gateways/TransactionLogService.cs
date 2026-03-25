@@ -43,14 +43,18 @@ public class TransactionLogService : ITransactionLogService
 
         return results.Select(r =>
         {
-            var (supplier, product) = ExtractFromJson(r.DetailsJson);
+            var (supplier, products) = ExtractFromJson(r.DetailsJson);
+            var groupedProducts = products
+                .GroupBy(p => p)
+                .Select(g => g.Count() > 1 ? $"{g.Key} x{g.Count()}" : g.Key)
+                .ToList();
             return new TransactionLogDto
             {
                 LogID        = r.Id,
                 LogType      = r.LogType ?? "UNKNOWN",
                 CreatedAt    = r.CreatedAt ?? DateTime.UtcNow,
                 SupplierName = supplier,
-                ProductName  = product,
+                ProductNames = groupedProducts,
                 Summary      = $"{r.LogType ?? "LOG"} #{r.Id}"
             };
         }).ToList();
@@ -62,29 +66,58 @@ public class TransactionLogService : ITransactionLogService
     /// Falls back to "items" if "products" not found.
     /// Returns null for each if key absent or JSON malformed.
     /// </summary>
-    private static (string? supplier, string? product) ExtractFromJson(string? json)
+    private static (string? supplier, List<string> products) ExtractFromJson(string? json)
     {
-        if (string.IsNullOrWhiteSpace(json)) return (null, null);
+        if (string.IsNullOrWhiteSpace(json)) return (null, new());
         try
         {
-            using var doc  = JsonDocument.Parse(json);
-            var root       = doc.RootElement;
-            string? supplier = null, product = null;
+            using var doc    = JsonDocument.Parse(json);
+            var root         = doc.RootElement;
+            string? supplier = null;
+            var products     = new List<string>();
 
-            if (root.TryGetProperty("suppliers", out var sArr)
+            // "supplierName": "Acme Corp"
+            if (root.TryGetProperty("supplierName", out var sName) && sName.ValueKind == JsonValueKind.String)
+                supplier = sName.GetString();
+            // "suppliers": ["Acme Corp", ...]
+            else if (root.TryGetProperty("suppliers", out var sArr)
                 && sArr.ValueKind == JsonValueKind.Array && sArr.GetArrayLength() > 0)
                 supplier = sArr[0].GetString();
 
-            if (root.TryGetProperty("products", out var pArr)
-                && pArr.ValueKind == JsonValueKind.Array && pArr.GetArrayLength() > 0)
-                product = pArr[0].GetString();
+            // "lineItems": [{"productName": "Canon R5", ...}, ...]
+            if (root.TryGetProperty("lineItems", out var lineItems)
+                && lineItems.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in lineItems.EnumerateArray())
+                    if (item.TryGetProperty("productName", out var p) && p.ValueKind == JsonValueKind.String)
+                        products.Add(p.GetString()!);
+            }
+            // "items": [{"productName": "Canon R5", ...}, ...] or ["Canon R5", ...]
             else if (root.TryGetProperty("items", out var iArr)
-                && iArr.ValueKind == JsonValueKind.Array && iArr.GetArrayLength() > 0)
-                product = iArr[0].GetString();
+                && iArr.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in iArr.EnumerateArray())
+                {
+                    if (item.ValueKind == JsonValueKind.Object
+                        && item.TryGetProperty("productName", out var p)
+                        && p.ValueKind == JsonValueKind.String)
+                        products.Add(p.GetString()!);
+                    else if (item.ValueKind == JsonValueKind.String)
+                        products.Add(item.GetString()!);
+                }
+            }
+            // "products": ["Canon R5", ...]
+            else if (root.TryGetProperty("products", out var pArr)
+                && pArr.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in pArr.EnumerateArray())
+                    if (item.ValueKind == JsonValueKind.String)
+                        products.Add(item.GetString()!);
+            }
 
-            return (supplier, product);
+            return (supplier, products);
         }
-        catch { return (null, null); }
+        catch { return (null, new()); }
     }
 }
 

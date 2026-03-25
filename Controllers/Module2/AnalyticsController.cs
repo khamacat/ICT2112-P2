@@ -163,7 +163,7 @@ public class AnalyticsController : Controller
                 $"{log.LogType}," +
                 $"{log.CreatedAt.AddHours(8):yyyy-MM-dd HH:mm}," +
                 $"\"{log.SupplierName ?? "-"}\"," +
-                $"\"{log.ProductName  ?? "-"}\"," +
+                $"\"{(log.ProductNames.Any() ? string.Join("; ", log.ProductNames) : "-")}\"," +
                 $"\"{log.Summary}\"");
 
         var csvBytes = Encoding.UTF8.GetBytes(sb.ToString());
