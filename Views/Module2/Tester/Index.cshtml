@@ -1,0 +1,76 @@
+@{
+    ViewData["Title"] = "Inventory Service Facade Tester";
+}
+
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="fw-bold">Inventory Service Facade Tester</h1>
+        <p class="text-muted">Bypass the UI and directly invoke the Facade coordination methods.</p>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success fs-5 shadow-sm">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger fs-5 shadow-sm">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="row g-4 justify-content-center">
+        
+        <div class="col-md-6">
+            <div class="card shadow border-0 h-100">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0"><i class="bi bi-cart-check"></i> Test: ProcessLoan</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small">Simulates Module 1 completing a checkout. The Facade will do Pre-Flight checks to ensure stock exists before generating the Loan and Bridge tables.</p>
+                    
+                    <form asp-action="TestProcessLoan" method="post">
+                        <div class="row g-3 mb-3">
+                            <div class="col-6">
+                                <label class="form-label fw-bold">Order ID (Fake)</label>
+                                <input type="number" name="orderId" class="form-control" value="5" required />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold">Customer ID</label>
+                                <input type="number" name="customerId" class="form-control" value="1" required />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold">Product ID to Rent</label>
+                                <input type="number" name="productId" class="form-control" value="1" required />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label fw-bold">Quantity Needed</label>
+                                <input type="number" name="quantity" class="form-control" value="1" required />
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Execute ProcessLoan()</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow border-0 h-100">
+                <div class="card-header bg-warning text-dark py-3">
+                    <h5 class="mb-0"><i class="bi bi-arrow-return-left"></i> Test: TriggerReturnProcess</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small">Simulates Staff receiving a physical return. The Facade will close the Loan, trigger the Return team's pipeline, and set physical items to MAINTENANCE.</p>
+                    
+                    <form asp-action="TestTriggerReturn" method="post">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Order ID (Must have an active loan)</label>
+                            <input type="number" name="orderId" class="form-control" value="4" required />
+                            <div class="form-text">Seed data already has Order 4 as ON_LOAN. Use Order 4 to test!</div>
+                        </div>
+                        <button type="submit" class="btn btn-warning w-100 fw-bold">Execute TriggerReturnProcess()</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

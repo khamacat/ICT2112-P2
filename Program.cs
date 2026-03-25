@@ -203,7 +203,6 @@ builder.Services.AddScoped<ClearanceItemControl>();
 builder.Services.AddScoped<iClearanceItemControl>(sp => sp.GetRequiredService<ClearanceItemControl>());
 builder.Services.AddScoped<iClearanceItemQuery>(sp => sp.GetRequiredService<ClearanceItemControl>());
 
-
 //return
 builder.Services.AddScoped<ReturnOrderControl>();
 builder.Services.AddScoped<iReturnOrderQuery>(sp => sp.GetRequiredService<ReturnOrderControl>());
@@ -217,6 +216,23 @@ builder.Services.AddScoped<iReturnItemCRUD>(sp => sp.GetRequiredService<ReturnIt
 builder.Services.AddScoped<DamageReportControl>();
 builder.Services.AddScoped<iDamageReportQuery>(sp => sp.GetRequiredService<DamageReportControl>());
 builder.Services.AddScoped<iDamageReportCRUD>(sp => sp.GetRequiredService<DamageReportControl>());
+
+//loan
+builder.Services.AddScoped<LoanItemControl>();
+builder.Services.AddScoped<ILoanItemCRUD>(sp => sp.GetRequiredService<LoanItemControl>());
+builder.Services.AddScoped<ILoanItemQuery>(sp => sp.GetRequiredService<LoanItemControl>());
+
+builder.Services.AddScoped<LoanListControl>();
+builder.Services.AddScoped<ILoanActions>(sp => sp.GetRequiredService<LoanListControl>());
+builder.Services.AddScoped<ILoanValidation>(sp => sp.GetRequiredService<LoanListControl>());
+builder.Services.AddScoped<ILoanListQuery>(sp => sp.GetRequiredService<LoanListControl>());
+builder.Services.AddScoped<ILoanListCRUD>(sp => sp.GetRequiredService<LoanListControl>());
+
+//inventory services
+builder.Services.AddScoped<InventoryService>();
+builder.Services.AddScoped<IInventoryQueryFacade>(sp => sp.GetRequiredService<InventoryService>());
+builder.Services.AddScoped<IResupplyService>(sp => sp.GetRequiredService<InventoryService>());
+builder.Services.AddScoped<IInventoryService>(sp => sp.GetRequiredService<InventoryService>());
 
 // Presentation/Controllers
 

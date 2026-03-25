@@ -1,0 +1,65 @@
+@model ProRental.Domain.Entities.Loanitem
+
+@{
+    ViewData["Title"] = $"Loan Bridge #{Model.GetLoanItemId()}";
+    var parentList = ViewBag.ParentList as ProRental.Domain.Entities.Loanlist;
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Inventory Assignment <span class="text-muted">#@Model.GetLoanItemId()</span></h2>
+                <a asp-action="Details" asp-route-id="@Model.GetLoanListId()" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Loan
+                </a>
+            </div>
+
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success shadow-sm">@TempData["SuccessMessage"]</div>
+            }
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h5 class="card-title text-primary mb-4"><i class="bi bi-link-45deg"></i> Link Details</h5>
+                    
+                    <div class="row mb-4">
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase">Parent Loan List</label>
+                            <p class="fs-5 mb-0 fw-bold">#@Model.GetLoanListId()</p>
+                            @if(parentList != null)
+                            {
+                                <small class="text-muted">Order ID: @parentList.GetOrderId()</small>
+                            }
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase">Physical Inventory ID</label>
+                            <p class="fs-5 mb-0 fw-bold">#@Model.GetInventoryItemId()</p>
+                            <a asp-controller="StaffInventory" asp-action="ShowProductDetails" asp-route-inventoryItemId="@Model.GetInventoryItemId()" class="btn btn-sm btn-link px-0">
+                                View in Warehouse <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <form asp-action="UpdateItemRemarks" method="post" class="mt-4">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="loanItemId" value="@Model.GetLoanItemId()" />
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Item Inspection Remarks</label>
+                            <textarea name="remarks" class="form-control" rows="4" placeholder="Record condition notes, scratches, or missing accessories specific to this physical item before handoff...">@Model.GetRemarks()</textarea>
+                            <div class="form-text">These remarks are specific to Inventory Item #@Model.GetInventoryItemId() for this rental instance.</div>
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary px-4">Update Item Notes</button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
