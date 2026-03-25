@@ -70,18 +70,6 @@ public class InventoryAlertsController : Controller
         return View("~/Views/Module2/Inventory/Alerts.cshtml", alerts);
     }
 
-    [HttpGet("DisplayAlertsByStaff/{staffId:int}")]
-    public IActionResult DisplayAlertsByStaff(int staffId)
-    {
-        var allAlerts = _alertControl.GetAlertsByStaff(staffId);
-        var activeAlerts = allAlerts?
-            .Where(a => a.GetAlertStatus() == AlertStatus.OPEN || a.GetAlertStatus() == AlertStatus.ACKNOWLEDGED)
-            .ToList() ?? new List<Alert>();
-        
-        ViewData["Filter"] = $"Active Alerts for Staff #{staffId}";
-        return View("~/Views/Module2/Inventory/Alerts.cshtml", activeAlerts);
-    }
-
     [HttpGet("DisplayAlertHistory")]
     public IActionResult DisplayAlertHistory()
     {
@@ -100,32 +88,10 @@ public class InventoryAlertsController : Controller
     public IActionResult DisplayAlert(int alertId)
     {
         // GetAlertById has been removed from the interface
-        // Use GetAlertsByProduct or GetAlertsByStaff instead
-        TempData["Message"] = "Use DisplayAlertsByProduct or DisplayAlertsByStaff to view alerts.";
+        // Use DisplayAlertsByProduct instead
+        TempData["Message"] = "Use DisplayAlertsByProduct to view alerts.";
         return RedirectToAction(nameof(DisplayAlerts));
     }
-
-    [HttpPost("SendAlertToStaff/{alertId:int}")]
-    [ValidateAntiForgeryToken]
-    public IActionResult SendAlertToStaff(int alertId, int staffId)
-    {
-        if (staffId <= 0)
-        {
-            TempData["Message"] = "Invalid staff ID.";
-            return RedirectToAction(nameof(DisplayAlerts));
-        }
-
-        if (_alertControl.SendAlertToStaff(alertId, staffId))
-        {
-            TempData["Message"] = $"Alert #{alertId} assigned to Staff #{staffId}.";
-        }
-        else
-        {
-            TempData["Message"] = "Alert not found or could not be assigned.";
-        }
-        return RedirectToAction(nameof(DisplayAlerts));
-    }
-    
 
     [HttpPost("AcknowledgeAlert/{alertId:int}")]
     [ValidateAntiForgeryToken]
