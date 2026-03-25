@@ -12,11 +12,14 @@ namespace ProRental.Domain.Module2.P22.Controls;
 public class ReplenishmentRequestControl
 {
     private readonly IReplenishmentRequestMapper _mapper;
-    // private readonly IResupplyService _resupplyService;
+    private readonly IResupplyService _resupplyService;
 
-    public ReplenishmentRequestControl(IReplenishmentRequestMapper mapper)
+    public ReplenishmentRequestControl(
+        IReplenishmentRequestMapper mapper,
+        IResupplyService resupplyService)
     {
         _mapper = mapper;
+        _resupplyService = resupplyService;
     }
 
     // Create a new replenishment request in DRAFT status
@@ -220,6 +223,23 @@ public class ReplenishmentRequestControl
         if (request == null)
         {
             return false;
+        }
+
+        foreach (var lineItem in request.Lineitems)
+        {
+            var productId = lineItem.GetProductId();
+            var quantity = lineItem.GetQuantityRequest();
+
+            if (!productId.HasValue || productId.Value <= 0 || !quantity.HasValue || quantity.Value <= 0)
+            {
+                return false;
+            }
+
+            var resupplied = _resupplyService.AddToProduct(productId.Value, quantity.Value);
+            if (!resupplied)
+            {
+                return false;
+            }
         }
 
         if (!request.MarkComplete(staffId, DateTime.UtcNow))
