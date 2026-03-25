@@ -93,7 +93,20 @@
     var isCompleted = request.Status == "COMPLETED" || request.Status == "Completed";
 }
 
-@if (isDraftRequest)
+
+@if (isCancelled)
+{
+    <button class="btn btn-secondary btn-sm" disabled>
+        <i class="bi bi-lock me-1"></i>Cancelled
+    </button>
+}
+else if (isCompleted)
+{
+    <button class="btn btn-secondary btn-sm" disabled>
+        <i class="bi bi-lock me-1"></i>Completed
+    </button>
+}
+else
 {
     <div class="d-flex justify-content-center gap-2">
         <!-- View Button -->
@@ -112,24 +125,6 @@
             </button>
         </form>
     </div>
-}
-else if (isCancelled)
-{
-    <button class="btn btn-secondary btn-sm" disabled>
-        <i class="bi bi-lock me-1"></i>Cancelled
-    </button>
-}
-else if (isCompleted)
-{
-    <button class="btn btn-secondary btn-sm" disabled>
-        <i class="bi bi-lock me-1"></i>Completed
-    </button>
-}
-else
-{
-    <button class="btn btn-secondary btn-sm" disabled>
-        <i class="bi bi-lock me-1"></i>Locked
-    </button>
 }
                                             </td>
                                             
@@ -225,13 +220,7 @@ else
 else if (po.Status == "APPROVED")
 {
     <div class="d-flex justify-content-center gap-2">
-        <form asp-controller="PurchaseOrderPage" asp-action="CompletePO" method="post">
-            <input type="hidden" name="poId" value="@po.PoId" />
-            <button type="submit" class="btn btn-primary btn-sm">
-                <i class="bi bi-flag me-1"></i>Complete
-            </button>
-        </form>
-
+        
         <form asp-controller="PurchaseOrderPage" asp-action="CancelPO" method="post">
             <input type="hidden" name="poId" value="@po.PoId" />
             <button type="submit" class="btn btn-danger btn-sm">
