@@ -11,4 +11,6 @@ public interface IProductCRUD
 	bool CheckProductConflicts(Product product);
 
 	bool AddToProduct(int productId, int quantity);
+
+	bool SetActiveQuantity(int productId, int quantity);
 }

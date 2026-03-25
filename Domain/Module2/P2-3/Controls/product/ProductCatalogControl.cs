@@ -276,4 +276,25 @@ public int GetThresholdQuantityForProduct(int productId)
     return (int)Math.Ceiling(totalQuantity * thresholdPercentage);
 }
 
+public bool SetActiveQuantity(int productId, int quantity)
+{
+    if (quantity < 0) return false;
+
+    var product = _productMapper.FindById(productId);
+    if (product == null) return false;
+
+    var detail = product.GetProductdetail();
+    if (detail == null) return false;
+
+    detail.UpdateTotalQuantity(quantity);
+
+    if (quantity == 0)
+        product.UpdateStatus(ProductStatus.UNAVAILABLE);
+    else
+        product.UpdateStatus(ProductStatus.AVAILABLE);
+
+    _productMapper.Update(product);
+    return true;
+}
+
 }
