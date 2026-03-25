@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace ProRental.Domain.Entities;
 
-public partial class Transport
+public abstract partial class Transport
 {
     private int _transportId;
     private int TransportId { get => _transportId; set => _transportId = value; }
@@ -16,14 +16,4 @@ public partial class Transport
 
     private bool? _isAvailable;
     private bool? IsAvailable { get => _isAvailable; set => _isAvailable = value; }
-
-    public virtual Plane? Plane { get; private set; }
-
-    public virtual ICollection<RouteLeg> RouteLegs { get; private set; } = new List<RouteLeg>();
-
-    public virtual Ship? Ship { get; private set; }
-
-    public virtual Train? Train { get; private set; }
-
-    public virtual Truck? Truck { get; private set; }
 }

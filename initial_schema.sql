@@ -176,41 +176,55 @@ CREATE TABLE train (
         REFERENCES transport(transport_id) ON DELETE CASCADE
 );
 
+-- DeliveryRoute & RouteLeg -- START
 
--- ============================================================
--- Route & Route Legs
--- ============================================================
 CREATE TABLE delivery_route (
-    route_id            INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    origin_address      VARCHAR(255)               NOT NULL,
-    destination_address VARCHAR(255)               NOT NULL,
-    total_distance_km   DOUBLE PRECISION,
-    is_valid            BOOLEAN                    DEFAULT TRUE,
-    origin_hub_id       INT,
-    destination_hub_id  INT,
-    CONSTRAINT fk_route_origin_hub      FOREIGN KEY (origin_hub_id)
-        REFERENCES transportation_hub(hub_id),
-    CONSTRAINT fk_route_destination_hub FOREIGN KEY (destination_hub_id)
-        REFERENCES transportation_hub(hub_id)
+    route_id              INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    origin_address        VARCHAR(255)     NOT NULL,
+    destination_address   VARCHAR(255)     NOT NULL,
+    total_distance_km     DOUBLE PRECISION NOT NULL DEFAULT 0,
+    is_valid              BOOLEAN          NOT NULL DEFAULT TRUE,
+
+    CONSTRAINT chk_delivery_route_total_distance
+        CHECK (total_distance_km >= 0)
 );
 
 CREATE TABLE route_leg (
-    leg_id         INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    route_id       INT            NOT NULL,
-    sequence       INT,
-    transport_mode transport_mode,
-    start_point    VARCHAR(255),
-    end_point      VARCHAR(255),
-    distance_km    DOUBLE PRECISION,
-    is_first_mile  BOOLEAN        DEFAULT FALSE,
-    is_last_mile   BOOLEAN        DEFAULT FALSE,
-    transport_id   INT,
-    CONSTRAINT fk_route_leg_route     FOREIGN KEY (route_id)
-        REFERENCES delivery_route(route_id),
-    CONSTRAINT fk_route_leg_transport FOREIGN KEY (transport_id)
-        REFERENCES transport(transport_id)
+    leg_id                INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    route_id              INT              NOT NULL,
+    sequence              INT              NOT NULL,
+    transport_mode        transport_mode   NOT NULL,
+    start_point           VARCHAR(255)     NOT NULL,
+    end_point             VARCHAR(255)     NOT NULL,
+    distance_km           DOUBLE PRECISION NOT NULL DEFAULT 0,
+    is_first_mile         BOOLEAN          NOT NULL DEFAULT FALSE,
+    is_main_transport     BOOLEAN          NOT NULL DEFAULT FALSE,
+    is_last_mile          BOOLEAN          NOT NULL DEFAULT FALSE,
+
+    CONSTRAINT fk_route_leg_route
+        FOREIGN KEY (route_id)
+        REFERENCES delivery_route(route_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT chk_route_leg_distance
+        CHECK (distance_km >= 0),
+
+    CONSTRAINT chk_route_leg_sequence_positive
+        CHECK (sequence > 0),
+
+    CONSTRAINT chk_route_leg_exactly_one_role
+        CHECK (
+            (CASE WHEN is_first_mile THEN 1 ELSE 0 END) +
+            (CASE WHEN is_main_transport THEN 1 ELSE 0 END) +
+            (CASE WHEN is_last_mile THEN 1 ELSE 0 END)
+            = 1
+        ),
+
+    CONSTRAINT uq_route_leg_route_sequence
+        UNIQUE (route_id, sequence)
 );
 
+-- DeliveryRoute & RouteLeg -- END
 
 -- ============================================================
 -- Carbon Results & Leg Carbon

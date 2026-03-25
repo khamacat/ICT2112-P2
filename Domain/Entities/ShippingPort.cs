@@ -3,11 +3,8 @@ using System.Collections.Generic;
 
 namespace ProRental.Domain.Entities;
 
-public partial class ShippingPort
+public partial class ShippingPort : TransportationHub
 {
-    private int _hubId;
-    private int HubId { get => _hubId; set => _hubId = value; }
-
     private string _portCode = null!;
     private string PortCode { get => _portCode; set => _portCode = value; }
 
@@ -19,6 +16,4 @@ public partial class ShippingPort
 
     private int? _vesselSize;
     private int? VesselSize { get => _vesselSize; set => _vesselSize = value; }
-
-    public virtual TransportationHub Hub { get; private set; } = null!;
 }

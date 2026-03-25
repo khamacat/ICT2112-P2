@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace ProRental.Domain.Entities;
 
-public partial class TransportationHub
+public abstract partial class TransportationHub
 {
     private int _hubId;
     private int HubId { get => _hubId; set => _hubId = value; }
@@ -26,15 +26,5 @@ public partial class TransportationHub
     private string? _operationTime;
     private string? OperationTime { get => _operationTime; set => _operationTime = value; }
 
-    public virtual Airport? Airport { get; private set; }
-
     public virtual ICollection<DeliveryBatch> DeliveryBatches { get; private set; } = new List<DeliveryBatch>();
-
-    public virtual ICollection<DeliveryRoute> DeliveryRouteDestinationHubs { get; private set; } = new List<DeliveryRoute>();
-
-    public virtual ICollection<DeliveryRoute> DeliveryRouteOriginHubs { get; private set; } = new List<DeliveryRoute>();
-
-    public virtual ShippingPort? ShippingPort { get; private set; }
-
-    public virtual Warehouse? Warehouse { get; private set; }
 }

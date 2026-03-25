@@ -3,11 +3,8 @@ using System.Collections.Generic;
 
 namespace ProRental.Domain.Entities;
 
-public partial class Airport
+public partial class Airport : TransportationHub
 {
-    private int _hubId;
-    private int HubId { get => _hubId; set => _hubId = value; }
-
     private string _airportCode = null!;
     private string AirportCode { get => _airportCode; set => _airportCode = value; }
 
@@ -19,6 +16,4 @@ public partial class Airport
 
     private int? _aircraftSize;
     private int? AircraftSize { get => _aircraftSize; set => _aircraftSize = value; }
-
-    public virtual TransportationHub Hub { get; private set; } = null!;
 }

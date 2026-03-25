@@ -24,6 +24,20 @@
     var annotationCodeGenerator = services.GetRequiredService<IAnnotationCodeGenerator>();
     var code = services.GetRequiredService<ICSharpHelper>();
 
+    // --- TPT Inheritance: TransportationHub hierarchy ---
+    var hubSubtypes = new HashSet<string> { "Airport", "ShippingPort", "Warehouse" };
+    var isHubBase = EntityType.Name == "TransportationHub";
+    var isHubSubtype = hubSubtypes.Contains(EntityType.Name);
+
+    // --- TPT Inheritance: Transport hierarchy ---
+    var transportSubtypes = new HashSet<string> { "Truck", "Ship", "Plane", "Train" };
+    var isTransportBase = EntityType.Name == "Transport";
+    var isTransportSubtype = transportSubtypes.Contains(EntityType.Name);
+
+    // --- Combined inheritance helpers ---
+    var isAbstractBase = isHubBase || isTransportBase;
+    var isSubtype = isHubSubtype || isTransportSubtype;
+
     var usings = new List<string>
     {
         "System",
@@ -64,12 +78,22 @@ namespace <#= NamespaceHint #>;
         }
     }
 #>
-public partial class <#= EntityType.Name #>
+public <#= isAbstractBase ? "abstract " : "" #>partial class <#= EntityType.Name #><#= isHubSubtype ? " : TransportationHub" : isTransportSubtype ? " : Transport" : "" #>
 {
 <#
     var firstProperty = true;
     foreach (var property in EntityType.GetProperties().OrderBy(p => p.GetColumnOrder() ?? -1))
     {
+        // TPT Inheritance: skip inherited PK on subtypes
+        if (isHubSubtype && property.Name == "HubId")
+        {
+            continue;
+        }
+        if (isTransportSubtype && property.Name == "TransportId")
+        {
+            continue;
+        }
+
         if (!firstProperty)
         {
             WriteLine("");
@@ -111,6 +135,24 @@ public partial class <#= EntityType.Name #>
 
     foreach (var navigation in EntityType.GetNavigations())
     {
+        // TPT Inheritance: skip nav properties that are part of inheritance hierarchies
+        if (isHubBase && hubSubtypes.Contains(navigation.Name))
+        {
+            continue;
+        }
+        if (isHubSubtype && navigation.Name == "Hub")
+        {
+            continue;
+        }
+        if (isTransportBase && transportSubtypes.Contains(navigation.Name))
+        {
+            continue;
+        }
+        if (isTransportSubtype && navigation.Name == "Transport")
+        {
+            continue;
+        }
+
         WriteLine("");
 
         if (Options.UseDataAnnotations)

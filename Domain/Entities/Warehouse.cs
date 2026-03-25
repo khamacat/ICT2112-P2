@@ -3,11 +3,8 @@ using System.Collections.Generic;
 
 namespace ProRental.Domain.Entities;
 
-public partial class Warehouse
+public partial class Warehouse : TransportationHub
 {
-    private int _hubId;
-    private int HubId { get => _hubId; set => _hubId = value; }
-
     private string _warehouseCode = null!;
     private string WarehouseCode { get => _warehouseCode; set => _warehouseCode = value; }
 
@@ -25,6 +22,4 @@ public partial class Warehouse
 
     private double? _securitySystemEmissionRate;
     private double? SecuritySystemEmissionRate { get => _securitySystemEmissionRate; set => _securitySystemEmissionRate = value; }
-
-    public virtual TransportationHub Hub { get; private set; } = null!;
 }

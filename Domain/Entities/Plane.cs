@@ -3,11 +3,8 @@ using System.Collections.Generic;
 
 namespace ProRental.Domain.Entities;
 
-public partial class Plane
+public partial class Plane : Transport
 {
-    private int _transportId;
-    private int TransportId { get => _transportId; set => _transportId = value; }
-
     private int _planeId;
     private int PlaneId { get => _planeId; set => _planeId = value; }
 
@@ -16,6 +13,4 @@ public partial class Plane
 
     private string? _planeCallsign;
     private string? PlaneCallsign { get => _planeCallsign; set => _planeCallsign = value; }
-
-    public virtual Transport Transport { get; private set; } = null!;
 }

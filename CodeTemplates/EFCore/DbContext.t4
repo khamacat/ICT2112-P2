@@ -25,6 +25,15 @@
     var annotationCodeGenerator = services.GetRequiredService<IAnnotationCodeGenerator>();
     var code = services.GetRequiredService<ICSharpHelper>();
 
+    // --- TPT Inheritance: TransportationHub hierarchy ---
+    var hubSubtypes = new HashSet<string> { "Airport", "ShippingPort", "Warehouse" };
+    // --- TPT Inheritance: Transport hierarchy ---
+    var transportSubtypes = new HashSet<string> { "Truck", "Ship", "Plane", "Train" };
+    // --- Combined ---
+    var allSubtypes = new HashSet<string>(hubSubtypes);
+    foreach (var s in transportSubtypes) allSubtypes.Add(s);
+    var allBases = new HashSet<string> { "TransportationHub", "Transport" };
+
     var usings = new List<string>
     {
         "System",
@@ -67,6 +76,12 @@ public partial class <#= Options.ContextName #> : DbContext
 <#
     foreach (var entityType in Model.GetEntityTypes().Where(e => !e.IsSimpleManyToManyJoinEntityType()))
     {
+        // TPT Inheritance: skip DbSet for hub subtypes (accessed via TransportationHubs.OfType<T>())
+        // Note: transport subtypes keep their DbSets for compatibility with existing mapper code
+        if (hubSubtypes.Contains(entityType.Name))
+        {
+            continue;
+        }
 #>
     public virtual DbSet<<#= entityType.Name #>> <#= entityType.GetDbSetName() #> { get; set; }
 
@@ -127,7 +142,8 @@ public partial class <#= Options.ContextName #> : DbContext
         {
 <#
         var key = entityType.FindPrimaryKey();
-        if (key != null)
+        // TPT Inheritance: skip HasKey for subtypes (key inherited from base)
+        if (key != null && !allSubtypes.Contains(entityType.Name))
         {
             var keyFluentApiCalls = key.GetFluentApiCalls(annotationCodeGenerator);
             if (keyFluentApiCalls != null
@@ -160,6 +176,19 @@ public partial class <#= Options.ContextName #> : DbContext
             anyEntityTypeConfiguration = true;
         }
 
+        // TPT Inheritance: add UseTptMappingStrategy for base classes
+        if (allBases.Contains(entityType.Name))
+        {
+            if (anyEntityTypeConfiguration)
+            {
+                WriteLine("");
+            }
+#>
+            entity.UseTptMappingStrategy();
+<#
+            anyEntityTypeConfiguration = true;
+        }
+
         foreach (var index in entityType.GetIndexes()
             .Where(i => !(Options.UseDataAnnotations && i.IsHandledByDataAnnotations(annotationCodeGenerator))))
         {
@@ -183,6 +212,16 @@ public partial class <#= Options.ContextName #> : DbContext
         var firstProperty = true;
         foreach (var property in entityType.GetProperties())
         {
+            // TPT Inheritance: skip inherited PK property mapping for subtypes
+            if (hubSubtypes.Contains(entityType.Name) && property.Name == "HubId")
+            {
+                continue;
+            }
+            if (transportSubtypes.Contains(entityType.Name) && property.Name == "TransportId")
+            {
+                continue;
+            }
+
             var fieldName = "_" + char.ToLowerInvariant(property.Name[0]) + property.Name.Substring(1);
             var propertyFluentApiCalls = property.GetFluentApiCalls(annotationCodeGenerator)
                 ?.FilterChain(c => !(Options.UseDataAnnotations && c.IsHandledByDataAnnotations)
@@ -207,6 +246,18 @@ public partial class <#= Options.ContextName #> : DbContext
 
         foreach (var foreignKey in entityType.GetForeignKeys())
         {
+            // TPT Inheritance: skip FK to base class for subtypes (relationship is now inheritance)
+            if (hubSubtypes.Contains(entityType.Name)
+                && foreignKey.PrincipalEntityType.Name == "TransportationHub")
+            {
+                continue;
+            }
+            if (transportSubtypes.Contains(entityType.Name)
+                && foreignKey.PrincipalEntityType.Name == "Transport")
+            {
+                continue;
+            }
+
             var foreignKeyFluentApiCalls = foreignKey.GetFluentApiCalls(annotationCodeGenerator, useStrings: true)
                 ?.FilterChain(c => !(Options.UseDataAnnotations && c.IsHandledByDataAnnotations));
             if (foreignKeyFluentApiCalls == null)

@@ -3,11 +3,8 @@ using System.Collections.Generic;
 
 namespace ProRental.Domain.Entities;
 
-public partial class Ship
+public partial class Ship : Transport
 {
-    private int _transportId;
-    private int TransportId { get => _transportId; set => _transportId = value; }
-
     private int _shipId;
     private int ShipId { get => _shipId; set => _shipId = value; }
 
@@ -19,6 +16,4 @@ public partial class Ship
 
     private string? _maxVesselSize;
     private string? MaxVesselSize { get => _maxVesselSize; set => _maxVesselSize = value; }
-
-    public virtual Transport Transport { get; private set; } = null!;
 }
