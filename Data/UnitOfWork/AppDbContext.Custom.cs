@@ -129,8 +129,12 @@ public partial class AppDbContext
 
         modelBuilder.Entity<Lineitem>(entity =>
         {
-            entity.Property("reason").HasField("_reason").UsePropertyAccessMode(PropertyAccessMode.Field)
-                  .HasColumnName("reason").HasColumnType("reason_code_enum");
+            // Map CLR property directly to avoid shadow-property conflicts
+            entity.Property(e => e.Reason)
+                  .HasField("_reasoncode")
+                  .UsePropertyAccessMode(PropertyAccessMode.Field)
+                  .HasColumnName("reasoncode")
+                  .HasColumnType("reason_code_enum");
         });
 
         modelBuilder.Entity<Loanlist>(entity =>
@@ -204,7 +208,7 @@ public partial class AppDbContext
 
         modelBuilder.Entity<Replenishmentrequest>(entity =>
         {
-            entity.Property("status").HasField("_status").UsePropertyAccessMode(PropertyAccessMode.Field)
+            entity.Property("Status").HasField("_status").UsePropertyAccessMode(PropertyAccessMode.Field)
                   .HasColumnName("status").HasColumnType("replenishment_status_enum");
         });
 

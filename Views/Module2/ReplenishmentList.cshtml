@@ -1,0 +1,106 @@
+@model IEnumerable<ProRental.Domain.Entities.Replenishmentrequest>
+@{
+    ViewData["Title"] = "Replenishment Requests";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-box-seam me-2"></i>Replenishment Requests</h1>
+    <a asp-action="Create" class="btn btn-success">
+        <i class="bi bi-plus-circle me-1"></i>New Request
+    </a>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Requested By</th>
+                    <th>Remarks</th>
+                    <th>Status</th>
+                    <th>Created At</th>
+                    <th>Completed At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.GetRequestId()</td>
+                            <td>@item.GetRequestedBy()</td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(item.GetRemarks()))
+                                {
+                                    @item.GetRemarks()
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>
+                                @switch (item.Status)
+                                {
+                                    case ProRental.Domain.Enums.ReplenishmentStatus.DRAFT:
+                                        <span class="badge bg-secondary">Draft</span>
+                                        break;
+                                    case ProRental.Domain.Enums.ReplenishmentStatus.SUBMITTED:
+                                        <span class="badge bg-primary">Submitted</span>
+                                        break;
+                                    case ProRental.Domain.Enums.ReplenishmentStatus.COMPLETED:
+                                        <span class="badge bg-success">Completed</span>
+                                        break;
+                                    case ProRental.Domain.Enums.ReplenishmentStatus.CANCELLED:
+                                        <span class="badge bg-danger">Cancelled</span>
+                                        break;
+                                }
+                            </td>
+                            <td>@item.GetCreatedAt()?.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@item.GetCompletedAt()?.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>
+                                <a asp-action="Detail" asp-route-id="@item.GetRequestId()" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                @if (item.CanEdit())
+                                {
+                                    <a asp-action="Form" asp-route-id="@item.GetRequestId()" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox me-2"></i>No replenishment requests found.
+                            <a asp-action="Create">Create one now</a>.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

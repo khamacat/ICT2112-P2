@@ -36,6 +36,7 @@ bld/
 
 # Local development settings (contains credentials)
 appsettings.Development.json
+global.json
 
 # NuGet Packages
 *.nupkg

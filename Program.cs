@@ -156,8 +156,11 @@ builder.Services.AddScoped<IPOLineItemMapper, POLineItemMapper>();
 builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderControl>();
 builder.Services.AddScoped<IPurchaseOrderService, PurchaseOrderControl>();
 // Data source
+builder.Services.AddScoped<ProRental.Data.Module2.Interfaces.IReplenishmentRequestMapper, ProRental.Data.Module2.Gateways.ReplenishmentRequestMapper>();
+builder.Services.AddScoped<ProRental.Interfaces.Module2.IReplenishmentRequestQuery, ProRental.Data.Module2.Gateways.ReplenishmentRequestMapper>();
 
 // Domain
+builder.Services.AddScoped<ProRental.Domain.Module2.P22.Controls.ReplenishmentRequestControl>();
 
 // Presentation/Controllers
 
