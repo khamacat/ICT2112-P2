@@ -208,6 +208,15 @@ public class ReturnProcessingController : Controller
         }
     }
 
+    // ── Clear damage report when POC switches to "No damage" ─────────────
+    [HttpPost("ClearDamageReport/{itemId:int}")]
+    [ValidateAntiForgeryToken]
+    public IActionResult ClearDamageReport(int itemId)
+    {
+        _damageReportCRUD.DeleteDamageReport(itemId);
+        return Ok();
+    }
+
     // ── Submit Phase 1: Damage Inspection ────────────────────────────────
     // hasDamage: true → REPAIRING, false → SERVICING (skips repair phase)
     [HttpPost("SubmitDamageInspection/{itemId:int}")]

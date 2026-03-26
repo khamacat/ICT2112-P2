@@ -13,8 +13,6 @@ public class DamageReportControl : iDamageReportCRUD, iDamageReportQuery
         _damageReportMapper = damageReportMapper ?? throw new ArgumentNullException(nameof(damageReportMapper));
     }
 
-    // -- iDamageReportCRUD ------------------------------------------------
-
     public bool SubmitDamageReport(int returnItemId, Damagereport damageReport)
     {
         if (!ValidateDamageReport(damageReport)) return false;
@@ -40,12 +38,20 @@ public class DamageReportControl : iDamageReportCRUD, iDamageReportQuery
         catch { return false; }
     }
 
-    // -- Control-level method (from diagram) ------------------------------
+    public bool DeleteDamageReport(int returnItemId)
+    {
+        try
+        {
+            var existing = _damageReportMapper.FindByReturnItemId(returnItemId);
+            if (existing is null) return true; // already gone
+            _damageReportMapper.Delete(existing);
+            return true;
+        }
+        catch { return false; }
+    }
 
     public bool SaveDamageReport(int returnItemId, Damagereport damageReport)
         => SubmitDamageReport(returnItemId, damageReport);
-
-    // -- iDamageReportQuery -----------------------------------------------
 
     public Damagereport? GetDamageReportByReturnItem(int returnItemId)
     {
@@ -178,8 +184,6 @@ public class DamageReportControl : iDamageReportCRUD, iDamageReportQuery
 
         return System.Text.Encoding.UTF8.GetBytes(html);
     }
-
-    // -- Control-level methods (from diagram) -----------------------------
 
     public bool ValidateDamageReport(Damagereport damageReport)
     {

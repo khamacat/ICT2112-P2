@@ -24,8 +24,6 @@ public class ReturnItemControl : iReturnItemCRUD, iReturnItemQuery
         _productQuery           = productQuery           ?? throw new ArgumentNullException(nameof(productQuery));
     }
 
-    // -- iReturnItemQuery -------------------------------------------------
-
     public Returnitem? GetReturnItem(int returnItemId)
     {
         return _returnItemMapper.FindById(returnItemId);
@@ -36,8 +34,6 @@ public class ReturnItemControl : iReturnItemCRUD, iReturnItemQuery
         return _returnItemMapper.FindByReturnRequest(returnRequestId)?.ToList()
                ?? new List<Returnitem>();
     }
-
-    // -- iReturnItemCRUD --------------------------------------------------
 
     public bool CreateReturnItem(Returnitem returnItem)
     {
@@ -59,35 +55,6 @@ public class ReturnItemControl : iReturnItemCRUD, iReturnItemQuery
             _returnItemMapper.Update(fresh);
             return true;
         }
-        catch { return false; }
-    }
-
-    // -- Control-level methods (from diagram) -----------------------------
-
-    public bool UpdateReturnItemStatus(int returnItemId, string status)
-    {
-        if (!Enum.TryParse<ReturnItemStatus>(status, out var parsedStatus)) return false;
-        var fresh = _returnItemMapper.FindById(returnItemId);
-        if (fresh is null) return false;
-        fresh.SetStatus(parsedStatus);
-        try { _returnItemMapper.Update(fresh); return true; }
-        catch { return false; }
-    }
-
-    public bool AcknowledgeReturn(int returnItemId, int staffId)
-    {
-        var fresh = _returnItemMapper.FindById(returnItemId);
-        if (fresh is null) return false;
-        fresh.ConductInspection();
-        try { _returnItemMapper.Update(fresh); return true; }
-        catch { return false; }
-    }
-
-    public bool RejectReturn(int returnItemId, int staffId, string reason)
-    {
-        var fresh = _returnItemMapper.FindById(returnItemId);
-        if (fresh is null || string.IsNullOrWhiteSpace(reason)) return false;
-        try { _returnItemMapper.Update(fresh); return true; }
         catch { return false; }
     }
 

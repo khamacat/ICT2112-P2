@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using ProRental.Domain.Entities;
 using ProRental.Domain.Enums;
 using ProRental.Interfaces.Data;
@@ -22,8 +21,6 @@ public class ReturnOrderControl : iReturnOrderCRUD, iReturnOrderQuery, iReturnPr
         _returnLogEnricher = returnLogEnricher ?? throw new ArgumentNullException(nameof(returnLogEnricher));
     }
 
-    // -- iReturnOrderQuery ------------------------------------------------
-
     public ReturnRequestStatus GetReturnStatus(int returnRequestId)
     {
         var request = _returnRequestMapper.FindById(returnRequestId);
@@ -45,8 +42,6 @@ public class ReturnOrderControl : iReturnOrderCRUD, iReturnOrderQuery, iReturnPr
         return _returnRequestMapper.FindById(returnRequestId);
     }
 
-    // -- iReturnOrderCRUD -------------------------------------------------
-
     public bool CreateReturnRequest(Returnrequest returnRequest)
     {
         if (!ValidateReturnRequest(returnRequest)) return false;
@@ -67,35 +62,6 @@ public class ReturnOrderControl : iReturnOrderCRUD, iReturnOrderQuery, iReturnPr
         catch { return false; }
     }
 
-    // -- Control-level methods (from diagram) -----------------------------
-
-    public bool UpdateReturnStatus(int returnRequestId, string status)
-    {
-        var fresh = _returnRequestMapper.FindById(returnRequestId);
-        if (fresh is null) return false;
-        if (!Enum.TryParse<ReturnRequestStatus>(status, out var parsedStatus)) return false;
-        fresh.SetStatus(parsedStatus);
-        try { _returnRequestMapper.Update(fresh); return true; }
-        catch { return false; }
-    }
-
-    public bool AcknowledgeReturn(int returnRequestId, int staffId)
-    {
-        var fresh = _returnRequestMapper.FindById(returnRequestId);
-        if (fresh is null) return false;
-        try { _returnRequestMapper.Update(fresh); return true; }
-        catch { return false; }
-    }
-
-    public bool RejectReturn(int returnRequestId, int staffId, string reason)
-    {
-        var fresh = _returnRequestMapper.FindById(returnRequestId);
-        if (fresh is null || string.IsNullOrWhiteSpace(reason)) return false;
-        fresh.SetStatus(ReturnRequestStatus.COMPLETED);
-        try { _returnRequestMapper.Update(fresh); return true; }
-        catch { return false; }
-    }
-
     public bool ValidateReturnRequest(Returnrequest returnRequest)
     {
         if (returnRequest is null) return false;
@@ -105,8 +71,6 @@ public class ReturnOrderControl : iReturnOrderCRUD, iReturnOrderQuery, iReturnPr
         if (_returnRequestMapper.FindByOrderId(returnRequest.GetOrderId()) != null) return false;
         return true;
     }
-
-    // -- iReturnProcess ---------------------------------------------------
 
     /// <summary>
     /// Creates ReturnRequest, then creates one ReturnItem per inventoryItemId

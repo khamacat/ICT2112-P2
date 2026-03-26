@@ -622,8 +622,19 @@ function onDamageChange(isDamaged) {
     if (fn) fn.style.display = isDamaged ? 'none'  : 'block';
     localStorage.setItem('damageChoice_@Model.GetReturnItemId()', isDamaged ? 'yes' : 'no');
     if (isDamaged) {
-        // Use the hidden trigger button instead of JS API
         document.getElementById('modalTriggerBtn').click();
+    } else {
+        // Delete damage report from DB if switching to No
+        var token = document.querySelector('input[name="__RequestVerificationToken"]');
+        if (token) {
+            fetch('@Url.Action("ClearDamageReport", "ReturnProcessing", new { itemId = Model.GetReturnItemId() })', {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': token.value }
+            }).then(function() {
+                // Reload to reflect cleared damage report
+                window.location.reload();
+            });
+        }
     }
 }
 
