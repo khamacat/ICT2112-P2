@@ -11,15 +11,18 @@ namespace ProRental.Domain.Control
         private readonly IPurchaseOrderMapper _purchaseOrderMapper;
         private readonly IPOLineItemMapper _poLineItemMapper;
         private readonly Interfaces.Module2.IReplenishmentRequestQuery _replenishmentRequestQuery;
+        private readonly ProRental.Interfaces.Module2.ISupplier _supplierService;
 
         public PurchaseOrderControl(
             IPurchaseOrderMapper purchaseOrderMapper,
             IPOLineItemMapper poLineItemMapper,
-            Interfaces.Module2.IReplenishmentRequestQuery replenishmentRequestQuery)
+            Interfaces.Module2.IReplenishmentRequestQuery replenishmentRequestQuery,
+            ProRental.Interfaces.Module2.ISupplier supplierService)
         {
             _purchaseOrderMapper = purchaseOrderMapper;
             _poLineItemMapper = poLineItemMapper;
             _replenishmentRequestQuery = replenishmentRequestQuery;
+            _supplierService = supplierService;
         }
 
         public PurchaseOrderPageViewModel GetPurchaseOrderPageData(int reqId)
@@ -40,7 +43,16 @@ namespace ProRental.Domain.Control
             }
 
             vm.Items = _poLineItemMapper.GetRequestItemsWithProductName(reqId);
-            vm.Suppliers = _purchaseOrderMapper.GetVerifiedSuppliers();
+            vm.Suppliers = _supplierService.getVerifiedSuppliers()
+                .Select(s => new PurchaseOrderSupplierViewModel
+                {
+                    SupplierId = s.SupplierID,
+                    SupplierName = s.Name,
+                    Details = s.Details,
+                    CreditPeriod = s.CreditPeriod,
+                    AvgTurnaroundTime = s.AvgTurnaroundTime,
+                    IsVerified = s.IsVerified
+                }).ToList();
 
             return vm;
         }
@@ -71,8 +83,8 @@ namespace ProRental.Domain.Control
             _purchaseOrderMapper.UpdatePurchaseOrderTotalAmount(poId, totalAmount);
             _purchaseOrderMapper.UpdateReplenishmentRequestStatusToSubmitted(reqId);
 
-            var supplierName = _purchaseOrderMapper.GetVerifiedSuppliers()
-                .FirstOrDefault(s => s.SupplierId == supplierId)?.SupplierName ?? $"Supplier #{supplierId}";
+            var supplierName = _supplierService.getVerifiedSuppliers()
+                .FirstOrDefault(s => s.SupplierID == supplierId)?.Name ?? $"Supplier #{supplierId}";
 
             var lineItems = _poLineItemMapper.GetPOLineItemsWithDetails(poId);
 

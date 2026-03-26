@@ -11,7 +11,6 @@ namespace ProRental.Data.Interfaces
         void UpdateExpectedDeliveryDate(int poId, DateOnly expectedDeliveryDate);
         List<PurchaseOrderRequestListItemViewModel> GetAllRequests();
         List<PurchaseOrderListItemViewModel> GetAllPurchaseOrders();
-        List<PurchaseOrderSupplierViewModel> GetVerifiedSuppliers();
         void UpdatePurchaseOrderTotalAmount(int poId, decimal totalAmount);
         void UpdateReplenishmentRequestStatusToSubmitted(int reqId);
         int InsertTransactionLogForPurchaseOrder();

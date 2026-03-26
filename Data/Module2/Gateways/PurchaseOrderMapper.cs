@@ -119,23 +119,6 @@ namespace ProRental.Data.Gateways
                 .ToList();
         }
 
-        public List<PurchaseOrderSupplierViewModel> GetVerifiedSuppliers()
-        {
-            return _context.Suppliers
-                .Where(s => EF.Property<bool?>(s, "Isverified") == true)
-                .OrderBy(s => EF.Property<string?>(s, "Name"))
-                .Select(s => new PurchaseOrderSupplierViewModel
-                {
-                    SupplierId = EF.Property<int>(s, "Supplierid"),
-                    SupplierName = EF.Property<string?>(s, "Name") ?? "",
-                    Details = EF.Property<string?>(s, "Details") ?? "",
-                    CreditPeriod = EF.Property<int?>(s, "Creditperiod"),
-                    AvgTurnaroundTime = EF.Property<double?>(s, "Avgturnaroundtime"),
-                    IsVerified = EF.Property<bool?>(s, "Isverified") ?? false
-                })
-                .ToList();
-        }
-
         public void UpdatePurchaseOrderTotalAmount(int poId, decimal totalAmount)
         {
             var po = FindById(poId) ?? throw new InvalidOperationException($"Purchase order #{poId} was not found.");
@@ -250,7 +233,7 @@ namespace ProRental.Data.Gateways
                 UPDATE purchaseorder
                 SET status = 'APPROVED'::po_status_enum
                 WHERE poid = {poId}
-                AND status = 'CONFIRMED'::po_status_enum;");
+                AND status IN ('CONFIRMED'::po_status_enum, 'SUBMITTED'::po_status_enum);");
         }
 
         public void CompletePurchaseOrder(int poId)

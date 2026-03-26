@@ -55,6 +55,7 @@ namespace ProRental.Data.Module2.Gateways
             return _context.Replenishmentrequests
                 .Include(r => r.Lineitems)
                     .ThenInclude(li => li.Product)
+                    .ThenInclude(p => p.Productdetail)
                 .FirstOrDefault(r => EF.Property<int>(r, "Requestid") == id);
         }
 
@@ -64,6 +65,7 @@ namespace ProRental.Data.Module2.Gateways
             return _context.Replenishmentrequests
                 .Include(r => r.Lineitems)
                     .ThenInclude(li => li.Product)
+                    .ThenInclude(p => p.Productdetail)
                 .OrderByDescending(r => EF.Property<DateTime?>(r, "Createdat"))
                 .ToList();
         }
@@ -73,6 +75,7 @@ namespace ProRental.Data.Module2.Gateways
         {
             return _context.Lineitems
                 .Include(li => li.Product)
+                .ThenInclude(p => p.Productdetail)
                 .Where(li => EF.Property<int?>(li, "Requestid") == requestId)
                 .OrderBy(li => EF.Property<int>(li, "Lineitemid"))
                 .ToList();

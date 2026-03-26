@@ -43,7 +43,7 @@ public class ReliabilityRatingMapper : IReliabilityRatingMapper
     public Reliabilityrating FindBySupplierID(int supplierID)
     {
         return context.Reliabilityratings
-            .Where(r => r.supplierid == supplierID)
+            .AsEnumerable().Where(r => r.supplierid == supplierID)
             .OrderByDescending(r => r.calculatedat)
             .FirstOrDefault()!;
     }
