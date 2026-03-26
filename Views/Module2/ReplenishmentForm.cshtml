@@ -164,9 +164,9 @@
                                      <tr>
                                          <td>
                                               <strong>Product #@item.GetProductId()</strong>
-                                            @if (item.Product != null)
+                                            @if (item.Product?.GetProductdetail() != null)
                                             {
-                                                <br /><small class="text-muted">@item.Product</small>
+                                                <br /><small class="text-muted">@item.Product.GetProductdetail()!.GetName()</small>
                                             }
                                          </td>
                                          <td>

@@ -553,7 +553,7 @@ VALUES
 INSERT INTO PurchaseOrder (supplierID, poDate, status, expectedDeliveryDate, totalAmount) VALUES
 (1, '2026-03-01', 'COMPLETED', '2026-03-05', 5500.00),
 (2, '2026-03-10', 'CONFIRMED', '2026-03-25', 1200.00),
-(3, '2026-03-15', 'SUBMITTED', '2026-03-30', 450.00);
+(3, '2026-03-15', 'CONFIRMED', '2026-03-30', 450.00);
 
 INSERT INTO StockItem (productID, sku, name, uom) VALUES
 (1, 'CAM-CANON-R5', 'Canon EOS R5 Body', 'Unit'),
@@ -801,29 +801,58 @@ OVERRIDING SYSTEM VALUE
 VALUES (13, 2, 'Water Damage Emergency', '2026-03-20', 'ONGOING',
 '{"batchStatus":"ONGOING","totalItemsCleared":2,"items":[{"clearanceItemId":4,"serialNumber":"70200RF-0003","productName":"Canon RF 70-200mm f2.8 L","reason":"Water damage from warehouse leak","originalPrice":110.00,"clearancePrice":0.00},{"clearanceItemId":5,"serialNumber":"RS3-0004","productName":"DJI RS 3 Gimbal Stabilizer","reason":"Water damage — non-functional","originalPrice":60.00,"clearancePrice":0.00}]}');
 
+-- Test account for authentication/authorization testing
+BEGIN;
 
--- ============================================================
--- VERIFICATION QUERY (uncomment to check)
--- ============================================================
--- SELECT 
---     t.transactionlogid AS id,
---     t.logtype AS type,
---     t.createdat,
---     r.orderid AS rental_order,
---     l.loanlistid AS loan,
---     l.rentalorderlogid AS loan_links_to_rental,
---     ret.returnrequestid AS return_req,
---     ret.rentalorderlogid AS return_links_to_rental,
---     c.batchname AS clearance,
---     p.poid AS po
--- FROM transactionlog t
--- LEFT JOIN rentalorderlog r ON r.rentalorderlogid = t.transactionlogid
--- LEFT JOIN loanlog l ON l.loanlogid = t.transactionlogid
--- LEFT JOIN returnlog ret ON ret.returnlogid = t.transactionlogid
--- LEFT JOIN clearancelog c ON c.clearancelogid = t.transactionlogid
--- LEFT JOIN purchaseorderlog p ON p.purchaseorderlogid = t.transactionlogid
--- ORDER BY t.transactionlogid;
--- Staff query test
+WITH inserted_users AS (
+    INSERT INTO "User" (userrole, name, email, passwordhash, phonecountry, phonenumber)
+    VALUES
+        ('CUSTOMER', 'Alice Tan', 'alice@test.com', 'Test1234', 65, '91234567'),
+        ('CUSTOMER', 'Bob Lim',   'bob@test.com',   'Test1234', 65, '92345678'),
+        ('STAFF',    'Carol Ng',  'carol@test.com',  'Test1234', 65, '93456789'),
+        ('ADMIN',    'Dave Ong',  'dave@test.com',   'Test1234', 65, '94567890')
+    RETURNING userid, email, userrole
+),
+
+inserted_customers AS (
+    INSERT INTO Customer (userid, address, customertype)
+    SELECT userid,
+           CASE email
+               WHEN 'alice@test.com' THEN '10 Bedok North Ave 1, Singapore 460010'
+               WHEN 'bob@test.com'   THEN '22 Tampines St 45, Singapore 520022'
+           END,
+           1
+    FROM inserted_users
+    WHERE email IN ('alice@test.com', 'bob@test.com')
+    RETURNING customerid, userid
+),
+
+inserted_staff AS (
+    INSERT INTO Staff (userid, department)
+    SELECT userid, 'Operations'
+    FROM inserted_users
+    WHERE email = 'carol@test.com'
+    RETURNING staffid, userid
+)
+
+SELECT
+    u.email,
+    u.userid,
+    u.userrole,
+    c.customerid,
+    s.staffid
+FROM inserted_users u
+LEFT JOIN inserted_customers c ON c.userid = u.userid
+LEFT JOIN inserted_staff     s ON s.userid = u.userid;
+
+COMMIT;
+
+-- Customer query test
+SELECT c.customerid, u.email, u.name
+FROM customer c
+JOIN "User" u ON u.userid = c.userid
+WHERE u.email = 'alice@test.com';
+
 SELECT u.userid, u.email, u.userrole, s.staffid, s.department
 FROM "User" u
 JOIN staff s ON s.userid = u.userid

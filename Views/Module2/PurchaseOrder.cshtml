@@ -199,7 +199,7 @@ else
                                             <td>@(po.TotalAmount?.ToString("0.00") ?? "0.00")</td>
                                             <td class="text-center">
                                                 
-                                                @if (po.Status == "CONFIRMED")
+                                                @if (po.Status == "CONFIRMED" || po.Status == "SUBMITTED")
 {
     <div class="d-flex justify-content-center gap-2">
         <form asp-controller="PurchaseOrderPage" asp-action="ApprovePO" method="post">
