@@ -8,7 +8,6 @@ public class InventoryServiceTesterController : Controller
 {
     private readonly IInventoryService _inventoryService;
 
-    // Inject your beautiful Facade!
     public InventoryServiceTesterController(IInventoryService inventoryService)
     {
         _inventoryService = inventoryService;
@@ -24,13 +23,13 @@ public class InventoryServiceTesterController : Controller
     [HttpPost("TestProcessLoan")]
     public IActionResult TestProcessLoan(int orderId, int customerId, int productId, int quantity)
     {
-        // 1. Setup fake requirements
+        // 1. Setup requirements mapped to the demo seed parameters
         var productQuantities = new Dictionary<int, int> 
         { 
             { productId, quantity } 
         };
-        var startDate = DateTime.UtcNow;
-        var dueDate = DateTime.UtcNow.AddDays(7);
+        var startDate = DateTime.UtcNow.AddDays(1);
+        var dueDate = DateTime.UtcNow.AddDays(5);
 
         // 2. FIRE THE FACADE
         bool result = _inventoryService.ProcessLoan(orderId, customerId, startDate, dueDate, productQuantities);
@@ -38,11 +37,11 @@ public class InventoryServiceTesterController : Controller
         // 3. Report Results
         if (result)
         {
-            TempData["SuccessMessage"] = $"✅ SUCCESS: ProcessLoan completed! Order {orderId} created. Items allocated and status updated to ON_LOAN.";
+            TempData["SuccessMessage"] = $"ProcessLoan completed! Order {orderId} processed. Items allocated, status updated to ON_LOAN, and cross-domain Logs generated. (If you used Order 4, a Low Stock Alert was just triggered!)";
         }
         else
         {
-            TempData["ErrorMessage"] = $"❌ FAILED: ProcessLoan aborted. Reasons could include: Not enough AVAILABLE stock for Product {productId}, or Order {orderId} already exists in the Loan list.";
+            TempData["ErrorMessage"] = $"ProcessLoan aborted. Reasons: Not enough AVAILABLE stock, or Order {orderId} already has an active Loan.";
         }
 
         return RedirectToAction(nameof(Index));
@@ -57,11 +56,11 @@ public class InventoryServiceTesterController : Controller
         // 2. Report Results
         if (result)
         {
-            TempData["SuccessMessage"] = $"✅ SUCCESS: TriggerReturnProcess completed! Loan for Order {orderId} closed, Return triggered, and all physical items set to MAINTENANCE.";
+            TempData["SuccessMessage"] = $"TriggerReturnProcess completed! Loan for Order {orderId} closed, Return Request generated, and items sent to Damage Inspection Pipeline.";
         }
         else
         {
-            TempData["ErrorMessage"] = $"❌ FAILED: TriggerReturnProcess aborted. Check if Order {orderId} actually has an active loan.";
+            TempData["ErrorMessage"] = $"TriggerReturnProcess aborted. Check if Order {orderId} actually has an active loan.";
         }
 
         return RedirectToAction(nameof(Index));
