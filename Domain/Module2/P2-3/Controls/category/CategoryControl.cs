@@ -7,12 +7,12 @@ namespace ProRental.Domain.Controls;
 public class CategoryControl : ICategoryCRUD, ICategoryQuery
 {
     private readonly ICategoryMapper _categoryMapper;
-    private readonly IProductMapper _productMapper;
+    private readonly IProductRead _productReader;
 
-    public CategoryControl(ICategoryMapper categoryMapper, IProductMapper productMapper)
+    public CategoryControl(ICategoryMapper categoryMapper, IProductRead productReader)
     {
         _categoryMapper = categoryMapper;
-        _productMapper = productMapper;
+        _productReader = productReader;
     }
 
     // --- Query Implementation ---
@@ -55,7 +55,7 @@ public class CategoryControl : ICategoryCRUD, ICategoryQuery
     categoryName = existing.GetName(); // Store the chosen category name
 
     // Check if any products are linked to this category ID
-    var products = _productMapper.FindAll();
+    var products = _productReader.FindAll();
     bool hasLinkedProducts = products != null && products.Any(p => p.GetCategoryId() == id);
 
     if (hasLinkedProducts)
