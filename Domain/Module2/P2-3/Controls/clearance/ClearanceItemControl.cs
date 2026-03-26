@@ -275,8 +275,6 @@ public class ClearanceItemControl : iClearanceItemQuery, iClearanceItemControl
         if (inventoryItem == null)
             return false;
 
-        return true;
-
         // Check that the item is in AVAILABLE status using public accessor
         var currentStatus = inventoryItem.GetStatus();
         if (currentStatus != InventoryStatus.AVAILABLE)
