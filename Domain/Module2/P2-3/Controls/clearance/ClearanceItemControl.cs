@@ -250,7 +250,7 @@ public class ClearanceItemControl : iClearanceItemQuery, iClearanceItemControl
 
     // ── Item Validation ───────────────────────────────────────────────────────
 
-    public bool ValidateClearanceItem(Clearanceitem clearanceItem)
+    private bool ValidateClearanceItem(Clearanceitem clearanceItem)
     {
         // Batch ID must be set
         if (clearanceItem.GetClearanceBatchId() <= 0)
@@ -268,7 +268,7 @@ public class ClearanceItemControl : iClearanceItemQuery, iClearanceItemControl
         return true;
     }
 
-    public bool CheckItemEligibility(int inventoryItemId)
+    private bool CheckItemEligibility(int inventoryItemId)
     {
         // Verify the inventory item exists via InventoryManagementControl
         var inventoryItem = _inventoryCRUD.GetInventoryItemById(inventoryItemId);
@@ -294,7 +294,7 @@ public class ClearanceItemControl : iClearanceItemQuery, iClearanceItemControl
         return true;
     }
 
-    public bool CheckClearanceItemConflict(Clearanceitem clearanceItem)
+    private bool CheckClearanceItemConflict(Clearanceitem clearanceItem)
     {
         // Check if this inventory item is already in another active batch
         var existing = _itemMapper.FindByInventoryItemId(clearanceItem.GetInventoryItemId());

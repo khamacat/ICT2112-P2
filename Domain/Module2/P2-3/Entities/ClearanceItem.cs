@@ -10,23 +10,23 @@ public partial class Clearanceitem
     // ── Public Accessors ───────────────────────────────────────────────────────
 
     public int GetClearanceItemId() => _clearanceitemid;
-    public void SetClearanceItemId(int value) => _clearanceitemid = value;
+    internal void SetClearanceItemId(int value) => _clearanceitemid = value;
 
     public int GetClearanceBatchId() => _clearancebatchid;
-    public void SetClearanceBatchId(int value) => _clearancebatchid = value;
+    internal void SetClearanceBatchId(int value) => _clearancebatchid = value;
 
     public int GetInventoryItemId() => _inventoryitemid;
-    public void SetInventoryItemId(int value) => _inventoryitemid = value;
+    internal void SetInventoryItemId(int value) => _inventoryitemid = value;
 
     public decimal? GetFinalPrice() => _finalprice;
-    public void SetFinalPrice(decimal? value) => _finalprice = value;
+    internal void SetFinalPrice(decimal? value) => _finalprice = value;
 
     public decimal? GetRecommendedPrice() => _recommendedprice;
-    public void SetRecommendedPrice(decimal? value) => _recommendedprice = value;
+    internal void SetRecommendedPrice(decimal? value) => _recommendedprice = value;
 
     public DateTime? GetSaleDate() => _saledate;
-    public void SetSaleDate(DateTime? value) => _saledate = value;
+    internal void SetSaleDate(DateTime? value) => _saledate = value;
 
     public ClearanceStatus GetStatus() => _status;
-    public void UpdateStatus(ClearanceStatus newValue) => _status = newValue;
+    internal void UpdateStatus(ClearanceStatus newValue) => _status = newValue;
 }

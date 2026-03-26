@@ -180,7 +180,7 @@ public class ClearanceBatchControl : iClearanceBatchQuery, iClearanceBatchContro
 
     // ── Batch Validation ──────────────────────────────────────────────────────
 
-    public bool ValidateClearanceBatch(Clearancebatch clearanceBatch)
+    private bool ValidateClearanceBatch(Clearancebatch clearanceBatch)
     {
         // Batch name is required
         if (string.IsNullOrWhiteSpace(clearanceBatch.GetBatchName()))
@@ -194,7 +194,7 @@ public class ClearanceBatchControl : iClearanceBatchQuery, iClearanceBatchContro
         return true;
     }
 
-    public bool CheckBatchConflicts(Clearancebatch clearanceBatch)
+    private bool CheckBatchConflicts(Clearancebatch clearanceBatch)
     {
         // Check if a batch with the same name already exists
         var allBatches = _batchMapper.FindAll();

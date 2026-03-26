@@ -12,17 +12,17 @@ public partial class Clearancebatch
     // expose the backing fields for use in control and presentation layers.
 
     public int GetClearanceBatchId() => _clearancebatchid;
-    public void SetClearanceBatchId(int value) => _clearancebatchid = value;
+    internal void SetClearanceBatchId(int value) => _clearancebatchid = value;
 
     public string GetBatchName() => _batchname;
-    public void SetBatchName(string value) => _batchname = value;
+    internal void SetBatchName(string value) => _batchname = value;
 
     public DateTime GetCreatedDate() => _createddate;
-    public void SetCreatedDate(DateTime value) => _createddate = value;
+    internal void SetCreatedDate(DateTime value) => _createddate = value;
 
     public DateTime? GetClearanceDate() => _clearancedate;
-    public void SetClearanceDate(DateTime? value) => _clearancedate = value;
+    internal void SetClearanceDate(DateTime? value) => _clearancedate = value;
 
     public ClearanceBatchStatus GetStatus() => _status;
-    public void UpdateStatus(ClearanceBatchStatus newValue) => _status = newValue;
+    internal void UpdateStatus(ClearanceBatchStatus newValue) => _status = newValue;
 }

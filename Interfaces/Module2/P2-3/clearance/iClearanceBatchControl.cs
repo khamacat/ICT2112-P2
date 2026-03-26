@@ -14,7 +14,6 @@ public interface iClearanceBatchControl
     bool ActivateBatch(int clearanceBatchId);
     bool CloseBatch(int clearanceBatchId);
 
-    // Validation
-    bool ValidateClearanceBatch(Clearancebatch clearanceBatch);
-    bool CheckBatchConflicts(Clearancebatch clearanceBatch);
+    // Validation methods have been encapsulated
+
 }

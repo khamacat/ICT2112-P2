@@ -113,13 +113,14 @@
                     return;
                 }
 
-                fetch(`/Clearance/GetInventoryDetails?id=${id}`)
+                fetch(`@Url.Action("GetInventoryDetails", "Clearance")?id=${id}`)
                     .then(response => response.json())
                     .then(data => {
                         lookupCache[id] = data;
                         renderDetails(detailsDiv, data);
                     })
                     .catch(err => {
+                        console.error('Fetch error:', err);
                         detailsDiv.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle"></i> Error checking item.</span>';
                     });
             }, 300); // 300ms debounce
