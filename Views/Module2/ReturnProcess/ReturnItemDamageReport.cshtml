@@ -91,7 +91,6 @@
         </div>
     }
 
-    <!-- Progress stepper -->
     <div class="card mb-4">
         <div class="card-body py-3">
             <div class="d-flex align-items-center justify-content-between">
@@ -144,10 +143,8 @@
         </div>
     </div>
 
-    <!-- ACCORDION -->
     <div class="accordion" id="returnAccordion">
 
-        <!-- PHASE 1 — DAMAGE INSPECTION -->
         <div class="accordion-item border mb-3 rounded shadow-sm">
             <h2 class="accordion-header">
                 <button class="accordion-button @(phase1Active ? "" : "collapsed") rounded"
@@ -170,7 +167,6 @@
                         </div>
                     }
 
-                    <!-- Show saved damage report summary if damage was found -->
                     @if (hasDamage)
                     {
                         <div class="card border-danger border-opacity-25 mb-3">
@@ -252,7 +248,6 @@
                             </div>
                         </div>
 
-                        <!-- Submit inspection — separate forms for yes/no -->
                         <form id="formInspectYes"
                               asp-controller="ReturnProcessing"
                               asp-action="SubmitDamageInspection"
@@ -287,7 +282,6 @@
             </div>
         </div>
 
-        <!-- PHASE 2 — REPAIRING -->
         <div class="accordion-item border mb-3 rounded shadow-sm">
             <h2 class="accordion-header">
                 <button class="accordion-button @(phase2Active ? "" : "collapsed") rounded"
@@ -345,7 +339,6 @@
                             </div>
                         </div>
 
-                        <!-- Not fixed → show read-only damage report summary with updated cost -->
                         <div id="brokenSummary" style="display:none" class="card border-danger border-opacity-50 mb-3">
                             <div class="card-header bg-danger bg-opacity-10 py-2">
                                 <span class="fw-semibold text-danger">
@@ -374,7 +367,6 @@
                             </div>
                         </div>
 
-                        <!-- Fixed → proceed to Servicing -->
                         <form id="formRepairFixed"
                               asp-controller="ReturnProcessing"
                               asp-action="SubmitRepairing"
@@ -390,7 +382,6 @@
                             </div>
                         </form>
 
-                        <!-- Not fixed → mark broken -->
                         <form id="formRepairBroken"
                               asp-controller="ReturnProcessing"
                               asp-action="SubmitRepairing"
@@ -410,7 +401,6 @@
             </div>
         </div>
 
-        <!-- PHASE 3 — SERVICING -->
         <div class="accordion-item border mb-3 rounded shadow-sm">
             <h2 class="accordion-header">
                 <button class="accordion-button @(phase3Active ? "" : "collapsed") rounded"
@@ -454,7 +444,6 @@
             </div>
         </div>
 
-        <!-- PHASE 4 — CLEANING -->
         <div class="accordion-item border mb-3 rounded shadow-sm">
             <h2 class="accordion-header">
                 <button class="accordion-button @(phase4Active || isLocked ? "" : "collapsed") rounded"
@@ -506,14 +495,12 @@
             </div>
         </div>
 
-    </div><!-- /accordion -->
-</div><!-- /container -->
+    </div>
+</div>
 
-<!-- Hidden modal trigger button — clicked via JS -->
 <button id="modalTriggerBtn" type="button" style="display:none"
         data-bs-toggle="modal" data-bs-target="#damageReportModal"></button>
 
-<!-- DAMAGE REPORT MODAL -->
 <div class="modal fade" id="damageReportModal" tabindex="-1"
      data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -613,32 +600,82 @@
 
 @section Scripts {
 <script>
-// hasDamage — JS only, never stored in DB
-function onDamageChange(isDamaged) {
-    console.log('onDamageChange called, isDamaged=' + isDamaged);
+function selectDamageYes() {
+    var yes = document.getElementById('damageYes');
+    var no = document.getElementById('damageNo');
     var fy = document.getElementById('formInspectYes');
     var fn = document.getElementById('formInspectNo');
-    if (fy) fy.style.display = isDamaged ? 'block' : 'none';
-    if (fn) fn.style.display = isDamaged ? 'none'  : 'block';
-    localStorage.setItem('damageChoice_@Model.GetReturnItemId()', isDamaged ? 'yes' : 'no');
+
+    if (yes) yes.checked = true;
+    if (no) no.checked = false;
+    if (fy) fy.style.display = 'block';
+    if (fn) fn.style.display = 'none';
+}
+
+function selectDamageNo() {
+    var yes = document.getElementById('damageYes');
+    var no = document.getElementById('damageNo');
+    var fy = document.getElementById('formInspectYes');
+    var fn = document.getElementById('formInspectNo');
+
+    if (no) no.checked = true;
+    if (yes) yes.checked = false;
+    if (fy) fy.style.display = 'none';
+    if (fn) fn.style.display = 'block';
+}
+
+async function onDamageChange(isDamaged) {
     if (isDamaged) {
+        selectDamageYes();
         document.getElementById('modalTriggerBtn').click();
-    } else {
-        // Delete damage report from DB if switching to No
-        var token = document.querySelector('input[name="__RequestVerificationToken"]');
-        if (token) {
-            fetch('@Url.Action("ClearDamageReport", "ReturnProcessing", new { itemId = Model.GetReturnItemId() })', {
-                method: 'POST',
-                headers: { 'RequestVerificationToken': token.value }
-            }).then(function() {
-                // Reload to reflect cleared damage report
-                window.location.reload();
-            });
+        return;
+    }
+
+    selectDamageNo();
+
+    var hasDamage = @(hasDamage.ToString().ToLower());
+
+    if (!hasDamage) {
+        return;
+    }
+
+    var token = document.querySelector('#formInspectNo input[name="__RequestVerificationToken"]')?.value;
+    if (!token) {
+        console.error('Anti-forgery token not found');
+        return;
+    }
+
+    try {
+        const body = new URLSearchParams();
+        body.append('__RequestVerificationToken', token);
+
+        const response = await fetch('@Url.Action("ClearDamageReport", "ReturnProcessing", new { itemId = Model.GetReturnItemId() })', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+            },
+            body: body.toString()
+        });
+
+        if (!response.ok) {
+            console.error('Failed to delete damage report. Status:', response.status);
+            return;
         }
+
+        // remove the visible damage report summary card
+        var damageCard = document.querySelector('.card.border-danger.border-opacity-25.mb-3');
+        if (damageCard) {
+            damageCard.remove();
+        }
+
+        // keep NO selected and NO submit button visible
+        selectDamageNo();
+    }
+    catch (err) {
+        console.error('Delete error:', err);
     }
 }
 
-// Repair phase — show correct submit form and broken summary
 function onRepairChange(isFixed) {
     document.getElementById('formRepairFixed').style.display  = isFixed ? 'block' : 'none';
     document.getElementById('formRepairBroken').style.display = isFixed ? 'none'  : 'block';
@@ -648,13 +685,13 @@ function onRepairChange(isFixed) {
 
 function clearDamageReport() {
     document.querySelector('#damageReportModal [name="description"]').value = '';
-    document.querySelector('#damageReportModal [name="severity"]').value    = '';
-    document.querySelector('#damageReportModal [name="repairCost"]').value  = '0.00';
+    document.querySelector('#damageReportModal [name="severity"]').value = '';
+    document.querySelector('#damageReportModal [name="repairCost"]').value = '0.00';
 }
 
 function validateDamageReport() {
     var desc = document.querySelector('#damageReportModal [name="description"]').value.trim();
-    var sev  = document.querySelector('#damageReportModal [name="severity"]').value;
+    var sev = document.querySelector('#damageReportModal [name="severity"]').value;
     if (!desc || !sev) {
         alert('Please fill in Description and Severity before saving.');
         return false;
@@ -662,44 +699,13 @@ function validateDamageReport() {
     return true;
 }
 
-// Pre-check radio and restore localStorage selection on page load
 document.addEventListener('DOMContentLoaded', function () {
-    var hasDamageReport = @(hasDamage ? "true" : "false");
-    var isPhase1Active  = @(phase1Active ? "true" : "false");
-    var itemId          = '@Model.GetReturnItemId()';
+    var hasDamage = @(hasDamage.ToString().ToLower());
+    var isPhase1Active = @(phase1Active.ToString().ToLower());
 
-    function selectDamageYes() {
-        var r = document.getElementById('damageYes');
-        if (r) r.checked = true;
-        var fy = document.getElementById('formInspectYes');
-        var fn = document.getElementById('formInspectNo');
-        if (fy) fy.style.display = 'block';
-        if (fn) fn.style.display = 'none';
-    }
-    function selectDamageNo() {
-        var r = document.getElementById('damageNo');
-        if (r) r.checked = true;
-        var fy = document.getElementById('formInspectYes');
-        var fn = document.getElementById('formInspectNo');
-        if (fy) fy.style.display = 'none';
-        if (fn) fn.style.display = 'block';
-    }
-
-    if (hasDamageReport) {
+    if (isPhase1Active && hasDamage) {
         selectDamageYes();
-    } else if (isPhase1Active) {
-        var saved = localStorage.getItem('damageChoice_' + itemId);
-        if (saved === 'yes')      selectDamageYes();
-        else if (saved === 'no')  selectDamageNo();
     }
-
-    // Persist selection to localStorage on change
-    var radios = document.querySelectorAll('input[name="damageChoice"]');
-    radios.forEach(function(r) {
-        r.addEventListener('change', function() {
-            localStorage.setItem('damageChoice_' + itemId, this.value);
-        });
-    });
 });
 </script>
 }

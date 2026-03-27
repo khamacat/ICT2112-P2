@@ -5,7 +5,6 @@ namespace ProRental.Domain.Entities;
 public partial class Returnrequest
 {
     // PUBLIC GETTERS
-
     public static Returnrequest Create(int orderId, int customerId, DateTime requestDate)
     {
         var request = new Returnrequest();
