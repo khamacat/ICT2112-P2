@@ -8,17 +8,17 @@ namespace ProRental.Domain.Controls;
 public class ReturnOrderControl : iReturnOrderCRUD, iReturnOrderQuery, iReturnProcess
 {
     private readonly IReturnRequestMapper _returnRequestMapper;
-    private readonly iReturnItemCRUD      _returnItemCRUD;
+    private readonly iReturnItemCRUD _returnItemCRUD;
     private readonly IReturnLogEnricher _returnLogEnricher;
 
-    public ReturnOrderControl(
-        IReturnRequestMapper returnRequestMapper,
-        iReturnItemCRUD      returnItemCRUD,
-        IReturnLogEnricher returnLogEnricher)
+    public ReturnOrderControl(IReturnRequestMapper returnRequestMapper, iReturnItemCRUD returnItemCRUD, IReturnLogEnricher returnLogEnricher)
     {
-        _returnRequestMapper = returnRequestMapper ?? throw new ArgumentNullException(nameof(returnRequestMapper));
-        _returnItemCRUD      = returnItemCRUD      ?? throw new ArgumentNullException(nameof(returnItemCRUD));
-        _returnLogEnricher = returnLogEnricher ?? throw new ArgumentNullException(nameof(returnLogEnricher));
+        _returnRequestMapper = returnRequestMapper
+            ?? throw new ArgumentNullException(nameof(returnRequestMapper));
+        _returnItemCRUD = returnItemCRUD
+            ?? throw new ArgumentNullException(nameof(returnItemCRUD));
+        _returnLogEnricher = returnLogEnricher
+            ?? throw new ArgumentNullException(nameof(returnLogEnricher));
     }
 
     public ReturnRequestStatus GetReturnStatus(int returnRequestId)
@@ -45,21 +45,35 @@ public class ReturnOrderControl : iReturnOrderCRUD, iReturnOrderQuery, iReturnPr
     public bool CreateReturnRequest(Returnrequest returnRequest)
     {
         if (!ValidateReturnRequest(returnRequest)) return false;
-        try { _returnRequestMapper.Insert(returnRequest); return true; }
-        catch { return false; }
+
+        try
+        {
+            _returnRequestMapper.Insert(returnRequest);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public bool CompleteReturnProcess(int returnRequestId)
     {
         var fresh = _returnRequestMapper.FindById(returnRequestId);
         if (fresh is null) return false;
+
         fresh.CompleteReturn();
-        try { 
+
+        try
+        {
             _returnRequestMapper.Update(fresh);
             _returnLogEnricher.LogReturnProcess(returnRequestId, fresh.GetOrderId());
             return true;
         }
-        catch { return false; }
+        catch
+        {
+            return false;
+        }
     }
 
     public bool ValidateReturnRequest(Returnrequest returnRequest)
@@ -67,48 +81,50 @@ public class ReturnOrderControl : iReturnOrderCRUD, iReturnOrderQuery, iReturnPr
         if (returnRequest is null) return false;
         if (returnRequest.GetOrderId() <= 0) return false;
         if (returnRequest.GetCustomerId() <= 0) return false;
-        // Check no existing return request for this order
         if (_returnRequestMapper.FindByOrderId(returnRequest.GetOrderId()) != null) return false;
+
         return true;
     }
 
-    /// <summary>
-    /// Creates ReturnRequest, then creates one ReturnItem per inventoryItemId
-    /// via iReturnItemCRUD (<<uses>> link in diagram).
-    /// </summary>
-    public bool TriggerReturnProcess(int orderId, int customerId, DateTime requestDate, List<int> inventoryItemIds)
+   public bool TriggerReturnProcess(int orderId, int customerId, DateTime requestDate, List<int> inventoryItemIds)
     {
-        if (orderId <= 0 || customerId <= 0 || inventoryItemIds is null || inventoryItemIds.Count == 0) return false;
-        if (_returnRequestMapper.FindByOrderId(orderId) != null) return false;
+        if (orderId <= 0 || customerId <= 0 || inventoryItemIds.Count == 0)
+            return false;
+
+        // prevent duplicate return request for same order
+        if (_returnRequestMapper.FindByOrderId(orderId) != null)
+            return false;
 
         try
         {
-            // 1. Create ReturnRequest
-            var returnRequest = new Returnrequest();
-            returnRequest.SetOrderId(orderId);
-            returnRequest.SetCustomerId(customerId);
-            returnRequest.SetStatus(ReturnRequestStatus.PROCESSING);
-            returnRequest.SetRequestDate(DateTime.UtcNow);
+            // 1. create return request for the order
+            var returnRequest = Returnrequest.Create(orderId, customerId, requestDate);
             _returnRequestMapper.Insert(returnRequest);
 
-            // 2. Get the inserted request to retrieve generated ID
-            var inserted = _returnRequestMapper.FindByOrderId(orderId);
-            if (inserted is null) return false;
+            // 2. fetch inserted request so we can get generated returnRequestId
+            var insertedRequest = _returnRequestMapper.FindByOrderId(orderId);
+            if (insertedRequest == null)
+                return false;
 
-            // 3. Create one ReturnItem per inventory item via iReturnItemCRUD
+            // 3. create return items for every inventory item in the order
             foreach (var inventoryItemId in inventoryItemIds)
             {
-                var returnItem = new Returnitem();
-                returnItem.SetReturnRequestId(inserted.GetReturnRequestId());
-                returnItem.SetInventoryItemId(inventoryItemId);
-                returnItem.SetStatus(ReturnItemStatus.DAMAGE_INSPECTION);
-                _returnItemCRUD.CreateReturnItem(returnItem);
+                var returnItem = Returnitem.Create(
+                    insertedRequest.GetReturnRequestId(),
+                    inventoryItemId);
+
+                var created = _returnItemCRUD.CreateReturnItem(returnItem);
+                if (!created)
+                    return false;
             }
 
-            _returnLogEnricher.LogReturnProcess(inserted.GetReturnRequestId(), orderId);
+            _returnLogEnricher.LogReturnProcess(insertedRequest.GetReturnRequestId(), orderId);
 
             return true;
         }
-        catch { return false; }
+        catch
+        {
+            return false;
+        }
     }
 }
