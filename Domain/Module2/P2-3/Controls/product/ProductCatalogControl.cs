@@ -5,7 +5,7 @@ using ProRental.Interfaces.Domain;
 
 namespace ProRental.Domain.Controls;
 
-public class ProductCatalogControl : IProductCRUD, IProductQuery, IProductBulkCommand, IProductStatusControl
+public class ProductCatalogControl : IProductCRUD, IProductQuery, IProductBulkCommand, IProductActions
 {
     private readonly IProductMapper _productMapper;
     private readonly ICategoryQuery _categoryQuery;
@@ -235,66 +235,56 @@ public class ProductCatalogControl : IProductCRUD, IProductQuery, IProductBulkCo
     }
 
     public bool AddToProduct(int productId, int quantity)
-{
-    if (quantity <= 0) return false;
+    {
+        if (quantity <= 0) return false;
 
-    var product = _productMapper.FindById(productId);
-    if (product == null) return false;
+        var product = _productMapper.FindById(productId);
+        if (product == null) return false;
 
-    var detail = product.GetProductdetail();
-    if (detail == null) return false;
+        var detail = product.GetProductdetail();
+        if (detail == null) return false;
 
-    detail.IncreaseTotalQuantity(quantity);
-    _productMapper.Update(product);
+        detail.IncreaseTotalQuantity(quantity);
+        _productMapper.Update(product);
 
-    return true;
-}
+        return true;
+    }
 
-public bool UpdateProductStatus(int productId, ProductStatus productStatus)
-{
-    var product = _productMapper.FindById(productId);
-    if (product == null) return false;
+    public int GetThresholdQuantityForProduct(int productId)
+    {
+        var product = _productMapper.FindById(productId);
+        if (product == null)
+            throw new InvalidOperationException($"Product {productId} not found.");
 
-    product.UpdateStatus(productStatus);
-    _productMapper.Update(product);
-    return true;
-}
+        var detail = product.GetProductdetail();
+        if (detail == null)
+            throw new InvalidOperationException($"Product detail for product {productId} not found.");
 
-public int GetThresholdQuantityForProduct(int productId)
-{
-    var product = _productMapper.FindById(productId);
-    if (product == null)
-        throw new InvalidOperationException($"Product {productId} not found.");
+        var totalQuantity = detail.GetTotalQuantity();
+        var thresholdPercentage = product.GetThreshold();
 
-    var detail = product.GetProductdetail();
-    if (detail == null)
-        throw new InvalidOperationException($"Product detail for product {productId} not found.");
+        return (int)Math.Ceiling(totalQuantity * thresholdPercentage);
+    }
 
-    var totalQuantity = detail.GetTotalQuantity();
-    var thresholdPercentage = product.GetThreshold();
+    public bool SyncProductStock(int productId, int availableQuantity, int totalActiveQuantity)
+    {
+        var product = _productMapper.FindById(productId);
+        if (product == null) return false;
 
-    return (int)Math.Ceiling(totalQuantity * thresholdPercentage);
-}
+        var detail = product.GetProductdetail();
+        if (detail == null) return false;
 
-public bool SetActiveQuantity(int productId, int quantity)
-{
-    if (quantity < 0) return false;
+        // 1. Update the Total Active Quantity (AVAILABLE + ON_LOAN + MAINTENANCE + RESERVED)
+        detail.UpdateTotalQuantity(totalActiveQuantity);
 
-    var product = _productMapper.FindById(productId);
-    if (product == null) return false;
+        // 2. Update the Product Status based STRICTLY on AVAILABLE quantity
+        if (availableQuantity == 0)
+            product.UpdateStatus(ProductStatus.UNAVAILABLE);
+        else
+            product.UpdateStatus(ProductStatus.AVAILABLE);
 
-    var detail = product.GetProductdetail();
-    if (detail == null) return false;
-
-    detail.UpdateTotalQuantity(quantity);
-
-    if (quantity == 0)
-        product.UpdateStatus(ProductStatus.UNAVAILABLE);
-    else
-        product.UpdateStatus(ProductStatus.AVAILABLE);
-
-    _productMapper.Update(product);
-    return true;
-}
+        _productMapper.Update(product);
+        return true;
+    }
 
 }

@@ -50,7 +50,7 @@ INSERT INTO Product (CategoryId, Sku, Threshold) VALUES
 (1, 'CAM-SONY-FX3-DEMO', 0.40);   -- 5 (Alert Demo Target - 40% threshold)
 
 INSERT INTO ProductDetails (ProductId, TotalQuantity, Name, Description, Weight, Image, Price, DepositRate) VALUES
-(1, 10, 'Canon EOS R5', '45MP full-frame mirrorless camera', 0.74, 'canon_r5.jpg', 150.00, 0.30),
+(1, 6, 'Canon EOS R5', '45MP full-frame mirrorless camera', 0.74, 'canon_r5.jpg', 150.00, 0.30),
 (2, 5, 'Manfrotto Befree Tripod', 'Older travel tripod', 1.50, 'manfrotto_befree.jpg', 25.00, 0.10),
 (3, 3, 'DJI RS 3 Gimbal Stabilizer', '3-axis camera stabilizer', 1.30, 'dji_rs3.jpg', 60.00, 0.20),
 (4, 5, 'Rode VideoMic Pro+', 'Shotgun microphone for cameras', 0.12, 'rode_videomic.jpg', 20.00, 0.10),

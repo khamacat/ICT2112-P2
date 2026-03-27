@@ -8,12 +8,12 @@ namespace ProRental.Domain.Controls;
 public class LowStockAlertControl : iAlertControl, iStockObserver
 {
     private readonly IAlertMapper _alertMapper;
-    private readonly IProductStatusControl _productStatusControl;
+    private readonly IProductActions _productActions;
 
-    public LowStockAlertControl(IAlertMapper alertMapper, IProductStatusControl productStatusControl)
+    public LowStockAlertControl(IAlertMapper alertMapper, IProductActions productActions)
     {
         _alertMapper = alertMapper ?? throw new ArgumentNullException(nameof(alertMapper));
-        _productStatusControl = productStatusControl ?? throw new ArgumentNullException(nameof(productStatusControl));
+        _productActions = productActions ?? throw new ArgumentNullException(nameof(productActions));
     }
 
     public bool CreateAlert(Alert alert)
@@ -72,7 +72,7 @@ public class LowStockAlertControl : iAlertControl, iStockObserver
         }
 
         // Get the product's configured threshold value from IProductStatusControl
-        int minThreshold = _productStatusControl.GetThresholdQuantityForProduct(productId);
+        int minThreshold = _productActions.GetThresholdQuantityForProduct(productId);
         
         // Check if stock is below threshold
         if (availableCount > minThreshold)
@@ -122,7 +122,7 @@ public class LowStockAlertControl : iAlertControl, iStockObserver
         try
         {
             // Get the product's configured threshold value
-            int minThreshold = _productStatusControl.GetThresholdQuantityForProduct(productId);
+            int minThreshold = _productActions.GetThresholdQuantityForProduct(productId);
 
             // If stock is NOT above threshold, nothing to resolve
             if (currentStock <= minThreshold)

@@ -8,7 +8,7 @@ public class InventoryService : IInventoryService, IResupplyService
 {
     // The Facade injects all the specific subsystem experts it needs to coordinate.
     private readonly IProductQuery _productQuery;
-    private readonly IProductCRUD _productCRUD;
+    private readonly IProductActions _productActions;
     private readonly iInventoryCRUDControl _inventoryCRUD;
     private readonly iInventoryQueryControl _inventoryQuery;
     private readonly iInventoryStatusControl _inventoryStatus;
@@ -19,7 +19,7 @@ public class InventoryService : IInventoryService, IResupplyService
 
     public InventoryService(
         IProductQuery productQuery,
-        IProductCRUD productCRUD,
+        IProductActions productActions,
         iInventoryCRUDControl inventoryCRUD,
         iInventoryQueryControl inventoryQuery,
         iInventoryStatusControl inventoryStatus,
@@ -29,7 +29,7 @@ public class InventoryService : IInventoryService, IResupplyService
         iReturnProcess returnProcess)
     {
         _productQuery = productQuery;
-        _productCRUD = productCRUD;
+        _productActions = productActions;
         _inventoryCRUD = inventoryCRUD;
         _inventoryQuery = inventoryQuery;
         _inventoryStatus = inventoryStatus;
@@ -52,10 +52,10 @@ public class InventoryService : IInventoryService, IResupplyService
 
     // ── Business Coordination Logic ──────────────────────────────────────────
 
-    public bool AddToProduct(int productId, int quantity)
+    public bool ResupplyProduct(int productId, int quantity)
     {
         // 1. Update the parent Product quantity
-        bool productUpdated = _productCRUD.AddToProduct(productId, quantity);
+        bool productUpdated = _productActions.AddToProduct(productId, quantity);
         if (!productUpdated) 
             return false;
 

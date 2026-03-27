@@ -235,7 +235,7 @@ public class ReplenishmentRequestControl
                 return false;
             }
 
-            var resupplied = _resupplyService.AddToProduct(productId.Value, quantity.Value);
+            var resupplied = _resupplyService.ResupplyProduct(productId.Value, quantity.Value);
             if (!resupplied)
             {
                 return false;
