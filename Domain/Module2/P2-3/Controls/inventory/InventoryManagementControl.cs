@@ -8,15 +8,17 @@ namespace ProRental.Domain.Controls;
 public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQueryControl, iInventoryStatusControl, iStockSubject
 {
     private readonly IInventoryItemMapper _inventoryItemMapper;
-    private readonly IProductQuery _productQuery;
-    private readonly IProductCRUD _productCRUD;
+    // SRP FIX: We only inject the specific Status Control interface, no more deep CRUD/Query access
+    private readonly IProductStatusControl _productStatusControl; 
     private readonly List<iStockObserver> _observers = new();
 
-    public InventoryManagementControl(IInventoryItemMapper inventoryItemMapper, IEnumerable<iStockObserver> observers, IProductQuery productQuery, IProductCRUD productCRUD)
+    public InventoryManagementControl(
+        IInventoryItemMapper inventoryItemMapper, 
+        IEnumerable<iStockObserver> observers, 
+        IProductStatusControl productStatusControl)
     {
         _inventoryItemMapper = inventoryItemMapper ?? throw new ArgumentNullException(nameof(inventoryItemMapper));
-        _productQuery = productQuery ?? throw new ArgumentNullException(nameof(productQuery));
-        _productCRUD = productCRUD ?? throw new ArgumentNullException(nameof(productCRUD));
+        _productStatusControl = productStatusControl ?? throw new ArgumentNullException(nameof(productStatusControl));
         _observers = observers.ToList();
     }
 
@@ -29,78 +31,42 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
         var inventoryItem = Inventoryitem.Create(productId, serialNumber, status, expiryDate);
 
         if (!ValidateInventoryItem(inventoryItem) || !CheckInventoryConflicts(inventoryItem))
-        {
             return false;
-        }
 
         try
         {
             _inventoryItemMapper.Insert(inventoryItem);
-            int availableCount = CheckProductQuantityByStatus(productId, InventoryStatus.AVAILABLE);
-            NotifyObservers(productId, availableCount);
-            SyncProductActiveQuantity(productId);
+            SyncProductStockLevels(productId); // SRP FIX
             return true;
         }
-        catch
-        {
-            return false;
-        }
+        catch { return false; }
     }
 
     public int CreateBulkInventoryItems(int productId, int quantity)
     {
-        if (productId <= 0 || quantity <= 0 || quantity > 100)
-        {
-            Console.WriteLine($"CreateBulkInventoryItems: Validation failed - ProductId={productId}, Quantity={quantity}");
-            return 0;
-        }
+        if (productId <= 0 || quantity <= 0 || quantity > 100) return 0;
 
         int createdCount = 0;
-
         try
         {
-            Console.WriteLine($"CreateBulkInventoryItems: Starting creation of {quantity} items for ProductId={productId}");
-            
             for (int i = 0; i < quantity; i++)
             {
                 var inventoryItem = Inventoryitem.CreateReserved(productId);
-
                 try
                 {
                     _inventoryItemMapper.Insert(inventoryItem);
                     createdCount++;
-                    Console.WriteLine($"  Item {i + 1}/{quantity} created successfully with serial: {inventoryItem.GetSerialNumber()}");
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"  Item {i + 1}/{quantity} FAILED: {ex.GetType().Name} - {ex.Message}");
-                    if (ex.InnerException != null)
-                    {
-                        Console.WriteLine($"    Inner Exception: {ex.InnerException.Message}");
-                    }
-                }
+                catch { /* Handle individual failure */ }
             }
-
-            Console.WriteLine($"CreateBulkInventoryItems: Completed - {createdCount}/{quantity} items created");
 
             if (createdCount > 0)
             {
-                int availableCount = CheckProductQuantityByStatus(productId, InventoryStatus.AVAILABLE);
-                NotifyObservers(productId, availableCount);
-                SyncProductActiveQuantity(productId);
-            }
-
-            return createdCount;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"CreateBulkInventoryItems: CRITICAL ERROR - {ex.GetType().Name}: {ex.Message}");
-            if (ex.InnerException != null)
-            {
-                Console.WriteLine($"  Inner Exception: {ex.InnerException.Message}");
+                SyncProductStockLevels(productId); // SRP FIX
             }
             return createdCount;
         }
+        catch { return createdCount; }
     }
 
     public Inventoryitem? GetInventoryItemById(int inventoryItemId)
@@ -111,63 +77,36 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
     public bool UpdateInventoryItem(int inventoryItemId, int productId, string serialNumber, InventoryStatus status, DateTime? expiryDate)
     {
         var existingItem = _inventoryItemMapper.FindById(inventoryItemId);
-        if (existingItem is null)
-        {
-            return false;
-        }
+        if (existingItem is null) return false;
 
         existingItem.Update(productId, serialNumber, status, expiryDate);
 
         if (!ValidateInventoryItem(existingItem) || !CheckInventoryConflicts(existingItem))
-        {
             return false;
-        }
 
         try
         {
             _inventoryItemMapper.Update(existingItem);
-            int availableCount = CheckProductQuantityByStatus(productId, InventoryStatus.AVAILABLE);
-            NotifyObservers(productId, availableCount);
-            SyncProductActiveQuantity(productId);
+            SyncProductStockLevels(productId); // SRP FIX
             return true;
         }
-        catch
-        {
-            return false;
-        }
+        catch { return false; }
     }
 
     public bool DeleteInventoryItem(int inventoryItemId)
     {
         var existingItem = _inventoryItemMapper.FindById(inventoryItemId);
-        if (existingItem is null)
-        {
-            Console.WriteLine($"DeleteInventoryItem: Item {inventoryItemId} not found");
-            return false;
-        }
+        if (existingItem is null) return false;
 
         var productId = existingItem.GetProductId();
-        var serialNumber = existingItem.GetSerialNumber();
 
         try
         {
-            Console.WriteLine($"DeleteInventoryItem: Deleting item {inventoryItemId} (ProductId={productId}, Serial={serialNumber}, Status={existingItem.GetStatus()})");
             _inventoryItemMapper.Delete(existingItem);
-            int availableCount = CheckProductQuantityByStatus(productId, InventoryStatus.AVAILABLE);
-            NotifyObservers(productId, availableCount);
-            SyncProductActiveQuantity(productId);
-            Console.WriteLine($"DeleteInventoryItem: Item {inventoryItemId} deleted successfully");
+            SyncProductStockLevels(productId); // SRP FIX
             return true;
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"DeleteInventoryItem: FAILED to delete item {inventoryItemId}: {ex.GetType().Name} - {ex.Message}");
-            if (ex.InnerException != null)
-            {
-                Console.WriteLine($"  Inner Exception: {ex.InnerException.Message}");
-            }
-            return false;
-        }
+        catch { return false; }
     }
 
     // ─────────────────────────────────────────────────────────────────────────────────
@@ -187,7 +126,6 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
     public List<Inventoryitem> GetAllInventoryItems()
     {
         var items = _inventoryItemMapper.FindAll()?.ToList() ?? new List<Inventoryitem>();
-        // Sort to show RESERVED items at top
         return items.OrderByDescending(i => i.GetStatus() == InventoryStatus.RESERVED).ToList();
     }
 
@@ -202,22 +140,16 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
 
         var normalized = query.Trim().ToUpper();
 
-        var results = allItems.Where(item =>
+        return allItems.Where(item =>
             item.GetSerialNumber().ToUpper().Contains(normalized))
         .OrderByDescending(i => i.GetStatus() == InventoryStatus.RESERVED)
         .ToList();
-
-        return results;
     }
 
     public int CheckProductQuantityByStatus(int productId, InventoryStatus status)
     {
         var items = _inventoryItemMapper.FindByProductId(productId);
-        if (items is null)
-        {
-            return 0;
-        }
-
+        if (items is null) return 0;
         return items.Count(item => item.GetStatus() == status);
     }
 
@@ -228,55 +160,23 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
     public bool UpdateInventoryStatus(int inventoryItemId, InventoryStatus status)
     {
         var item = _inventoryItemMapper.FindById(inventoryItemId);
-        if (item is null)
-        {
-            return false;
-        }
+        if (item is null) return false;
 
-        // Prevent status updates on items with temporary serial numbers
-        if (item.GetSerialNumber().Contains("TEMP"))
-        {
-            Console.WriteLine($"UpdateInventoryStatus: Cannot update status for item {inventoryItemId}. Serial number '{item.GetSerialNumber()}' is temporary. Please change the serial number first.");
-            return false;
-        }
+        if (item.GetSerialNumber().Contains("TEMP")) return false;
 
         item.UpdateStatusAndDate(status);
 
         try
         {
             _inventoryItemMapper.Update(item);
-            int productId = item.GetProductId();
             
-            // Check available quantity for this product
-            int availableCount = CheckProductQuantityByStatus(productId, InventoryStatus.AVAILABLE);
+            // SRP FIX: We no longer manipulate the Product entity here! 
+            // We just update the DB, and let the sync method pass the message.
+            SyncProductStockLevels(item.GetProductId());
             
-            // Sync product status based on availability
-            var product = _productQuery.GetProductById(productId);
-            if (product is not null)
-            {
-                ProductStatus newProductStatus = availableCount == 0 
-                    ? ProductStatus.UNAVAILABLE 
-                    : ProductStatus.AVAILABLE;
-
-                // Only update product if status change is needed
-                if (product.GetStatus() != newProductStatus)
-                {
-                    product.UpdateStatus(newProductStatus);
-                    if (product.Productdetail is not null)
-                    {
-                        _productCRUD.UpdateProduct(product, product.Productdetail);
-                    }
-                }
-            }
-
-            NotifyObservers(productId, availableCount);
-            SyncProductActiveQuantity(productId);
             return true;
         }
-        catch
-        {
-            return false;
-        }
+        catch { return false; }
     }
 
     public List<int> AllocateAvailableItems(int productId, int quantity)
@@ -295,76 +195,39 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
 
     private bool ValidateInventoryItem(Inventoryitem inventoryItem)
     {
-        if (inventoryItem is null)
-        {
-            return false;
-        }
-
-        if (inventoryItem.GetInventoryItemId() < 0)
-        {
-            return false;
-        }
-
-        if (inventoryItem.GetProductId() <= 0)
-        {
-            return false;
-        }
+        if (inventoryItem is null) return false;
+        if (inventoryItem.GetInventoryItemId() < 0) return false;
+        if (inventoryItem.GetProductId() <= 0) return false;
 
         var serialNumber = inventoryItem.GetSerialNumber();
-        if (string.IsNullOrWhiteSpace(serialNumber) || serialNumber.Length > 255)
-        {
-            return false;
-        }
+        if (string.IsNullOrWhiteSpace(serialNumber) || serialNumber.Length > 255) return false;
 
         var status = inventoryItem.GetStatus();
-        if (status.HasValue && !Enum.IsDefined(typeof(InventoryStatus), status.Value))
-        {
-            return false;
-        }
+        if (status.HasValue && !Enum.IsDefined(typeof(InventoryStatus), status.Value)) return false;
 
         var createdDate = inventoryItem.GetCreatedDate();
         var updatedDate = inventoryItem.GetUpdatedDate();
         var expiryDate = inventoryItem.GetExpiryDate();
 
-        if (expiryDate.HasValue && createdDate != default && expiryDate.Value < createdDate)
-        {
-            return false;
-        }
-
-        if (createdDate != default && updatedDate != default && updatedDate < createdDate)
-        {
-            return false;
-        }
+        if (expiryDate.HasValue && createdDate != default && expiryDate.Value < createdDate) return false;
+        if (createdDate != default && updatedDate != default && updatedDate < createdDate) return false;
 
         return true;
     }
 
     private bool CheckInventoryConflicts(Inventoryitem inventoryItem)
     {
-        if (inventoryItem is null)
-        {
-            return false;
-        }
+        if (inventoryItem is null) return false;
 
         var serialNumber = inventoryItem.GetSerialNumber();
         
-        // RESERVED items with empty serial numbers bypass duplicate check
         if (inventoryItem.GetStatus() == InventoryStatus.RESERVED && string.IsNullOrWhiteSpace(serialNumber))
-        {
             return true;
-        }
 
-        // For other items, serial number is required
-        if (string.IsNullOrWhiteSpace(serialNumber))
-        {
-            return false;
-        }
+        if (string.IsNullOrWhiteSpace(serialNumber)) return false;
 
         var allItems = _inventoryItemMapper.FindAll();
-        if (allItems is null)
-        {
-            return true;
-        }
+        if (allItems is null) return true;
 
         var hasDuplicateSerial = allItems.Any(item =>
             item.GetInventoryItemId() != inventoryItem.GetInventoryItemId() &&
@@ -379,38 +242,21 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
 
     public void AttachObserver(iStockObserver observer)
     {
-        if (observer is null || _observers.Contains(observer))
-        {
-            return;
-        }
-
+        if (observer is null || _observers.Contains(observer)) return;
         _observers.Add(observer);
     }
 
     public void RemoveObserver(iStockObserver observer)
     {
-        if (observer is null)
-        {
-            return;
-        }
-
+        if (observer is null) return;
         _observers.Remove(observer);
     }
-
-    // ─────────────────────────────────────────────────────────────────────────────────
-    // Explicit Interface Implementation - NotifyObservers is protected internally
-    // ─────────────────────────────────────────────────────────────────────────────────
 
     void iStockSubject.NotifyObservers(int productId, int availableCount)
     {
         NotifyObservers(productId, availableCount);
     }
 
-    /// <summary>
-    /// Internal protected notification method for observers.
-    /// Uses explicit interface implementation to restrict direct access from InventoryManagementControl instances.
-    /// Can only be called directly from within this control class.
-    /// </summary>
     protected void NotifyObservers(int productId, int availableCount)
     {
         foreach (var observer in _observers)
@@ -419,29 +265,34 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
         }
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────────
+    // SRP FIX: The Master Sync Method
+    // ─────────────────────────────────────────────────────────────────────────────────
     /// <summary>
-    /// Syncs the product's totalQuantity in Productdetail based on the count of active inventory items.
-    /// Active statuses include: AVAILABLE, ON_LOAN, RESERVED, MAINTENANCE
+    /// Calculates physical quantities and passes the message to Product Catalog via interface.
     /// </summary>
-    private void SyncProductActiveQuantity(int productId)
+    private void SyncProductStockLevels(int productId)
     {
         try
         {
             var items = _inventoryItemMapper.FindByProductId(productId);
-            if (items is null)
-            {
-                return;
-            }
+            if (items is null) return;
 
-            // Count items with active statuses: AVAILABLE, ON_LOAN, RESERVED, MAINTENANCE
+            // 1. Calculate Available Count
+            int availableCount = items.Count(item => item.GetStatus() == InventoryStatus.AVAILABLE);
+
+            // 2. Calculate Total Active Count (User's Exact Definition)
             int activeInventoryCount = items.Count(item =>
                 item.GetStatus() == InventoryStatus.AVAILABLE ||
                 item.GetStatus() == InventoryStatus.ON_LOAN ||
                 item.GetStatus() == InventoryStatus.RESERVED ||
                 item.GetStatus() == InventoryStatus.MAINTENANCE);
 
-            // Update the product's totalQuantity in Productdetail
-            _productCRUD.SetActiveQuantity(productId, activeInventoryCount);
+            // 3. Delegate to Product Catalog to apply its own business rules
+            _productStatusControl.SyncProductStock(productId, availableCount, activeInventoryCount);
+            
+            // 4. Notify Observers (Low Stock Alert)
+            NotifyObservers(productId, availableCount);
         }
         catch
         {

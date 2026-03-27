@@ -6,4 +6,5 @@ public interface IProductStatusControl
 {
     bool UpdateProductStatus(int productId, ProductStatus productStatus);
     int GetThresholdQuantityForProduct(int productId);
+    bool SyncProductStock(int productId, int availableQuantity, int totalActiveQuantity);
 }
