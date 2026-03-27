@@ -252,17 +252,17 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
         _observers.Remove(observer);
     }
 
-    void iStockSubject.NotifyObservers(int productId, int availableCount)
-    {
-        NotifyObservers(productId, availableCount);
-    }
-
     protected void NotifyObservers(int productId, int availableCount)
     {
         foreach (var observer in _observers)
         {
             observer.Update(productId, availableCount);
         }
+    }
+
+    void iStockSubject.NotifyObservers(int productId, int availableCount)
+    {
+        NotifyObservers(productId, availableCount);
     }
 
     // ─────────────────────────────────────────────────────────────────────────────────
