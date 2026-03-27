@@ -4,10 +4,7 @@ namespace ProRental.Domain.Entities;
 
 public partial class Returnitem
 {
-    // =========================
-    // PUBLIC
-    // =========================
-
+    // PUBLIC GETTERS
     public static Returnitem Create(int returnRequestId, int inventoryItemId)
     {
         var item = new Returnitem();
@@ -49,10 +46,7 @@ public partial class Returnitem
         _completiondate = DateTime.UtcNow;
     }
 
-    // =========================
-    // PRIVATE
-    // =========================
-
+    // PRIVATE SETTERS 
     private ReturnItemStatus _status;
 
     private ReturnItemStatus Status

@@ -149,12 +149,7 @@ public class ReturnProcessingController : Controller
 
     [HttpPost("SaveDamageReport/{returnItemId:int}")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> SaveDamageReport(
-        int returnItemId,
-        string? description,
-        string? severity,
-        decimal? repairCost,
-        IFormFile? imageFile)
+    public async Task<IActionResult> SaveDamageReport(int returnItemId, string? description, string? severity, decimal? repairCost, IFormFile? imageFile)
     {
         try
         {

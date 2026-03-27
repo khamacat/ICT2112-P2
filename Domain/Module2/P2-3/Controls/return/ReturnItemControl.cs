@@ -12,11 +12,7 @@ public class ReturnItemControl : iReturnItemCRUD, iReturnItemQuery
     private readonly iInventoryQueryControl _inventoryQueryControl;
     private readonly IProductQuery _productQuery;
 
-    public ReturnItemControl(
-        IReturnItemMapper returnItemMapper,
-        iInventoryStatusControl inventoryStatusControl,
-        iInventoryQueryControl inventoryQueryControl,
-        IProductQuery productQuery)
+    public ReturnItemControl( IReturnItemMapper returnItemMapper, iInventoryStatusControl inventoryStatusControl, iInventoryQueryControl inventoryQueryControl, IProductQuery productQuery)
     {
         _returnItemMapper = returnItemMapper
             ?? throw new ArgumentNullException(nameof(returnItemMapper));
@@ -42,6 +38,8 @@ public class ReturnItemControl : iReturnItemCRUD, iReturnItemQuery
     public bool CreateReturnItem(Returnitem returnItem)
     {
         if (returnItem is null) return false;
+        if (returnItem.GetReturnRequestId() <= 0) return false;
+        if (returnItem.GetInventoryItemId() <= 0) return false;
 
         try
         {
@@ -101,12 +99,12 @@ public class ReturnItemControl : iReturnItemCRUD, iReturnItemQuery
             var previousCost = damageReport.GetRepairCost() ?? 0m;
             var finalCost = previousCost + productPrice;
 
-            damageReport.SetRepairCost(finalCost);
+            damageReport.UpdateRepairCost(finalCost);
 
             var originalDesc = damageReport.GetDescription() ?? string.Empty;
             var breakdown =
                 $"\n\nUnable to repair.\nPrice breakdown:\n  - Product price: ${productPrice:F2}\n  - Repair cost: ${previousCost:F2}\nFinal cost: ${finalCost:F2}";
-            damageReport.SetDescription(originalDesc + breakdown);
+            damageReport.UpdateDescription(originalDesc + breakdown);
 
             fresh.CompleteReturn();
             _returnItemMapper.Update(fresh);
@@ -146,6 +144,7 @@ public class ReturnItemControl : iReturnItemCRUD, iReturnItemQuery
         }
     }
 
+    // HELPER
     public decimal GetProductPriceForItem(int inventoryItemId)
     {
         var inventoryItem = _inventoryQueryControl.GetInventoryItemById(inventoryItemId);

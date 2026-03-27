@@ -14,20 +14,15 @@ public class DamageReportControl : iDamageReportCRUD, iDamageReportQuery
             ?? throw new ArgumentNullException(nameof(damageReportMapper));
     }
 
-    public bool SaveDamageReport(
-        int returnItemId,
-        string description,
-        string severity,
-        decimal? repairCost,
-        string? imagePath)
+    public bool SaveDamageReport( int returnItemId, string description, string severity, decimal? repairCost, string? imagePath)
     {
         var report = _damageReportMapper.FindByReturnItemId(returnItemId) ?? new Damagereport();
-        report.SetReturnItemId(returnItemId);
-        report.SetDescription(description);
-        report.SetSeverity(severity);
-        report.SetRepairCost(repairCost ?? 0m);
-        report.SetReportDate(DateTime.UtcNow);
-        report.SetImages(imagePath ?? string.Empty);
+        report.UpdateReturnItemId(returnItemId);
+        report.UpdateDescription(description);
+        report.UpdateSeverity(severity);
+        report.UpdateRepairCost(repairCost ?? 0m);
+        report.UpdateReportDate(DateTime.UtcNow);
+        report.UpdateImages(imagePath ?? string.Empty);
 
         if (!ValidateDamageReport(report)) return false;
 
@@ -41,11 +36,11 @@ public class DamageReportControl : iDamageReportCRUD, iDamageReportQuery
             }
             else
             {
-                existing.SetDescription(description);
-                existing.SetSeverity(severity);
-                existing.SetRepairCost(repairCost ?? 0m);
-                existing.SetImages(imagePath ?? string.Empty);
-                existing.SetReportDate(DateTime.UtcNow);
+                existing.UpdateDescription(description);
+                existing.UpdateSeverity(severity);
+                existing.UpdateRepairCost(repairCost ?? 0m);
+                existing.UpdateImages(imagePath ?? string.Empty);
+                existing.UpdateReportDate(DateTime.UtcNow);
                 _damageReportMapper.Update(existing);
             }
 
@@ -64,7 +59,7 @@ public class DamageReportControl : iDamageReportCRUD, iDamageReportQuery
             var existing = _damageReportMapper.FindByReturnItemId(returnItemId);
             if (existing is null) return false;
 
-            existing.SetDescription((existing.GetDescription() ?? string.Empty) + note);
+            existing.UpdateDescription((existing.GetDescription() ?? string.Empty) + note);
             _damageReportMapper.Update(existing);
             return true;
         }
