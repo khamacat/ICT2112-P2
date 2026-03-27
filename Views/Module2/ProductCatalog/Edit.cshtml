@@ -1,4 +1,3 @@
-@model ProRental.Controllers.ProductFormViewModel
 @using ProRental.Domain.Enums
 
 @{
@@ -14,83 +13,83 @@
     <div class="card-body">
         <form asp-action="Edit" method="post">
             @Html.AntiForgeryToken()
-            <input asp-for="ProductId" type="hidden" />
+            <input type="hidden" name="ProductId" value="@ViewBag.ProductId" />
 
             <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label asp-for="CategoryId" class="form-label"></label>
-                    <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-select">
+                    <label class="form-label" for="CategoryId">Category</label>
+                    <select id="CategoryId" name="CategoryId" asp-items="ViewBag.Categories" class="form-select">
                         <option value="">-- Select Category --</option>
                     </select>
-                    <span asp-validation-for="CategoryId" class="text-danger"></span>
+                    <span class="text-danger">@Html.ValidationMessage("CategoryId")</span>
                 </div>
 
                 <div class="col-md-6">
-                    <label asp-for="Sku" class="form-label"></label>
-                    <input asp-for="Sku" class="form-control" />
-                    <span asp-validation-for="Sku" class="text-danger"></span>
+                    <label class="form-label" for="Sku">SKU</label>
+                    <input id="Sku" name="Sku" class="form-control" value="@ViewBag.Sku" />
+                    <span class="text-danger">@Html.ValidationMessage("Sku")</span>
                 </div>
 
                 <div class="col-md-6">
-                    <label asp-for="Status" class="form-label"></label>
-                    <select asp-for="Status" asp-items="Html.GetEnumSelectList<ProductStatus>()" class="form-select"></select>
+                    <label class="form-label" for="Status">Status</label>
+                    <select id="Status" name="Status" class="form-select" asp-items="Html.GetEnumSelectList<ProductStatus>()"></select>
                 </div>
 
                 <div class="col-md-6">
-    <label asp-for="Threshold" class="form-label"></label>
-    <div class="input-group">
-        <input asp-for="Threshold" class="form-control" />
-        <span class="input-group-text">%</span>
-    </div>
-    <span asp-validation-for="Threshold" class="text-danger"></span>
+                    <label class="form-label" for="Threshold">Low Stock Threshold (%)</label>
+                    <div class="input-group">
+                        <input id="Threshold" name="Threshold" class="form-control" value="@ViewBag.Threshold" />
+                        <span class="input-group-text">%</span>
+                    </div>
+                    <span class="text-danger">@Html.ValidationMessage("Threshold")</span>
                 </div>
 
                 <div class="col-md-6">
-                    <label asp-for="Name" class="form-label"></label>
-                    <input asp-for="Name" class="form-control" />
-                    <span asp-validation-for="Name" class="text-danger"></span>
+                    <label class="form-label" for="Name">Product Name</label>
+                    <input id="Name" name="Name" class="form-control" value="@ViewBag.Name" />
+                    <span class="text-danger">@Html.ValidationMessage("Name")</span>
                 </div>
 
                 <div class="col-md-6">
-                    <label asp-for="Price" class="form-label"></label>
-                    <input asp-for="Price" class="form-control" type="number" step="0.01" min="0" />
-                    <span asp-validation-for="Price" class="text-danger"></span>
+                    <label class="form-label" for="Price">Daily Rental Price (S$)</label>
+                    <input id="Price" name="Price" class="form-control" type="number" step="0.01" min="0" value="@ViewBag.Price" />
+                    <span class="text-danger">@Html.ValidationMessage("Price")</span>
                 </div>
 
                 <div class="col-12">
-                    <label asp-for="Description" class="form-label"></label>
-                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    <label class="form-label" for="Description">Description</label>
+                    <textarea id="Description" name="Description" class="form-control" rows="3">@ViewBag.Description</textarea>
                 </div>
 
                 <div class="col-md-4">
-                    <label asp-for="TotalQuantity" class="form-label"></label>
-                    <input asp-for="TotalQuantity" class="form-control" type="number" min="0" />
-                    <span asp-validation-for="TotalQuantity" class="text-danger"></span>
+                    <label class="form-label" for="TotalQuantity">Total Quantity</label>
+                    <input id="TotalQuantity" name="TotalQuantity" class="form-control" type="number" min="0" value="@ViewBag.TotalQuantity" />
+                    <span class="text-danger">@Html.ValidationMessage("TotalQuantity")</span>
                 </div>
 
                 <div class="col-md-4">
-                    <label asp-for="Weight" class="form-label"></label>
-                    <input asp-for="Weight" class="form-control" type="number" step="0.01" min="0" />
-                    <span asp-validation-for="Weight" class="text-danger"></span>
+                    <label class="form-label" for="Weight">Weight (kg)</label>
+                    <input id="Weight" name="Weight" class="form-control" type="number" step="0.01" min="0" value="@ViewBag.Weight" />
+                    <span class="text-danger">@Html.ValidationMessage("Weight")</span>
                 </div>
 
                 <div class="col-md-4">
-                    <label asp-for="DepositRate" class="form-label"></label>
-                    <input asp-for="DepositRate" class="form-control" type="number" step="0.01" min="0" max="1" />
-                    <span asp-validation-for="DepositRate" class="text-danger"></span>
+                    <label class="form-label" for="DepositRate">Deposit Rate</label>
+                    <input id="DepositRate" name="DepositRate" class="form-control" type="number" step="0.01" min="0" max="1" value="@ViewBag.DepositRate" />
+                    <span class="text-danger">@Html.ValidationMessage("DepositRate")</span>
                 </div>
 
                 <div class="col-12">
-                    <label asp-for="Image" class="form-label"></label>
-                    <input asp-for="Image" class="form-control" />
+                    <label class="form-label" for="Image">Image Filename</label>
+                    <input id="Image" name="Image" class="form-control" value="@ViewBag.Image" />
                 </div>
             </div>
 
             <div class="mt-4 d-flex gap-2">
                 <button type="submit" class="btn btn-warning">Save Changes</button>
-                <a asp-action="Details" asp-route-id="@Model.ProductId" class="btn btn-outline-secondary">Cancel</a>
+                <a asp-action="Details" asp-route-id="@ViewBag.ProductId" class="btn btn-outline-secondary">Cancel</a>
             </div>
         </form>
     </div>
@@ -98,4 +97,20 @@
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+
+    <script>
+        (function () {
+            const statusSelect = document.getElementById("Status");
+            const currentStatus = "@ViewBag.Status";
+            if (statusSelect && currentStatus) {
+                statusSelect.value = currentStatus;
+            }
+
+            const categorySelect = document.getElementById("CategoryId");
+            const currentCategory = "@ViewBag.CategoryId";
+            if (categorySelect && currentCategory) {
+                categorySelect.value = currentCategory;
+            }
+        })();
+    </script>
 }
