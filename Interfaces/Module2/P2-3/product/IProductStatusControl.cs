@@ -2,9 +2,9 @@ using ProRental.Domain.Enums;
 
 namespace ProRental.Interfaces.Domain;
 
-public interface IProductStatusControl
+public interface IProductActions
 {
-    bool UpdateProductStatus(int productId, ProductStatus productStatus);
     int GetThresholdQuantityForProduct(int productId);
     bool SyncProductStock(int productId, int availableQuantity, int totalActiveQuantity);
+    bool AddToProduct(int productId, int quantity);
 }

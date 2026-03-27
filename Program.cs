@@ -258,7 +258,7 @@ builder.Services.AddScoped<ProductCatalogControl>();
 builder.Services.AddScoped<IProductQuery>(sp => sp.GetRequiredService<ProductCatalogControl>());
 builder.Services.AddScoped<IProductCRUD>(sp => sp.GetRequiredService<ProductCatalogControl>());
 builder.Services.AddScoped<IProductBulkCommand>(sp => sp.GetRequiredService<ProductCatalogControl>());
-builder.Services.AddScoped<IProductStatusControl>(sp => sp.GetRequiredService<ProductCatalogControl>());
+builder.Services.AddScoped<IProductActions>(sp => sp.GetRequiredService<ProductCatalogControl>());
 
 //clearance
 builder.Services.AddScoped<ClearanceBatchControl>();

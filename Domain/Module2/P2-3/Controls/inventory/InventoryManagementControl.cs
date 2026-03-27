@@ -9,16 +9,16 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
 {
     private readonly IInventoryItemMapper _inventoryItemMapper;
     // SRP FIX: We only inject the specific Status Control interface, no more deep CRUD/Query access
-    private readonly IProductStatusControl _productStatusControl; 
+    private readonly IProductActions _productActions;
     private readonly List<iStockObserver> _observers = new();
 
     public InventoryManagementControl(
         IInventoryItemMapper inventoryItemMapper, 
         IEnumerable<iStockObserver> observers, 
-        IProductStatusControl productStatusControl)
+        IProductActions productActions)
     {
         _inventoryItemMapper = inventoryItemMapper ?? throw new ArgumentNullException(nameof(inventoryItemMapper));
-        _productStatusControl = productStatusControl ?? throw new ArgumentNullException(nameof(productStatusControl));
+        _productActions = productActions ?? throw new ArgumentNullException(nameof(productActions));
         _observers = observers.ToList();
     }
 
@@ -289,7 +289,7 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
                 item.GetStatus() == InventoryStatus.MAINTENANCE);
 
             // 3. Delegate to Product Catalog to apply its own business rules
-            _productStatusControl.SyncProductStock(productId, availableCount, activeInventoryCount);
+            _productActions.SyncProductStock(productId, availableCount, activeInventoryCount);
             
             // 4. Notify Observers (Low Stock Alert)
             NotifyObservers(productId, availableCount);

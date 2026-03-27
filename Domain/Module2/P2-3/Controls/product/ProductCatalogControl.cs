@@ -5,7 +5,7 @@ using ProRental.Interfaces.Domain;
 
 namespace ProRental.Domain.Controls;
 
-public class ProductCatalogControl : IProductCRUD, IProductQuery, IProductBulkCommand, IProductStatusControl
+public class ProductCatalogControl : IProductCRUD, IProductQuery, IProductBulkCommand, IProductActions
 {
     private readonly IProductMapper _productMapper;
     private readonly ICategoryQuery _categoryQuery;
@@ -247,16 +247,6 @@ public class ProductCatalogControl : IProductCRUD, IProductQuery, IProductBulkCo
         detail.IncreaseTotalQuantity(quantity);
         _productMapper.Update(product);
 
-        return true;
-    }
-
-    public bool UpdateProductStatus(int productId, ProductStatus productStatus)
-    {
-        var product = _productMapper.FindById(productId);
-        if (product == null) return false;
-
-        product.UpdateStatus(productStatus);
-        _productMapper.Update(product);
         return true;
     }
 
