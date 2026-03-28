@@ -11,6 +11,7 @@ public class ClearanceItemControl : iClearanceItemQuery, iClearanceItemControl
     private readonly IClearanceBatchMapper _batchMapper;
     private readonly iInventoryCRUDControl _inventoryCRUD;
     private readonly iInventoryStatusControl _inventoryStatus;
+    private readonly iInventoryQueryControl _inventoryQuery;
     private readonly IProductQuery _productQuery;
 
     // Default discount rate for recommended price calculation (30% off retail)
@@ -21,12 +22,14 @@ public class ClearanceItemControl : iClearanceItemQuery, iClearanceItemControl
         IClearanceBatchMapper batchMapper,
         iInventoryCRUDControl inventoryCRUD,
         iInventoryStatusControl inventoryStatus,
+        iInventoryQueryControl inventoryQuery,
         IProductQuery productQuery)
     {
         _itemMapper = itemMapper;
         _batchMapper = batchMapper;
         _inventoryCRUD = inventoryCRUD;
         _inventoryStatus = inventoryStatus;
+        _inventoryQuery = inventoryQuery;
         _productQuery = productQuery;
     }
 
@@ -312,6 +315,13 @@ public class ClearanceItemControl : iClearanceItemQuery, iClearanceItemControl
             return true; // Conflict: item is in a non-closed batch
 
         return false; // No conflict
+    }
+
+    // ── Eligible Items ────────────────────────────────────────────────────────
+
+    public List<Inventoryitem> GetEligibleItemsForClearance()
+    {
+        return _inventoryQuery.GetNoMoveInventoryItems();
     }
 
     // ── Private Helpers ───────────────────────────────────────────────────────

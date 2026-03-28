@@ -150,8 +150,20 @@ public class ClearanceController : Controller
         ViewBag.BatchId = batchId;
         ViewBag.BatchName = batch.GetBatchName();
 
-        // Get available inventory items for selection
-        // Note: the eligibility check runs per-item during AddItemToBatch
+        // Get eligible no-move inventory items via ClearanceItemControl
+        var noMoveItems = _itemControl.GetEligibleItemsForClearance();
+        ViewBag.NoMoveItems = noMoveItems;
+
+        // Build product name lookup for display in dropdown
+        var productNames = new Dictionary<int, string>();
+        foreach (var item in noMoveItems)
+        {
+            var product = _productQuery.GetProductById(item.GetProductId());
+            string name = product?.Productdetail?.GetName() ?? "Unknown Product";
+            productNames[item.GetInventoryItemId()] = name;
+        }
+        ViewBag.ProductNames = productNames;
+
         return View();
     }
 

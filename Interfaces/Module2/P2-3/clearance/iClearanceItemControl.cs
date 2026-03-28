@@ -13,5 +13,6 @@ public interface iClearanceItemControl
     bool UpdateClearanceItemStatus(int clearanceItemId, string status);
     decimal CalculateClearancePrice(int clearanceItemId);
     bool RecordSale(int clearanceItemId, decimal finalPrice, int staffId);
+    List<Inventoryitem> GetEligibleItemsForClearance();
 
 }
