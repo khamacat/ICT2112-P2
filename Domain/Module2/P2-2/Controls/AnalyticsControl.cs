@@ -4,7 +4,7 @@ using ProRental.Interfaces;
 
 namespace ProRental.Domain.Control;
 
-public class AnalyticsControl : IAnalyticsData
+public class AnalyticsControl : IAnalyticsData, ITrend
 {
     private readonly IAnalyticsMapper _analyticsMapper;
     private readonly AnalyticsFactory _factory;
@@ -93,6 +93,32 @@ public class AnalyticsControl : IAnalyticsData
 
     public async Task<IEnumerable<TransactionLogDto>> GetAllLogsAsync()
         => await _transactionLogService.GetAllTransactionLogsAsync();
+
+    // ── Trend (ITrend) ──────────────────────────────────────────────────────
+
+    // Returns the supplier reliability score (RefValue) for the most recent
+    // SUPTREND analytics record matching the given supplier ID.
+    public async Task<float?> GetSupplierReliabilityAsync(int targetID)
+    {
+        var records = await _analyticsMapper.FindBySupplierAsync(targetID);
+        var latest  = records
+            .Where(a => a.GetAnalyticsType() == AnalyticsType.SUPTREND.ToString())
+            .OrderByDescending(a => a.GetEndDate())
+            .FirstOrDefault();
+        return latest is null ? null : (float?)latest.GetRefValue();
+    }
+
+    // Returns the product turnover rate (RefValue) for the most recent
+    // PRODTREND analytics record matching the given product ID.
+    public async Task<float?> GetTurnoverRateAsync(int targetID)
+    {
+        var records = await _analyticsMapper.FindByProductAsync(targetID);
+        var latest  = records
+            .Where(a => a.GetAnalyticsType() == AnalyticsType.PRODTREND.ToString())
+            .OrderByDescending(a => a.GetEndDate())
+            .FirstOrDefault();
+        return latest is null ? null : (float?)latest.GetRefValue();
+    }
 
     // ── Update / Delete ───────────────────────────────────────────────────────
 
