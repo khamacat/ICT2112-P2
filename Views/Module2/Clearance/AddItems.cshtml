@@ -2,6 +2,8 @@
     ViewData["Title"] = "Add Items to Batch";
     var batchId = ViewBag.BatchId;
     var batchName = ViewBag.BatchName;
+    var noMoveItems = (List<ProRental.Domain.Entities.Inventoryitem>)ViewBag.NoMoveItems;
+    var productNames = (Dictionary<int, string>)ViewBag.ProductNames;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -21,66 +23,80 @@
 
 <div class="card">
     <div class="card-body">
-        <form asp-action="AddItems" method="post">
-            <input type="hidden" name="batchId" value="@batchId" />
-
-            <div class="mb-3">
-                <label class="form-label fw-bold">Enter Inventory Item IDs</label>
-                <p class="text-muted small">
-                    Enter the inventory item IDs you want to add to this clearance batch.
-                    Items must be in AVAILABLE status and inactive for 24+ months.
-                </p>
+        @if (noMoveItems == null || noMoveItems.Count == 0)
+        {
+            <div class="alert alert-info mb-0">
+                <i class="bi bi-info-circle"></i> No eligible items found. Items must be inactive for 24+ months to qualify for clearance.
             </div>
+        }
+        else
+        {
+            <form asp-action="AddItems" method="post">
+                <input type="hidden" name="batchId" value="@batchId" />
 
-            <div id="itemIdsContainer">
-                <div class="inventory-row mb-3">
-                    <div class="input-group mb-1">
-                        <span class="input-group-text"><i class="bi bi-hash"></i></span>
-                        <input type="number" class="form-control inventory-input" name="inventoryItemIds"
-                               placeholder="Inventory Item ID" min="1" required oninput="lookupItem(this)" />
-                        <button type="button" class="btn btn-outline-danger" onclick="removeRow(this)" style="display:none">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
-                    </div>
-                    <div class="item-details small ms-1" style="min-height: 20px;">
-                        <span class="text-muted fst-italic">Type an ID to see item details...</span>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Select Inventory Items</label>
+                    <p class="text-muted small">
+                        Choose from inventory items that have been inactive for 24+ months (no-move items).
+                    </p>
+                </div>
+
+                <div id="itemIdsContainer">
+                    <div class="inventory-row mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-box-seam"></i></span>
+                            <select class="form-select" name="inventoryItemIds" required>
+                                <option value="" disabled selected>-- Select an item --</option>
+                                @foreach (var item in noMoveItems)
+                                {
+                                    var itemId = item.GetInventoryItemId();
+                                    var serial = item.GetSerialNumber();
+                                    var name = productNames.ContainsKey(itemId) ? productNames[itemId] : "Unknown";
+                                    <option value="@itemId">@name — SN: @serial (ID: @itemId)</option>
+                                }
+                            </select>
+                            <button type="button" class="btn btn-outline-danger" onclick="removeRow(this)" style="display:none">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <button type="button" class="btn btn-outline-primary btn-sm mb-3" onclick="addRow()">
-                <i class="bi bi-plus-circle"></i> Add Another Item
-            </button>
-
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-success">
-                    <i class="bi bi-check-lg"></i> Add Items to Batch
+                <button type="button" class="btn btn-outline-primary btn-sm mb-3" onclick="addRow()">
+                    <i class="bi bi-plus-circle"></i> Add Another Item
                 </button>
-                <a asp-action="BatchDetails" asp-route-id="@batchId" class="btn btn-outline-secondary">
-                    Cancel
-                </a>
-            </div>
-        </form>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg"></i> Add Items to Batch
+                    </button>
+                    <a asp-action="BatchDetails" asp-route-id="@batchId" class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        }
     </div>
 </div>
 
 @section Scripts {
     <script>
+        // Template for the select options (built server-side, reused client-side)
+        const selectOptionsHtml = document.querySelector('.inventory-row select')?.innerHTML ?? '';
+
         function addRow() {
             const container = document.getElementById('itemIdsContainer');
             const div = document.createElement('div');
             div.className = 'inventory-row mb-3';
             div.innerHTML = `
-                <div class="input-group mb-1">
-                    <span class="input-group-text"><i class="bi bi-hash"></i></span>
-                    <input type="number" class="form-control inventory-input" name="inventoryItemIds"
-                           placeholder="Inventory Item ID" min="1" required oninput="lookupItem(this)" />
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-box-seam"></i></span>
+                    <select class="form-select" name="inventoryItemIds" required>
+                        ${selectOptionsHtml}
+                    </select>
                     <button type="button" class="btn btn-outline-danger" onclick="removeRow(this)">
                         <i class="bi bi-x-lg"></i>
                     </button>
-                </div>
-                <div class="item-details small ms-1" style="min-height: 20px;">
-                    <span class="text-muted fst-italic">Type an ID to see item details...</span>
                 </div>
             `;
             container.appendChild(div);
@@ -89,58 +105,6 @@
         function removeRow(btn) {
             btn.closest('.inventory-row').remove();
         }
-
-        // Cache for lookups to prevent spamming
-        const lookupCache = {};
-        // Debounce timer
-        let typingTimer;
-
-        function lookupItem(input) {
-            clearTimeout(typingTimer);
-            const id = input.value.trim();
-            const detailsDiv = input.closest('.inventory-row').querySelector('.item-details');
-
-            if (!id) {
-                detailsDiv.innerHTML = '<span class="text-muted fst-italic">Type an ID to see item details...</span>';
-                return;
-            }
-
-            detailsDiv.innerHTML = '<span class="text-muted"><i class="spinner-border spinner-border-sm"></i> Looking up...</span>';
-
-            typingTimer = setTimeout(() => {
-                if (lookupCache[id]) {
-                    renderDetails(detailsDiv, lookupCache[id]);
-                    return;
-                }
-
-                fetch(`@Url.Action("GetInventoryDetails", "Clearance")?id=${id}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        lookupCache[id] = data;
-                        renderDetails(detailsDiv, data);
-                    })
-                    .catch(err => {
-                        console.error('Fetch error:', err);
-                        detailsDiv.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle"></i> Error checking item.</span>';
-                    });
-            }, 300); // 300ms debounce
-        }
-
-        function renderDetails(div, data) {
-            if (!data.isValid) {
-                div.innerHTML = `<span class="text-danger fw-bold"><i class="bi bi-x-circle"></i> ${data.error || 'Item not found'}</span>`;
-                return;
-            }
-            
-            let statusBadge = data.isAvailable 
-                ? '<span class="badge bg-success">Available</span>'
-                : '<span class="badge bg-warning text-dark">Not Available (Check Eligibility)</span>';
-                
-            div.innerHTML = `
-                <span class="text-primary fw-bold"><i class="bi bi-box-seam"></i> ${data.productName}</span> 
-                <span class="text-muted ms-2 px-2 border-start border-end">SN: ${data.serialNumber}</span>
-                <span class="ms-2">${statusBadge}</span>
-            `;
-        }
     </script>
 }
+
