@@ -1,9 +1,8 @@
-using ProRental.Domain.Entities;
-
 namespace ProRental.Interfaces.Domain;
 
 public interface iDamageReportCRUD
 {
-    bool SubmitDamageReport(int returnItemId, Damagereport damageReport);
+    bool SaveDamageReport(int returnItemId, string description, string severity, decimal? repairCost, string? imagePath);
+    bool AppendRepairNote(int returnItemId, string note);
     bool DeleteDamageReport(int returnItemId);
 }
