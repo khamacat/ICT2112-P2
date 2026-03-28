@@ -8,18 +8,28 @@ using ProRental.Interfaces.Module2;
 
 namespace ProRental.Domain.Module2.P2_2.Controls;
 
-public class SupplierControl : ISupplier, IVerifiedSupplierRegistry, ISupplierVettingGateway
+public class SupplierControl : ISupplier, ISupplierVettingGateway
 {
     private readonly ISupplierMapper _supplierMapper;
-    private readonly ICategoryChangeLogMapper _categoryChangeLogMapper;
     private readonly SupplierRegistryFactory _factory;
+    private readonly IVerifiedSupplierRegistry _verifiedSupplierRegistry;
 
-    public SupplierControl(ISupplierMapper supplierMapper, ICategoryChangeLogMapper categoryChangeLogMapper, SupplierRegistryFactory factory)
+    public SupplierControl(ISupplierMapper supplierMapper, SupplierRegistryFactory factory, IVerifiedSupplierRegistry verifiedSupplierRegistry)
     {
         _supplierMapper = supplierMapper;
-        _categoryChangeLogMapper = categoryChangeLogMapper;
         _factory = factory;
+        _verifiedSupplierRegistry = verifiedSupplierRegistry;
     }
+
+    // ── Factory helpers ──────────────────────────────────────────────────────
+
+    public Supplier createEmptySupplier()
+    {
+        return _factory.createSupplierRegistryEntity("Supplier") as Supplier
+               ?? new Supplier();
+    }
+
+    // ── CRUD ─────────────────────────────────────────────────────────────────
 
     public Supplier createSupplier(string name, string details, int creditPeriod, float avgTurnaroundTime)
     {
@@ -90,6 +100,8 @@ public class SupplierControl : ISupplier, IVerifiedSupplierRegistry, ISupplierVe
         return _supplierMapper.deleteSupplier(supplierID);
     }
 
+    // ── ISupplier ────────────────────────────────────────────────────────────
+
     public Supplier getVerifiedSupplierById(int supplierID)
     {
         var supplier = _supplierMapper.findSupplierById(supplierID);
@@ -104,19 +116,19 @@ public class SupplierControl : ISupplier, IVerifiedSupplierRegistry, ISupplierVe
         return _supplierMapper.findAll().Where(s => s.IsVerified).ToList();
     }
 
+    // ── Using IVerifiedSupplierRegistry ────────────────────────────────────────────
+
     public List<Supplier> getVettedSuppliers()
     {
-        // TODO: IVerifiedSupplierRegistry is implemented by a teammate.
-        // Temporarily returning verified suppliers as a stub until integrated.
-        // REMOVE this stub implementation once teammate's class is wired in.
-        return getVerifiedSuppliers();
+        return _verifiedSupplierRegistry.getVettedSuppliers();
     }
 
-    /// <summary>
-    /// Stub — SupplierControl has no access to vetting records.
-    /// VettingControl, which also implements IVerifiedSupplierRegistry, provides the real implementation.
-    /// </summary>
-    public string? getLatestVettingNote(int supplierID) => null;
+    public string? getLatestVettingNote(int supplierID)
+    {
+        return _verifiedSupplierRegistry.getLatestVettingNote(supplierID);
+    }
+
+    // ── ISupplierVettingGateway ──────────────────────────────────────────────
 
     public List<Supplier> getUnverifiedSuppliers()
     {

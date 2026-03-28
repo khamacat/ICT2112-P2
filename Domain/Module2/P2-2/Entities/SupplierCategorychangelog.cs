@@ -32,5 +32,6 @@ public class SupplierCategoryChangeLog : ISupplierRegistryEntity
         ChangedReason = newReason;
     }
 
+    // ISupplierRegistryEntity
     string ISupplierRegistryEntity.GetType() => "SupplierCategoryChangeLog";
 }

@@ -11,4 +11,3 @@ public interface ICategoryChangeLogMapper
     SupplierCategoryChangeLog findCategoryChangeLogById(int logID);
     List<SupplierCategoryChangeLog> findLogsBySupplier(int supplierID);
 }
-

@@ -1,4 +1,3 @@
-// PATH: Data\Module2\Gateways\SupplierMapper.cs
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;

@@ -11,4 +11,3 @@ public interface ISupplierMapper
     Supplier findSupplierById(int supplierID);
     List<Supplier> findAll();
 }
-

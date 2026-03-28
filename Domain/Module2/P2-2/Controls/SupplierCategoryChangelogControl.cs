@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using ProRental.Data.Module2.Interfaces;
 using ProRental.Domain.Enums;
 using ProRental.Domain.Module2.P2_2.Entities;
@@ -57,4 +56,3 @@ public class SupplierCategoryChangeLogControl
         return _logMapper.deleteCategoryChangeLog(logID);
     }
 }
-
