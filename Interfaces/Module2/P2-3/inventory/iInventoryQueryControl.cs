@@ -12,4 +12,6 @@ public interface iInventoryQueryControl
     List<Inventoryitem> GetAllInventoryItems();
     List<Inventoryitem> SearchInventoryItems(string query);
     List<int> AllocateAvailableItems(int productId, int quantity);
+
+    public List<Inventoryitem> GetNoMoveInventoryItems();
 }

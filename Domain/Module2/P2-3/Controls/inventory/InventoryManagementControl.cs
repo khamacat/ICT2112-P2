@@ -153,6 +153,22 @@ public class InventoryManagementControl : iInventoryCRUDControl, iInventoryQuery
         return items.Count(item => item.GetStatus() == status);
     }
 
+    public List<Inventoryitem> GetNoMoveInventoryItems()
+    {
+        var allItems = _inventoryItemMapper.FindAll();
+        if (allItems is null) return new List<Inventoryitem>();
+
+        var twoYearsAgo = DateTime.UtcNow.AddYears(-2);
+        return allItems
+            .Where(item =>
+                {
+                    var updatedDate = item.GetUpdatedDate();
+                    // If updatedDate is default(DateTime), treat as not old
+                    return updatedDate != default && updatedDate < twoYearsAgo;
+                })
+            .ToList();
+    }
+
     // ─────────────────────────────────────────────────────────────────────────────────
     // Business Logic Methods
     // ─────────────────────────────────────────────────────────────────────────────────
