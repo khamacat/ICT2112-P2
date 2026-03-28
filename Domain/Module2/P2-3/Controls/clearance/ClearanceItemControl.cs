@@ -9,7 +9,6 @@ public class ClearanceItemControl : iClearanceItemQuery, iClearanceItemControl
 {
     private readonly IClearanceItemMapper _itemMapper;
     private readonly IClearanceBatchMapper _batchMapper;
-    private readonly iInventoryCRUDControl _inventoryCRUD;
     private readonly iInventoryStatusControl _inventoryStatus;
     private readonly iInventoryQueryControl _inventoryQuery;
     private readonly IProductQuery _productQuery;
@@ -20,14 +19,12 @@ public class ClearanceItemControl : iClearanceItemQuery, iClearanceItemControl
     public ClearanceItemControl(
         IClearanceItemMapper itemMapper,
         IClearanceBatchMapper batchMapper,
-        iInventoryCRUDControl inventoryCRUD,
         iInventoryStatusControl inventoryStatus,
         iInventoryQueryControl inventoryQuery,
         IProductQuery productQuery)
     {
         _itemMapper = itemMapper;
         _batchMapper = batchMapper;
-        _inventoryCRUD = inventoryCRUD;
         _inventoryStatus = inventoryStatus;
         _inventoryQuery = inventoryQuery;
         _productQuery = productQuery;
@@ -117,7 +114,7 @@ public class ClearanceItemControl : iClearanceItemQuery, iClearanceItemControl
                 return false;
 
             // Verify inventory item exists via InventoryManagementControl
-            var inventoryItem = _inventoryCRUD.GetInventoryItemById(inventoryItemId);
+            var inventoryItem = _inventoryQuery.GetInventoryItemById(inventoryItemId);
             if (inventoryItem == null)
                 return false;
 
@@ -274,7 +271,7 @@ public class ClearanceItemControl : iClearanceItemQuery, iClearanceItemControl
     private bool CheckItemEligibility(int inventoryItemId)
     {
         // Verify the inventory item exists via InventoryManagementControl
-        var inventoryItem = _inventoryCRUD.GetInventoryItemById(inventoryItemId);
+        var inventoryItem = _inventoryQuery.GetInventoryItemById(inventoryItemId);
         if (inventoryItem == null)
             return false;
 
@@ -329,7 +326,7 @@ public class ClearanceItemControl : iClearanceItemQuery, iClearanceItemControl
     private decimal CalculateRecommendedPriceForInventoryItem(int inventoryItemId)
     {
         // Look up the product's retail price via inventory item → product → product detail
-        var inventoryItem = _inventoryCRUD.GetInventoryItemById(inventoryItemId);
+        var inventoryItem = _inventoryQuery.GetInventoryItemById(inventoryItemId);
         if (inventoryItem == null)
             return 0m;
 

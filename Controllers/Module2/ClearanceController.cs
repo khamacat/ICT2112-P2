@@ -13,7 +13,7 @@ public class ClearanceController : Controller
     private readonly iClearanceBatchQuery _batchQuery;
     private readonly iClearanceItemControl _itemControl;
     private readonly iClearanceItemQuery _itemQuery;
-    private readonly iInventoryCRUDControl _inventoryCRUD;
+    private readonly iInventoryQueryControl _inventoryQuery;
     private readonly IProductQuery _productQuery;
 
     public ClearanceController(
@@ -21,14 +21,14 @@ public class ClearanceController : Controller
         iClearanceBatchQuery batchQuery,
         iClearanceItemControl itemControl,
         iClearanceItemQuery itemQuery,
-        iInventoryCRUDControl inventoryCRUD,
+        iInventoryQueryControl inventoryQuery,
         IProductQuery productQuery)
     {
         _batchControl = batchControl;
         _batchQuery = batchQuery;
         _itemControl = itemControl;
         _itemQuery = itemQuery;
-        _inventoryCRUD = inventoryCRUD;
+        _inventoryQuery = inventoryQuery;
         _productQuery = productQuery;
     }
 
@@ -85,7 +85,7 @@ public class ClearanceController : Controller
         {
             foreach (var item in items)
             {
-                var invItem = _inventoryCRUD.GetInventoryItemById(item.GetInventoryItemId());
+                var invItem = _inventoryQuery.GetInventoryItemById(item.GetInventoryItemId());
                 if (invItem != null)
                 {
                     var product = _productQuery.GetProductById(invItem.GetProductId());
@@ -226,7 +226,7 @@ public class ClearanceController : Controller
     [HttpGet]
     public IActionResult GetInventoryDetails(int id)
     {
-        var invItem = _inventoryCRUD.GetInventoryItemById(id);
+        var invItem = _inventoryQuery.GetInventoryItemById(id);
         if (invItem == null)
         {
             return Json(new { isValid = false, error = "Item not found." });
