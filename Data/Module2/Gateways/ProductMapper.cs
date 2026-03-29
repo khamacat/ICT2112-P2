@@ -6,21 +6,6 @@ using ProRental.Interfaces.Data;
 
 namespace ProRental.Data;
 
-/* * =========================================================================
- * ARCHITECTURE & AI ASSISTANT RULES FOR THIS FILE
- * =========================================================================
- * 1. STRICT ENCAPSULATION: All entity properties (Productid, Sku, etc.) are PRIVATE. 
- * Do NOT attempt to use standard LINQ (e.g., p.Productid == id). 
- * You MUST use EF.Property<T>(entity, "PropertyName") for all queries.
- * 2. COMPOSITE INCLUDES ONLY: You MAY use .Include(p => p.Productdetail) because 
- * Productdetail is a strict composite of Product. Do NOT include other aggregates (Alerts, Inventoryitems).
- * 3. UTC TIMESTAMPS: Always override the "Updatedat" to DateTime.UtcNow 
- * using _context.Entry() during updates to maintain the TIMESTAMPTZ standard.
- * 4. DISCONNECTED UPDATES: Always use CurrentValues.SetValues() to update entities 
- * to avoid tracking conflicts without writing manual property-by-property mapping.
- * =========================================================================
- */
-
 public class ProductMapper : IProductMapper
 {
     private readonly AppDbContext _context;

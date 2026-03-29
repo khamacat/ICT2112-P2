@@ -6,21 +6,6 @@ using ProRental.Interfaces.Data;
 
 namespace ProRental.Data;
 
-/* * =========================================================================
- * ARCHITECTURE & AI ASSISTANT RULES FOR THIS FILE
- * =========================================================================
- * 1. STRICT ENCAPSULATION: All entity properties (Returnrequestid, Orderid, etc.) are PRIVATE. 
- * Do NOT attempt to use standard LINQ (e.g., r.Returnrequestid == id). 
- * You MUST use EF.Property<T>(entity, "PropertyName") for all queries.
- * 2. NO CROSS-AGGREGATE INCLUDES: Do NOT use .Include() for Customer, Order, Returnitems, etc. 
- * If a developer needs those related records, they must use their respective mappers.
- * 3. NO AUTO-UPDATEDAT: This specific entity uses Requestdate and Completiondate. 
- * It DOES NOT have an Updatedat field. Do not hallucinate a DateTime.UtcNow override in Update().
- * 4. DISCONNECTED UPDATES: Always use CurrentValues.SetValues() to update entities 
- * to avoid tracking conflicts without writing manual property-by-property mapping.
- * =========================================================================
- */
-
 public class ReturnRequestMapper : IReturnRequestMapper
 {
     private readonly AppDbContext _context;

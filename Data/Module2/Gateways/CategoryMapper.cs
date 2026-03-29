@@ -5,21 +5,6 @@ using ProRental.Interfaces.Data;
 
 namespace ProRental.Data;
 
-/* * =========================================================================
- * ARCHITECTURE & AI ASSISTANT RULES FOR THIS FILE
- * =========================================================================
- * 1. STRICT ENCAPSULATION: All entity properties (Categoryid, Name, etc.) are PRIVATE. 
- * Do NOT attempt to use standard LINQ (e.g., c.Categoryid == id). 
- * You MUST use EF.Property<T>(entity, "PropertyName") for all queries.
- * 2. NO CROSS-AGGREGATE INCLUDES: Do NOT use .Include(c => c.Products). 
- * If a developer needs Products, they must use the IProductMapper.
- * 3. UTC TIMESTAMPS: Always override the "Updateddate" to DateTime.UtcNow 
- * using _context.Entry() during updates to maintain the TIMESTAMPTZ standard.
- * 4. DISCONNECTED UPDATES: Always use CurrentValues.SetValues() to update entities 
- * to avoid tracking conflicts without writing manual property-by-property mapping.
- * =========================================================================
- */
-
 public class CategoryMapper : ICategoryMapper
 {
     private readonly AppDbContext _context;

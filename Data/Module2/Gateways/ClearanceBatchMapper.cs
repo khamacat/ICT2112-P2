@@ -6,21 +6,6 @@ using ProRental.Interfaces.Data;
 
 namespace ProRental.Data;
 
-/* * =========================================================================
- * ARCHITECTURE & AI ASSISTANT RULES FOR THIS FILE
- * =========================================================================
- * 1. STRICT ENCAPSULATION: All entity properties (Clearancebatchid, Batchname, etc.) are PRIVATE. 
- * Do NOT attempt to use standard LINQ (e.g., c.Clearancebatchid == id). 
- * You MUST use EF.Property<T>(entity, "PropertyName") for all queries.
- * 2. NO CROSS-AGGREGATE INCLUDES: Do NOT use .Include() for Clearanceitems or Clearancelogs. 
- * If a developer needs the items inside a batch, they must use the IClearanceItemMapper.
- * 3. NO AUTO-UPDATEDAT: This specific entity relies on Createddate and Clearancedate. 
- * It DOES NOT have an Updateddate field. Do not hallucinate a DateTime.UtcNow override in Update().
- * 4. DISCONNECTED UPDATES: Always use CurrentValues.SetValues() to update entities 
- * to avoid tracking conflicts without writing manual property-by-property mapping.
- * =========================================================================
- */
-
 public class ClearanceBatchMapper : IClearanceBatchMapper
 {
     private readonly AppDbContext _context;

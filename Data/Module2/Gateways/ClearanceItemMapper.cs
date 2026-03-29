@@ -6,21 +6,6 @@ using ProRental.Interfaces.Data;
 
 namespace ProRental.Data;
 
-/* * =========================================================================
- * ARCHITECTURE & AI ASSISTANT RULES FOR THIS FILE
- * =========================================================================
- * 1. STRICT ENCAPSULATION: All entity properties (Clearanceitemid, Inventoryitemid, etc.) are PRIVATE. 
- * Do NOT attempt to use standard LINQ (e.g., c.Clearanceitemid == id). 
- * You MUST use EF.Property<T>(entity, "PropertyName") for all queries.
- * 2. NO CROSS-AGGREGATE INCLUDES: Do NOT use .Include() for Inventoryitem or Clearancebatch. 
- * If a developer needs the associated inventory or batch data, they must use those respective mappers.
- * 3. NO AUTO-UPDATEDAT: This specific entity relies on Saledate which is set 
- * when the item is sold. It DOES NOT have an Updatedat field. Do not hallucinate one in Update().
- * 4. DISCONNECTED UPDATES: Always use CurrentValues.SetValues() to update entities 
- * to avoid tracking conflicts without writing manual property-by-property mapping.
- * =========================================================================
- */
-
 public class ClearanceItemMapper : IClearanceItemMapper
 {
     private readonly AppDbContext _context;

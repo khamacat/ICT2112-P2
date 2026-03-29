@@ -6,20 +6,6 @@ using ProRental.Interfaces.Data;
 
 namespace ProRental.Data;
 
-/* * =========================================================================
- * ARCHITECTURE & AI ASSISTANT RULES FOR THIS FILE
- * =========================================================================
- * 1. STRICT ENCAPSULATION: All entity properties (Returnitemid, Returnrequestid, etc.) are PRIVATE. 
- * Do NOT attempt to use standard LINQ (e.g., r.Returnitemid == id). 
- * You MUST use EF.Property<T>(entity, "PropertyName") for all queries.
- * 2. NO CROSS-AGGREGATE INCLUDES: Do NOT use .Include() for Inventoryitem, Returnrequest, or Damagereports. 
- * If a developer needs those, they must use their respective mappers.
- * 3. NO AUTO-UPDATEDAT: This specific entity does not have an Updatedat field. Do not hallucinate one.
- * 4. DISCONNECTED UPDATES: Always use CurrentValues.SetValues() to update entities 
- * to avoid tracking conflicts without writing manual property-by-property mapping.
- * =========================================================================
- */
-
 public class ReturnItemMapper : IReturnItemMapper
 {
     private readonly AppDbContext _context;
