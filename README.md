@@ -5,6 +5,10 @@
 
 ---
 
+## For Prof Serena for P2 Module 2
+- After setting up database and running initial_schema.sql, please do run demo_seed.sql instead, the current seed.sql is bugged.
+- To test InventoryService, link is localhost:5000/InventoryServiceTester, only works on order 4 at the moment.
+
 ## Table of Contents
 
 1. [Project Overview](#1-project-overview)
